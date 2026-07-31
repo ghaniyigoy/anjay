@@ -1,0 +1,35 @@
+defmodule OjsLandingWeb.EditorHTML do
+  use OjsLandingWeb, :html
+  embed_templates "editor_html/*"
+
+  def badge_class(view_id, count) do
+    cond do
+      view_id == "reviews-overdue" and count > 0 -> "badge-danger"
+      count > 0 -> "badge-default"
+      true -> "badge-zero"
+    end
+  end
+
+  def stage_label(:needs_editor), do: "Needs Editor"
+  def stage_label(:initial_review), do: "Initial Review"
+  def stage_label(:needs_reviews), do: "Needs Reviews"
+  def stage_label(:awaiting_reviews), do: "Awaiting Reviews"
+  def stage_label(:reviews_submitted), do: "Reviews Submitted"
+  def stage_label(:external_review), do: "External Review"
+  def stage_label(:copyediting), do: "Copyediting"
+  def stage_label(:production), do: "Production"
+  def stage_label(:scheduled), do: "Scheduled"
+  def stage_label(:published), do: "Published"
+  def stage_label(:declined), do: "Declined"
+  def stage_label(_), do: "Submission"
+
+  def stage_color(:needs_editor), do: "#9b59b6"
+  def stage_color(:initial_review), do: "#3498db"
+  def stage_color(:needs_reviews), do: "#f39c12"
+  def stage_color(:awaiting_reviews), do: "#3498db"
+  def stage_color(:reviews_submitted), do: "#27ae60"
+  def stage_color(:external_review), do: "#9b59b6"
+  def stage_color(:copyediting), do: "#e67e22"
+  def stage_color(:production), do: "#e74c3c"
+  def stage_color(_), do: "#95a5a6"
+end

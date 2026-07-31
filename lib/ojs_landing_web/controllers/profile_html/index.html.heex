@@ -1,0 +1,42 @@
+<div class="profile-page">
+  <div class="container">
+    <h1>My Profile</h1>
+    
+    <div class="profile-card">
+      <div class="profile-header">
+        <h2>Profile Information</h2>
+      </div>
+      <div class="profile-body">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" value={@user.username} readonly>
+        </div>
+        
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" value={@user.email} readonly>
+        </div>
+        
+        <div class="form-group">
+          <label for="given_name">Given Name</label>
+          <input type="text" id="given_name" value={@user.given_name} readonly>
+        </div>
+        
+        <div class="form-group">
+          <label for="family_name">Family Name</label>
+          <input type="text" id="family_name" value={@user.family_name} readonly>
+        </div>
+        
+        <div class="form-group">
+          <label for="affiliation">Affiliation</label>
+          <input type="text" id="affiliation" value={@user.affiliation} readonly>
+        </div>
+        
+        <div class="form-group">
+          <label for="role">Role</label>
+          <input type="text" id="role" value={to_string(@user.role)} readonly>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

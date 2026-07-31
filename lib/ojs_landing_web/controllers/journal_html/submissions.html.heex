@@ -1,0 +1,52 @@
+<div class="submissions-page">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="/">Home</a> / <span>Submissions</span>
+    </div>
+
+    <h1 class="page-title">Submissions</h1>
+
+    <!-- Pesan berdasarkan status login (menggunakan assigns[:current_user] agar aman) -->
+    <%= if assigns[:current_user] do %>
+      <!-- Sudah Login -->
+      <div class="login-notice logged-in">
+        <p>
+          <a href="/submission/new" class="btn-link">Make a new submission</a> 
+          or 
+          <a href="/dashboard/mySubmissions" class="btn-link">view your pending submissions</a>.
+        </p>
+      </div>
+    <% else %>
+      <!-- Belum Login -->
+      <div class="login-notice not-logged-in">
+        <p>
+          <a href="/login" class="btn-link">Login</a> 
+          or 
+          <a href="/register" class="btn-link">Register</a> 
+          to make a submission.
+        </p>
+      </div>
+    <% end %>
+
+    <!-- Author Guidelines -->
+    <div class="content-section">
+      <h2>Author Guidelines</h2>
+      
+      <p>Authors are invited to make a submission to this journal. All submissions will be assessed by an editor to determine whether they meet the aims and scope of this journal. Those considered to be a good fit will be sent for peer review before determining whether they will be accepted or rejected.</p>
+      
+      <p>Before making a submission, authors are responsible for obtaining permission to publish any material included with the submission, such as photos, documents and datasets. All authors identified on the submission must consent to be identified as an author. Where appropriate, research should be approved by an appropriate ethics committee in accordance with the legal requirements of the study's country.</p>
+    </div>
+
+    <!-- Submission Process -->
+    <div class="content-section">
+      <h2>Submission Process</h2>
+      
+      <ol>
+        <li>Register as an author</li>
+        <li>Prepare your manuscript according to the guidelines</li>
+        <li>Submit through the online system</li>
+        <li>Wait for peer review process</li>
+      </ol>
+    </div>
+  </div>
+</div>

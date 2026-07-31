@@ -1,0 +1,20 @@
+<div class="content-wrapper">
+  <div class="content-inner">
+    <div class="journals-list">
+      <%= for journal <- @journals do %>
+        <div class="journal-item">
+          <h2 class="journal-title">
+            <a href={"/#{journal.path || String.replace(String.downcase(journal.title), " ", "_")}"}>
+              <%= journal.title %>
+            </a>
+          </h2>
+          <p class="journal-description"><%= journal.description %></p>
+          <div class="journal-actions">
+            <a href={"/#{journal.path || String.replace(String.downcase(journal.title), " ", "_")}"} class="journal-link">View Journal</a>
+            <a href={"/#{journal.path || String.replace(String.downcase(journal.title), " ", "_")}/issues"} class="journal-link">Current Issue</a>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

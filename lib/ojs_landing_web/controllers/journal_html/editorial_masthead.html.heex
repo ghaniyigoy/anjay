@@ -1,0 +1,57 @@
+<div class="journal-page-header">
+  <div class="container">
+    <h1 class="journal-page-title"><%= @journal.title %></h1>
+    <nav class="journal-nav">
+      <ul class="nav-list">
+        <li><a href={"/#{@journal_path}/issue/current"} class="nav-link">Current</a></li>
+        <li><a href={"/#{@journal_path}/issue/archive"} class="nav-link">Archives</a></li>
+        <li class="dropdown">
+          <button class="dropdown-toggle" onclick="toggleDropdown(this)">About ▾</button>
+          <ul class="dropdown-menu">
+            <li><a href={"/#{@journal_path}/about"} class="dropdown-item">About the Journal</a></li>
+            <li><a href={"/#{@journal_path}/about/submissions"} class="dropdown-item">Submissions</a></li>
+            <li><a href={"/#{@journal_path}/about/editorialMasthead"} class="dropdown-item">Editorial Masthead</a></li>
+            <li><a href={"/#{@journal_path}/about/privacy"} class="dropdown-item">Privacy Statement</a></li>
+            <li><a href={"/#{@journal_path}/about/contact"} class="dropdown-item">Contact</a></li>
+          </ul>
+        </li>
+      </ul>
+      <div class="nav-search">
+        <a href="#" class="search-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          Search
+        </a>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<div class="journal-content">
+  <div class="container">
+    <div class="content-wrapper">
+      <h2 class="section-heading">Editorial Masthead</h2>
+      <div class="about-content">
+        <h3>Editor-in-Chief</h3>
+        <p><%= @journal.editor || "Not specified" %></p>
+        
+        <h3>Editorial Board</h3>
+        <p>Editorial board members will be listed here.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleDropdown(button) {
+    var dropdown = button.parentElement;
+    var menu = dropdown.querySelector('.dropdown-menu');
+    if (menu.style.display === 'block') {
+      menu.style.display = 'none';
+    } else {
+      menu.style.display = 'block';
+    }
+  }
+</script>

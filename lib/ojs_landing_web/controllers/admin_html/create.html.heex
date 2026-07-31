@@ -1,0 +1,112 @@
+<div class="create-journal-page">
+  <!-- Header dengan Back Button -->
+  <div class="wizard-header">
+    <a href="/admin/contexts" class="back-button">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M15 18l-6-6 6-6"></path>
+      </svg>
+    </a>
+    <h1 class="wizard-title">Create Journal</h1>
+  </div>
+
+  <!-- Form Card -->
+  <div class="wizard-form-card">
+    <form method="POST" action="/admin/createJournal">
+      <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()}>
+      
+      <!-- Journal Title -->
+      <div class="form-field">
+        <label class="field-label">
+          Journal title <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M2 12h20"></path>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+          </span>
+          <input type="text" name="journal_title" required>
+        </div>
+      </div>
+
+      <!-- Journal Initials -->
+      <div class="form-field">
+        <label class="field-label">
+          Journal initials <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M2 12h20"></path>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+          </span>
+          <input type="text" name="journal_initials" required>
+        </div>
+      </div>
+
+      <!-- Journal Abbreviation -->
+      <div class="form-field">
+        <label class="field-label">
+          Journal Abbreviation
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M2 12h20"></path>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+          </span>
+          <input type="text" name="journal_abbreviation">
+        </div>
+      </div>
+
+      <!-- Principal Contact Name -->
+      <div class="form-field">
+        <label class="field-label">
+          Principal Contact Name <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <input type="text" name="contact_name" required>
+        </div>
+      </div>
+
+      <!-- Principal Contact Email -->
+      <div class="form-field">
+        <label class="field-label">
+          Principal Contact Email <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <input type="email" name="contact_email" required>
+        </div>
+      </div>
+
+      <!-- Country -->
+      <div class="form-field">
+        <label class="field-label">
+          Country
+        </label>
+        <div class="input-wrapper">
+          <select name="country">
+            <option value="">Select Country</option>
+            <option value="ID">Indonesia</option>
+            <option value="US">United States</option>
+            <option value="GB">United Kingdom</option>
+            <option value="AU">Australia</option>
+            <option value="CA">Canada</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="form-actions">
+        <button type="submit" class="btn-submit">Save</button>
+        <a href="/admin/contexts" class="btn-cancel">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

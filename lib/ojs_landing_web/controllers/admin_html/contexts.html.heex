@@ -1,0 +1,70 @@
+<div class="contexts-page">
+  <div class="admin-breadcrumb">
+    <a href="/admin">Administration</a>
+    <span class="breadcrumb-separator">/</span>
+    <span>Hosted Journals</span>
+  </div>
+
+  <div class="admin-table-card">
+    <div class="admin-table-header">
+      <h2 class="admin-table-title">Journals</h2>
+      <div class="admin-table-actions">
+        <button class="btn-admin-table">Order</button>
+        <a href="/admin/createJournal" class="btn-admin-table btn-admin-table-primary">Create Journal</a>
+      </div>
+    </div>
+    
+    <div class="admin-table">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px;"></th>
+            <th>Name</th>
+            <th>Path</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= for journal <- @journals do %>
+            <tr>
+              <td>
+                <span class="journal-toggle" data-journal-id={journal.id} onclick="toggleJournal(this)">▶</span>
+              </td>
+              <td>
+                <span class="journal-name"><%= journal.title %></span>
+              </td>
+              <td>
+                <%= journal.path || String.replace(String.downcase(journal.title), " ", "_") %>
+              </td>
+            </tr>
+            <tr id={"journal-sub-#{journal.id}"} style="display: none;">
+              <td></td>
+              <td colspan="2">
+                <div class="journal-sub-menu">
+                  <a href={"/admin/wizard/#{journal.id}"} class="sub-menu-link">Edit</a>
+                  <a href="#" class="sub-menu-link sub-menu-danger" onclick="return confirm('Are you sure?');">Remove</a>
+                  <a href={"/admin/wizard/#{journal.id}"} class="sub-menu-link">Settings wizard</a>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleJournal(element) {
+    var journalId = element.getAttribute('data-journal-id');
+    var subRow = document.getElementById('journal-sub-' + journalId);
+    if (subRow) {
+      if (subRow.style.display === 'none') {
+        subRow.style.display = 'table-row';
+        element.textContent = '▼';
+      } else {
+        subRow.style.display = 'none';
+        element.textContent = '▶';
+      }
+    }
+  }
+</script>

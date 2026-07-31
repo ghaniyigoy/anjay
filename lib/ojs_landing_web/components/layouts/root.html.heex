@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={Plug.CSRFProtection.get_csrf_token()} />
+    <title>OJS - Open Journal Systems</title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-top">
+        <div class="header-links">
+          <%= if @current_user do %>
+            <div class="user-dropdown">
+              <button class="user-dropdown-toggle" onclick="toggleUserDropdown(this)">
+                <span class="username"><%= @current_user.username %></span>
+                <span class="arrow">▸</span>
+              </button>
+              <div class="user-dropdown-menu">
+                <%= if @current_user.role == :admin do %>
+                  <a href="/admin" class="dropdown-item">Administration</a>
+                <% else %>
+                  <a href="/dashboard" class="dropdown-item">Dashboard</a>
+                <% end %>
+                <a href="/profile" class="dropdown-item">View Profile</a>
+                <a href="/logout" class="dropdown-item">Logout</a>
+              </div>
+            </div>
+          <% else %>
+            <%= if journal_path = assigns[:journal_path] do %>
+              <a href={"/#{journal_path}/register"} class="header-link">Register</a>
+              <a href={"/#{journal_path}/login"} class="header-link">Login</a>
+            <% else %>
+              <a href="/register" class="header-link">Register</a>
+              <a href="/login" class="header-link">Login</a>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+      <div class="header-main">
+        <div class="logo">
+          <h1>OJS</h1>
+          <span>Open Journal Systems</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <%= if msg = Phoenix.Flash.get(@flash, :info) do %>
+        <div class="flash-message flash-info">{msg}</div>
+      <% end %>
+      <%= if msg = Phoenix.Flash.get(@flash, :error) do %>
+        <div class="flash-message flash-error">{msg}</div>
+      <% end %>
+      {@inner_content}
+    </main>
+
+    <footer class="site-footer">
+      <p>&copy; 2026 Open Journal Systems</p>
+    </footer>
+
+    <!-- JAVASCRIPT LANGSUNG DI SINI -->
+    <script>
+      window.toggleUserDropdown = function(button) {
+        var dropdown = button.parentElement;
+        var menu = dropdown.querySelector('.user-dropdown-menu');
+        var arrow = button.querySelector('.arrow');
+        
+        if (menu && menu.classList.contains('show')) {
+          menu.classList.remove('show');
+          button.classList.remove('active');
+          if (arrow) arrow.textContent = '▸';
+          document.body.classList.remove('dropdown-open');
+        } else if (menu) {
+          var allMenus = document.querySelectorAll('.user-dropdown-menu.show');
+          for (var i = 0; i < allMenus.length; i++) {
+            allMenus[i].classList.remove('show');
+            var btn = allMenus[i].parentElement.querySelector('.user-dropdown-toggle');
+            if (btn) btn.classList.remove('active');
+            var otherArrow = allMenus[i].parentElement.querySelector('.arrow');
+            if (otherArrow) otherArrow.textContent = '▸';
+          }
+          document.body.classList.remove('dropdown-open');
+          
+          menu.classList.add('show');
+          button.classList.add('active');
+          if (arrow) arrow.textContent = '▾';
+          document.body.classList.add('dropdown-open');
+        }
+      }
+
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.user-dropdown')) {
+          var allMenus = document.querySelectorAll('.user-dropdown-menu.show');
+          for (var i = 0; i < allMenus.length; i++) {
+            allMenus[i].classList.remove('show');
+            var btn = allMenus[i].parentElement.querySelector('.user-dropdown-toggle');
+            if (btn) btn.classList.remove('active');
+            var arrow = allMenus[i].parentElement.querySelector('.arrow');
+            if (arrow) arrow.textContent = '▸';
+          }
+          document.body.classList.remove('dropdown-open');
+        }
+      });
+
+      document.addEventListener('DOMContentLoaded', function() {
+        var flashMessages = document.querySelectorAll('.flash-message');
+        for (var i = 0; i < flashMessages.length; i++) {
+          (function(msg) {
+            setTimeout(function() {
+              msg.classList.add('fade-out');
+              setTimeout(function() {
+                if (msg.parentNode) msg.parentNode.removeChild(msg);
+              }, 300);
+            }, 1500);
+          })(flashMessages[i]);
+        }
+      });
+    </script>
+  </body>
+</html>

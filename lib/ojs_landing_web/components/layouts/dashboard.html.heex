@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={Plug.CSRFProtection.get_csrf_token()} />
+    <title>{assigns[:page_title] || "Dashboard - OJS"}</title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
+  </head>
+  <body class="dashboard-body">
+    <!-- Dashboard Header -->
+    <header class="dashboard-header">
+      <div class="dashboard-header-left">
+        <h1 class="dashboard-journal-title">Jurnal Perang Dunia 1</h1>
+      </div>
+      <div class="dashboard-header-right">
+        <a href="#" class="header-icon" title="Information">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </a>
+        <a href="#" class="header-icon" title="Notifications">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </a>
+        <div class="user-dropdown">
+          <button class="user-avatar-btn" onclick="toggleUserDropdown(this)" title={@current_user.username}>
+            <span class="avatar-letter"><%= String.first(String.upcase(@current_user.username)) %></span>
+          </button>
+          <div class="user-dropdown-menu">
+            <a href="/profile" class="dropdown-item">Edit Profile</a>
+            <a href="/logout" class="dropdown-item">Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Flash Messages -->
+    <%= if msg = Phoenix.Flash.get(@flash, :info) do %>
+      <div class="flash-message flash-info">{msg}</div>
+    <% end %>
+    <%= if msg = Phoenix.Flash.get(@flash, :error) do %>
+      <div class="flash-message flash-error">{msg}</div>
+    <% end %>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      {@inner_content}
+    </main>
+
+    <!-- JavaScript -->
+    <script>
+      function toggleUserDropdown(button) {
+        var dropdown = button.parentElement;
+        var menu = dropdown.querySelector('.user-dropdown-menu');
+        
+        if (menu.classList.contains('show')) {
+          menu.classList.remove('show');
+          button.classList.remove('active');
+        } else {
+          // Close all other dropdowns
+          var allMenus = document.querySelectorAll('.user-dropdown-menu.show');
+          for (var i = 0; i < allMenus.length; i++) {
+            allMenus[i].classList.remove('show');
+            var btn = allMenus[i].parentElement.querySelector('.user-avatar-btn');
+            if (btn) btn.classList.remove('active');
+          }
+          
+          menu.classList.add('show');
+          button.classList.add('active');
+        }
+      }
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.user-dropdown')) {
+          var allMenus = document.querySelectorAll('.user-dropdown-menu.show');
+          for (var i = 0; i < allMenus.length; i++) {
+            allMenus[i].classList.remove('show');
+            var btn = allMenus[i].parentElement.querySelector('.user-avatar-btn');
+            if (btn) btn.classList.remove('active');
+          }
+        }
+      });
+
+      // Auto-hide flash messages
+      document.addEventListener('DOMContentLoaded', function() {
+        var flashMessages = document.querySelectorAll('.flash-message');
+        for (var i = 0; i < flashMessages.length; i++) {
+          (function(msg) {
+            setTimeout(function() {
+              msg.classList.add('fade-out');
+              setTimeout(function() {
+                if (msg.parentNode) msg.parentNode.removeChild(msg);
+              }, 300);
+            }, 1500);
+          })(flashMessages[i]);
+        }
+      });
+    </script>
+  </body>
+</html>

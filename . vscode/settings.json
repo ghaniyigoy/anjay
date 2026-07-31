@@ -1,0 +1,10 @@
+{
+  "files.associations": {
+    "*.heex": "phoenix-heex",
+    "*.html.heex": "phoenix-heex"
+  },
+  "html.validate.scripts": false,
+  "json.schemaDownload.enable": false,
+  "typescript.validate.enable": false,
+  "javascript.validate.enable": false
+}
