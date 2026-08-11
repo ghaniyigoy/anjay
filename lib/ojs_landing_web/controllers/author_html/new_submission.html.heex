@@ -1,0 +1,253 @@
+<div class="author-dashboard-container">
+  <!-- Sidebar -->
+  <aside class="author-sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-header" onclick="toggleSidebarSection(this)">
+        <svg
+          class="sidebar-icon"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="sidebar-title">My Submissions as Author</span>
+        <svg
+          class="sidebar-arrow"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+        >
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+
+      <ul class="sidebar-menu">
+        <%= for view <- @views do %>
+          <li class={if @current_view == view.id, do: "active"}>
+            <a href={"/dashboard/mySubmissions?currentViewId=#{view.id}"}>
+              <span class="badge">{Enum.count(@all_submissions, &(&1.status == view.status))}</span>
+              {view.label}
+            </a>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="/submission/new" class="btn-new-submission">Start A New Submission</a>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="author-main-content">
+    <h1 class="page-heading">Start A New Submission</h1>
+
+    <!-- OJS-style intro notice -->
+    <div class="ojs-intro-box">
+      <p>
+        Langkah ini merupakan langkah awal dari proses penyerahan makalah ke <strong>Jurnal Perang Dunia 1</strong>. Anda dapat menyimpan pekerjaan dan melanjutkannya kapan
+        saja dari dashboard. Pastikan Anda sudah membaca
+        <a href="/informatika/about/submissions">Panduan Penyerahan</a>
+        dan <a href="/informatika/about/submissions">Panduan Penulis</a>
+        sebelum memulai.
+      </p>
+    </div>
+
+    <div class="ojs-new-submission-grid">
+      <!-- Main form -->
+      <div class="ojs-new-submission-main">
+        <form
+          class="ojs-form-box"
+          method="POST"
+          action="/submission/create"
+          id="new-submission-form"
+        >
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+
+          <!-- Choose a Section -->
+          <div class="ojs-form-section">
+            <h3>Choose a Section</h3>
+            <p class="ojs-form-help">
+              Pilih bagian jurnal yang paling sesuai dengan makalah Anda. Jika ragu, pilih bagian yang
+              paling mendekati — Anda dapat menghubungi tim editorial jika perlu perubahan.
+            </p>
+            <select class="ojs-select" id="submission-section" name="submission[section]">
+              <%= for section <- ["Artikel Penelitian", "Tinjauan Literatur", "Studi Kasus", "Laporan Riset"] do %>
+                <option value={section}>{section}</option>
+              <% end %>
+            </select>
+          </div>
+
+          <!-- Submission Requirements -->
+          <div class="ojs-form-section">
+            <h3>Submission Requirements</h3>
+            <p class="ojs-form-help">
+              Centang setiap item yang telah Anda siapkan. Seluruh item berlabel
+              <span class="ojs-checklist-tag tag-required">Required</span>
+              wajib dipenuhi sebelum
+              penyerahan dapat dilanjutkan.
+            </p>
+
+            <ul class="ojs-checklist">
+              <%= for {text, type} <- submission_checklist() do %>
+                <li>
+                  <label class="ojs-checklist-item">
+                    <input
+                      type="checkbox"
+                      class="ojs-checklist-check"
+                      data-required={if type == :required, do: "true", else: "false"}
+                    />
+                    <span class="ojs-checklist-text">
+                      {text}
+                      <span class={"ojs-checklist-tag #{if type == :required, do: "tag-required", else: "tag-optional"}"}>
+                        {checklist_tag(type)}
+                      </span>
+                    </span>
+                  </label>
+                </li>
+              <% end %>
+            </ul>
+
+            <p class="ojs-checklist-progress" id="checklist-progress">
+              0 dari {required_checklist_count()} item <em>Required</em> telah dicentang
+            </p>
+          </div>
+
+          <!-- Comments for the Editor -->
+          <div class="ojs-form-section">
+            <h3>Comments for the Editor</h3>
+            <p class="ojs-form-help">
+              Opsional. Tuliskan catatan yang hanya terlihat oleh tim editorial, misalnya calon penelaah
+              atau keterkaitan dengan artikel lain.
+            </p>
+            <textarea
+              class="ojs-textarea"
+              id="comments-for-editor"
+              name="comments_for_editor"
+              placeholder="Tulis komentar untuk editor (opsional)..."
+            ></textarea>
+          </div>
+
+          <!-- Privacy Statement -->
+          <div class="ojs-privacy-box">
+            <h3>Privacy Statement</h3>
+            <p>
+              Nama dan alamat email yang dimasukkan di situs jurnal ini hanya akan digunakan untuk tujuan
+              yang disebutkan pada jurnal ini dan tidak akan digunakan untuk tujuan atau pihak lain mana
+              pun. Silakan baca <a href="/informatika/about/privacy">Kebijakan Privasi</a> kami.
+            </p>
+          </div>
+
+          <div class="ojs-form-actions">
+            <span class="ojs-form-actions-hint" id="submit-hint">
+              Lengkapi seluruh item <em>Required</em> untuk melanjutkan.
+            </span>
+            <button
+              type="submit"
+              class="btn-ojs-primary"
+              id="start-submission-btn"
+              disabled
+            >
+              Start Submission
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Side panels -->
+      <aside class="ojs-new-submission-side">
+        <div class="ojs-form-box ojs-side-box">
+          <h3>What Happens Next</h3>
+          <p class="ojs-form-help">
+            Setelah memulai, Anda akan menempuh langkah-langkah berikut secara berurutan. Setiap langkah
+            dapat disimpan dan dilanjutkan kembali.
+          </p>
+          <ol class="ojs-prep-steps">
+            <li>Isi detail makalah: judul, abstrak, bagian, dan kata kunci.</li>
+            <li>Unggah berkas naskah dan berkas pendukung.</li>
+            <li>Daftarkan kontributor beserta afiliasi dan email.</li>
+            <li>Pilih editor yang akan menangani submission.</li>
+            <li>Tinjau kembali seluruh informasi sebelum dikirim ke editor.</li>
+          </ol>
+        </div>
+
+        <div class="ojs-form-box ojs-side-box">
+          <h3>Need Help?</h3>
+          <ul class="ojs-side-help-links">
+            <li>
+              <a href="/informatika/about/submissions">Panduan Penyerahan</a>
+              <span>Persyaratan dan format berkas naskah.</span>
+            </li>
+            <li>
+              <a href="/informatika/about/contact">Hubungi Editorial Office</a>
+              <span>Bantuan teknis atau pertanyaan tentang proses.</span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleSidebarSection(header) {
+    var menu = header.nextElementSibling;
+    var arrow = header.querySelector('.sidebar-arrow');
+    if (menu.style.display === 'none') {
+      menu.style.display = 'block';
+      arrow.style.transform = 'rotate(0deg)';
+    } else {
+      menu.style.display = 'none';
+      arrow.style.transform = 'rotate(-90deg)';
+    }
+  }
+
+  (function () {
+    var requiredChecks = Array.prototype.slice.call(
+      document.querySelectorAll('.ojs-checklist-check[data-required="true"]')
+    );
+    var btn = document.getElementById('start-submission-btn');
+    var progress = document.getElementById('checklist-progress');
+    var hint = document.getElementById('submit-hint');
+
+    if (!btn || !requiredChecks.length) return;
+
+    function updateProgress() {
+      var checked = requiredChecks.filter(function (el) { return el.checked; }).length;
+      var done = checked === requiredChecks.length;
+      btn.disabled = !done;
+      btn.classList.toggle('btn-ojs-primary-ready', done);
+
+      if (progress) {
+        progress.textContent =
+          checked + ' dari ' + requiredChecks.length + ' item Required telah dicentang';
+      }
+      if (hint) {
+        if (done) {
+          hint.innerHTML = 'Semua persyaratan telah terpenuhi. Klik untuk mulai penyerahan.';
+          hint.classList.add('hint-ok');
+        } else {
+          hint.innerHTML = 'Lengkapi seluruh item <em>Required</em> untuk melanjutkan.';
+          hint.classList.remove('hint-ok');
+        }
+      }
+    }
+
+    requiredChecks.forEach(function (el) {
+      el.addEventListener('change', updateProgress);
+    });
+
+    updateProgress();
+  })();
+</script>

@@ -5,29 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={Plug.CSRFProtection.get_csrf_token()} />
     <title>Open Journal Systems - Administration</title>
-    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
+    </script>
   </head>
+
   <body class="admin-body">
     <header class="admin-header">
       <div class="admin-header-left">
         <div class="admin-logo-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <rect x="3" y="3" width="7" height="7"></rect>
+
             <rect x="14" y="3" width="7" height="7"></rect>
+
             <rect x="3" y="14" width="7" height="7"></rect>
+
             <rect x="14" y="14" width="7" height="7"></rect>
           </svg>
         </div>
+
         <h1 class="admin-title">Open Journal Systems</h1>
       </div>
+
       <div class="admin-header-right">
         <%= if @current_user do %>
           <div class="user-dropdown">
             <button class="user-dropdown-toggle" onclick="toggleUserDropdown(this)">
-              <span class="username"><%= @current_user.username %></span>
-              <span class="arrow">▸</span>
+              <span class="username">{@current_user.username}</span> <span class="arrow">▸</span>
             </button>
+
             <div class="user-dropdown-menu">
               <%= if @current_user.role == :admin do %>
                 <a href="/admin" class="dropdown-item">Administration</a>
@@ -47,6 +61,7 @@
     <%= if msg = Phoenix.Flash.get(@flash, :info) do %>
       <div class="flash-message flash-info">{msg}</div>
     <% end %>
+
     <%= if msg = Phoenix.Flash.get(@flash, :error) do %>
       <div class="flash-message flash-error">{msg}</div>
     <% end %>
@@ -58,7 +73,6 @@
     <footer class="admin-footer">
       <p>&copy; 2026 Open Journal Systems</p>
     </footer>
-
     <!-- JAVASCRIPT LANGSUNG DI SINI -->
     <script>
       window.toggleUserDropdown = function(button) {

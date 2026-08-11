@@ -1,14 +1,94 @@
 defmodule OjsLanding.User do
   @moduledoc """
-  User management module
+  User management module with an in-memory store (Agent).
+
+  Keeps users in a process so newly registered accounts survive across requests.
   """
 
-  defstruct [:id, :username, :password, :email, :given_name, :family_name, :affiliation, :country, :role]
+  use Agent
+
+  defstruct [
+    :id,
+    :username,
+    :password,
+    :email,
+    :given_name,
+    :family_name,
+    :affiliation,
+    :country,
+    :role
+  ]
+
+  def start_link(_opts) do
+    Agent.start_link(&seed/0, name: __MODULE__)
+  end
 
   @doc """
   Get all users
   """
   def all do
+    Agent.get(__MODULE__, & &1)
+  end
+
+  @doc """
+  Find user by username
+  """
+  def find_by_username(username) do
+    Agent.get(__MODULE__, fn users -> Enum.find(users, &(&1.username == username)) end)
+  end
+
+  @doc """
+  Find user by email
+  """
+  def find_by_email(email) do
+    Agent.get(__MODULE__, fn users -> Enum.find(users, &(&1.email == email)) end)
+  end
+
+  @doc """
+  Verify login credentials
+  """
+  def verify_login(username_or_email, password) do
+    user = find_by_username(username_or_email) || find_by_email(username_or_email)
+
+    cond do
+      is_nil(user) ->
+        {:error, "Username atau email tidak ditemukan"}
+
+      user.password != password ->
+        {:error, "Password salah"}
+
+      true ->
+        {:ok, user}
+    end
+  end
+
+  @doc """
+  Register new user as :author and persist it.
+  """
+  def register(params) do
+    username = params["username"]
+
+    if find_by_username(username) || find_by_email(params["email"] || "") do
+      {:error, "Username atau email sudah digunakan"}
+    else
+      new_user = %__MODULE__{
+        id: next_id(),
+        username: username,
+        password: params["password"],
+        email: params["email"],
+        given_name: params["given_name"],
+        family_name: params["family_name"] || "",
+        affiliation: params["affiliation"] || "",
+        country: params["country"] || "Indonesia",
+        role: :author
+      }
+
+      Agent.update(__MODULE__, fn users -> [new_user | users] end)
+      {:ok, new_user}
+    end
+  end
+
+  defp seed do
     [
       %__MODULE__{
         id: 1,
@@ -68,58 +148,9 @@ defmodule OjsLanding.User do
     ]
   end
 
-  @doc """
-  Find user by username
-  """
-  def find_by_username(username) do
-    Enum.find(all(), fn user -> user.username == username end)
-  end
-
-  @doc """
-  Find user by email
-  """
-  def find_by_email(email) do
-    Enum.find(all(), fn user -> user.email == email end)
-  end
-
-  @doc """
-  Verify login credentials
-  """
-  def verify_login(username_or_email, password) do
-    user = find_by_username(username_or_email) || find_by_email(username_or_email)
-
-    cond do
-      is_nil(user) ->
-        {:error, "Username atau email tidak ditemukan"}
-      user.password != password ->
-        {:error, "Password salah"}
-      true ->
-        {:ok, user}
-    end
-  end
-
-  @doc """
-  Register new user
-  """
-  def register(params) do
-    username = params["username"]
-
-    if find_by_username(username) do
-      {:error, "Username sudah digunakan"}
-    else
-      new_user = %__MODULE__{
-        id: System.unique_integer([:positive]),
-        username: username,
-        password: params["password"],
-        email: params["email"],
-        given_name: params["given_name"],
-        family_name: params["family_name"] || "",
-        affiliation: params["affiliation"] || "",
-        country: params["country"] || "Indonesia",
-        role: :author
-      }
-
-      {:ok, new_user}
-    end
+  defp next_id do
+    Agent.get(__MODULE__, fn users ->
+      Enum.reduce(users, 0, fn u, acc -> max(u.id, acc) end) + 1
+    end)
   end
 end

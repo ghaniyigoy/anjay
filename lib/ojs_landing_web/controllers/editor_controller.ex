@@ -7,24 +7,56 @@ defmodule OjsLandingWeb.EditorController do
     # Filter submissions berdasarkan view_id
     all_submissions = get_editorial_submissions()
 
-    filtered_submissions = case view_id do
-      "assigned-to-me" -> Enum.filter(all_submissions, fn s -> s.assigned_to == user.username end)
-      "active" -> Enum.filter(all_submissions, fn s -> s.status in [:active, :under_review] end)
-      "needs-editor" -> Enum.filter(all_submissions, fn s -> s.stage == :needs_editor end)
-      "initial-review" -> Enum.filter(all_submissions, fn s -> s.stage == :initial_review end)
-      "needs-reviews" -> Enum.filter(all_submissions, fn s -> s.stage == :needs_reviews end)
-      "awaiting-reviews" -> Enum.filter(all_submissions, fn s -> s.stage == :awaiting_reviews end)
-      "reviews-submitted" -> Enum.filter(all_submissions, fn s -> s.stage == :reviews_submitted end)
-      "reviews-overdue" -> Enum.filter(all_submissions, fn s -> s.reviews_overdue end)
-      "revisions-submitted" -> Enum.filter(all_submissions, fn s -> s.stage == :revisions_submitted end)
-      "external-review" -> Enum.filter(all_submissions, fn s -> s.stage == :external_review end)
-      "copyediting" -> Enum.filter(all_submissions, fn s -> s.stage == :copyediting end)
-      "production" -> Enum.filter(all_submissions, fn s -> s.stage == :production end)
-      "scheduled" -> Enum.filter(all_submissions, fn s -> s.status == :scheduled end)
-      "published" -> Enum.filter(all_submissions, fn s -> s.status == :published end)
-      "declined" -> Enum.filter(all_submissions, fn s -> s.status == :declined end)
-      _ -> all_submissions
-    end
+    filtered_submissions =
+      case view_id do
+        "assigned-to-me" ->
+          Enum.filter(all_submissions, fn s -> s.assigned_to == user.username end)
+
+        "active" ->
+          Enum.filter(all_submissions, fn s -> s.status in [:active, :under_review] end)
+
+        "needs-editor" ->
+          Enum.filter(all_submissions, fn s -> s.stage == :needs_editor end)
+
+        "initial-review" ->
+          Enum.filter(all_submissions, fn s -> s.stage == :initial_review end)
+
+        "needs-reviews" ->
+          Enum.filter(all_submissions, fn s -> s.stage == :needs_reviews end)
+
+        "awaiting-reviews" ->
+          Enum.filter(all_submissions, fn s -> s.stage == :awaiting_reviews end)
+
+        "reviews-submitted" ->
+          Enum.filter(all_submissions, fn s -> s.stage == :reviews_submitted end)
+
+        "reviews-overdue" ->
+          Enum.filter(all_submissions, fn s -> s.reviews_overdue end)
+
+        "revisions-submitted" ->
+          Enum.filter(all_submissions, fn s -> s.stage == :revisions_submitted end)
+
+        "external-review" ->
+          Enum.filter(all_submissions, fn s -> s.stage == :external_review end)
+
+        "copyediting" ->
+          Enum.filter(all_submissions, fn s -> s.stage == :copyediting end)
+
+        "production" ->
+          Enum.filter(all_submissions, fn s -> s.stage == :production end)
+
+        "scheduled" ->
+          Enum.filter(all_submissions, fn s -> s.status == :scheduled end)
+
+        "published" ->
+          Enum.filter(all_submissions, fn s -> s.status == :published end)
+
+        "declined" ->
+          Enum.filter(all_submissions, fn s -> s.status == :declined end)
+
+        _ ->
+          all_submissions
+      end
 
     conn
     |> put_root_layout(false)
@@ -33,7 +65,8 @@ defmodule OjsLandingWeb.EditorController do
       submissions: filtered_submissions,
       all_submissions: all_submissions,
       current_view: view_id || "assigned-to-me",
-      user: user)
+      user: user
+    )
   end
 
   def editorial(conn, _params) do

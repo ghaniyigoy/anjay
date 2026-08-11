@@ -1,0 +1,653 @@
+<div class="submission-wizard">
+  <%!-- Header --%>
+  <div class="submission-wizard-header">
+    <div class="submission-wizard-title">
+      <h1>
+        Submission <span class="submission-id">#{@submission.id}</span>
+        <span class="submission-status-badge submission-status-{status_class(@submission.status)}">
+          {status_label(@submission.status)}
+        </span>
+      </h1>
+      <p class="submission-wizard-subtitle">
+        <%= if @submission.title == "" do %>
+          (Untitled submission)
+        <% else %>
+          {@submission.title}
+        <% end %>
+      </p>
+    </div>
+    <div class="submission-wizard-meta">
+      <span class="meta-item">
+        <svg
+          class="meta-icon"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        ><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        Created {format_date(@submission.created_at)}
+      </span>
+      <%= if @submission.date_submitted do %>
+        <span class="meta-item">
+          <svg
+            class="meta-icon"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          ><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12">
+          </polyline></svg>
+          Submitted {format_date(@submission.date_submitted)}
+        </span>
+      <% end %>
+    </div>
+  </div>
+
+  <%!-- Step tabs --%>
+  <nav class="submission-wizard-tabs" aria-label="Submission steps">
+    <a
+      class={tab_class(@current_tab, "details", @submission)}
+      href={"/submission/#{@submission.id}?tab=details"}
+    >
+      <span class="tab-step-num">{step_done_class("details", @submission)}</span> Details
+    </a>
+    <a
+      class={tab_class(@current_tab, "files", @submission)}
+      href={"/submission/#{@submission.id}?tab=files"}
+    >
+      <span class="tab-step-num">{step_done_class("files", @submission)}</span>
+      Files
+      <%= if length(@submission.files) > 0 do %>
+        <span class="tab-count">{length(@submission.files)}</span>
+      <% end %>
+    </a>
+    <a
+      class={tab_class(@current_tab, "contributors", @submission)}
+      href={"/submission/#{@submission.id}?tab=contributors"}
+    >
+      <span class="tab-step-num">{step_done_class("contributors", @submission)}</span>
+      Contributors
+      <%= if length(@submission.contributors) > 0 do %>
+        <span class="tab-count">{length(@submission.contributors)}</span>
+      <% end %>
+    </a>
+    <a
+      class={tab_class(@current_tab, "editors", @submission)}
+      href={"/submission/#{@submission.id}?tab=editors"}
+    >
+      <span class="tab-step-num">{step_done_class("editors", @submission)}</span> Editors
+    </a>
+    <a
+      class={tab_class(@current_tab, "review", @submission)}
+      href={"/submission/#{@submission.id}?tab=review"}
+    >
+      <span class="tab-step-num">{step_done_class("review", @submission)}</span> Review
+    </a>
+  </nav>
+
+  <%!-- Tab content --%>
+  <div class="submission-wizard-body">
+    <%= cond do %>
+      <% @current_tab == "details" -> %>
+        <div class="wizard-panel">
+          <div class="wizard-panel-heading">
+            <h2>Details</h2>
+            <p>Masukkan metadata utama makalah Anda pada formulir berikut.</p>
+          </div>
+
+          <.form
+            for={submission_to_form(@submission)}
+            id="submission-details-form"
+            action={submission_form_action(@submission, @current_tab)}
+            method="post"
+          >
+            <input type="hidden" name="_method" value="put" />
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+
+            <div class="ojs-form-grid">
+              <div class="ojs-field ojs-field-full">
+                <label for="submission_title">Title *</label>
+                <input
+                  type="text"
+                  id="submission_title"
+                  name="submission[title]"
+                  value={@submission.title}
+                  placeholder="Judul lengkap makalah"
+                />
+                <span class="ojs-field-hint">Judul maksimal 250 karakter.</span>
+              </div>
+
+              <div class="ojs-field ojs-field-full">
+                <label for="submission_subtitle">Subtitle</label>
+                <input
+                  type="text"
+                  id="submission_subtitle"
+                  name="submission[subtitle]"
+                  value={@submission.subtitle}
+                  placeholder="Subjudul (opsional)"
+                />
+              </div>
+
+              <div class="ojs-field ojs-field-full">
+                <label for="submission_abstract">Abstract *</label>
+                <textarea
+                  id="submission_abstract"
+                  name="submission[abstract]"
+                  rows="8"
+                  placeholder="Ringkasan singkat tentang tujuan, metode, hasil, dan kesimpulan penelitian"
+                >{@submission.abstract}</textarea>
+                <span class="ojs-field-hint">Abstrak maksimal 300 kata. Harus menyajikan struktur yang jelas (tujuan, metode, hasil, simpulan).</span>
+              </div>
+
+              <div class="ojs-field">
+                <label for="submission_section">Section *</label>
+                <select id="submission_section" name="submission[section]">
+                  <%= for section <- ["Artikel Penelitian", "Tinjauan Literatur", "Studi Kasus", "Laporan Riset"] do %>
+                    <option value={section} selected={@submission.section == section}>
+                      {section}
+                    </option>
+                  <% end %>
+                </select>
+              </div>
+
+              <div class="ojs-field">
+                <label for="submission_language">Language</label>
+                <select id="submission_language" name="submission[language]">
+                  <option value="id" selected={@submission.language == "id"}>Indonesian</option>
+                  <option value="en" selected={@submission.language == "en"}>English</option>
+                </select>
+              </div>
+
+              <div class="ojs-field ojs-field-full">
+                <label for="submission_keywords">Keywords</label>
+                <input
+                  type="text"
+                  id="submission_keywords"
+                  name="submission[keywords]"
+                  value={@submission.keywords}
+                  placeholder="Pisahkan dengan koma, contoh: machine learning, NLP, analisis sentimen"
+                />
+              </div>
+            </div>
+
+            <div class="wizard-actions">
+              <button
+                type="submit"
+                name="submission[save_status]"
+                value="draft"
+                class="btn-ojs-secondary"
+              >Save</button>
+              <a href={"/submission/#{@submission.id}?tab=files"} class="btn-ojs-primary">Continue</a>
+            </div>
+          </.form>
+        </div>
+      <% @current_tab == "files" -> %>
+        <div class="wizard-panel">
+          <div class="wizard-panel-heading">
+            <h2>Files</h2>
+            <p>Unggah naskah dan berkas pendukung makalah Anda.</p>
+          </div>
+
+          <div class="file-upload-dropzone" id="submission-dropzone">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              class="dropzone-icon"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p class="dropzone-text">
+              <strong>Pilih berkas</strong> atau seret dan lepaskan di sini
+            </p>
+            <p class="dropzone-hint">PDF, DOCX, DOC, ODT, TXT maksimal 10 MB</p>
+            <div class="dropzone-actions">
+              <button type="button" class="btn-ojs-secondary" id="btn-pick-file">Upload File</button>
+              <button type="button" class="btn-ojs-secondary" id="btn-load-demo">Load Sample File</button>
+            </div>
+          </div>
+
+          <%= if length(@submission.files) > 0 do %>
+            <div class="uploaded-files-section">
+              <h3 class="ojs-section-title">Uploaded files ({length(@submission.files)})</h3>
+              <table class="submissions-table uploaded-files-table">
+                <thead>
+                  <tr>
+                    <th>FILE NAME</th>
+                    <th>GENRE</th>
+                    <th>SIZE</th>
+                    <th>DATE UPLOADED</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <%= for file <- @submission.files do %>
+                    <tr>
+                      <td>
+                        <div class="file-name-cell">
+                          <%= if file.has_revisions do %>
+                            <svg
+                              class="rev-icon"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            ><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10">
+                            </path><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                          <% end %>
+                          {file.filename}
+                        </div>
+                      </td>
+                      <td>{file.genre}</td>
+                      <td>{file.size}</td>
+                      <td>{file.date}</td>
+                      <td class="col-actions">
+                        <a href="#" class="btn-view">Download</a>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="ojs-empty-state">
+              Belum ada file yang diunggah. Silakan unggah naskah Anda.
+            </div>
+          <% end %>
+
+          <.form
+            for={submission_to_form(@submission)}
+            id="submission-files-form"
+            action={submission_form_action(@submission, @current_tab)}
+            method="post"
+          >
+            <input type="hidden" name="_method" value="put" />
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+            <input type="hidden" name="submission[files]" value={file_count(@submission)} />
+
+            <div class="wizard-actions">
+              <button
+                type="submit"
+                name="submission[save_status]"
+                value="draft"
+                class="btn-ojs-secondary"
+              >Save</button>
+              <a href={"/submission/#{@submission.id}?tab=contributors"} class="btn-ojs-primary">Continue</a>
+            </div>
+          </.form>
+        </div>
+      <% @current_tab == "contributors" -> %>
+        <div class="wizard-panel">
+          <div class="wizard-panel-heading">
+            <h2>Contributors</h2>
+            <p>Daftarkan semua penulis yang berkontribusi pada makalah ini.</p>
+          </div>
+
+          <%= if length(@submission.contributors) > 0 do %>
+            <div class="contributors-list">
+              <%= for contributor <- @submission.contributors do %>
+                <div class="contributor-card">
+                  <div class="contributor-avatar">{String.first(short_name(contributor))}</div>
+                  <div class="contributor-info">
+                    <div class="contributor-name">
+                      {contributor.given_name} {contributor.family_name}
+                      <%= if contributor.primary do %>
+                        <span class="ojs-chip">Primary Contact</span>
+                      <% end %>
+                    </div>
+                    <div class="contributor-detail">{contributor.email}</div>
+                    <div class="contributor-detail">{contributor.affiliation}</div>
+                  </div>
+                  <div class="contributor-actions">
+                    <a href="#" class="btn-view">Edit</a>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="ojs-empty-state">
+              Belum ada kontributor terdaftar. Tambahkan penulis/peneliti yang terlibat.
+            </div>
+          <% end %>
+
+          <.form
+            for={submission_to_form(@submission)}
+            id="submission-contributors-form"
+            action={submission_form_action(@submission, @current_tab)}
+            method="post"
+          >
+            <input type="hidden" name="_method" value="put" />
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+            <input
+              type="hidden"
+              name="submission[contributors_count]"
+              value={contributors_count(@submission)}
+            />
+
+            <div class="wizard-actions">
+              <button
+                type="submit"
+                name="submission[save_status]"
+                value="draft"
+                class="btn-ojs-secondary"
+              >Save</button>
+              <button type="button" class="btn-ojs-secondary" id="btn-add-contributor">Add Contributor</button>
+              <a href={"/submission/#{@submission.id}?tab=editors"} class="btn-ojs-primary">Continue</a>
+            </div>
+          </.form>
+        </div>
+      <% @current_tab == "editors" -> %>
+        <div class="wizard-panel">
+          <div class="wizard-panel-heading">
+            <h2>Editors</h2>
+            <p>Pilih editor yang akan menangani submission Anda.</p>
+          </div>
+
+          <%= if length(@submission.editors) > 0 do %>
+            <div class="editors-list">
+              <%= for editor <- @submission.editors do %>
+                <div class="editor-row">
+                  <div class="editor-avatar">{String.first(editor.name)}</div>
+                  <div class="editor-info">
+                    <div class="editor-name">{editor.name}</div>
+                    <div class="editor-role">{editor.role}</div>
+                  </div>
+                  <div class="editor-email">{editor.email}</div>
+                  <a href="#" class="btn-view">Remove</a>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="ojs-empty-state">
+              Belum ada editor yang ditugaskan. Editor utama jurnal akan ditugaskan otomatis setelah submission dikirim.
+            </div>
+          <% end %>
+
+          <%= if length(@submission.editors) < 2 do %>
+            <div class="ojs-card add-editor-box">
+              <h4>Request Editor</h4>
+              <p>Cari editor berdasarkan nama atau email.</p>
+              <div class="editor-search-row">
+                <input
+                  type="text"
+                  id="editor-search-input"
+                  class="search-input editor-search-input"
+                  placeholder="Search editors..."
+                />
+                <a href="#" class="btn-ojs-primary" id="btn-add-editor">Add Editor</a>
+              </div>
+            </div>
+          <% end %>
+
+          <.form
+            for={submission_to_form(@submission)}
+            id="submission-editors-form"
+            action={submission_form_action(@submission, @current_tab)}
+            method="post"
+          >
+            <input type="hidden" name="_method" value="put" />
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+            <input
+              type="hidden"
+              name="submission[editors_count]"
+              value={editors_count(@submission)}
+            />
+
+            <div class="wizard-actions">
+              <button
+                type="submit"
+                name="submission[save_status]"
+                value="draft"
+                class="btn-ojs-secondary"
+              >Save</button>
+              <a href={"/submission/#{@submission.id}?tab=review"} class="btn-ojs-primary">Continue</a>
+            </div>
+          </.form>
+        </div>
+      <% true -> %>
+        <div class="wizard-panel">
+          <div class="wizard-panel-heading">
+            <h2>Review</h2>
+            <p>Periksa kembali seluruh informasi sebelum menyerahkan makalah ke jurnal.</p>
+          </div>
+
+          <div class="review-summary-grid">
+            <div class="review-summary-card">
+              <h3>Summary</h3>
+              <dl class="summary-list">
+                <div>
+                  <dt>Title</dt><dd>
+                    {if @submission.title == "", do: "(Belum diisi)", else: @submission.title}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Section</dt><dd>{@submission.section || "Artikel Penelitian"}</dd>
+                </div>
+                <div>
+                  <dt>Language</dt><dd>
+                    {if @submission.language == "id", do: "Indonesian", else: "English"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Files</dt><dd>{length(@submission.files)} file</dd>
+                </div>
+                <div>
+                  <dt>Contributors</dt><dd>{length(@submission.contributors)} author</dd>
+                </div>
+                <div>
+                  <dt>Editors</dt><dd>{length(@submission.editors)} editor</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="review-summary-card">
+              <h3>Submission Checklist</h3>
+              <ul class="checklist">
+                <li class={if @submission.title != "", do: "checked", else: ""}>
+                  <span class="check-icon">{if @submission.title != "", do: "✓", else: ""}</span>
+                  Judul telah diisi
+                </li>
+                <li class={if @submission.abstract != "", do: "checked", else: ""}>
+                  <span class="check-icon">{if @submission.abstract != "", do: "✓", else: ""}</span>
+                  Abstrak telah diisi
+                </li>
+                <li class={if length(@submission.files) > 0, do: "checked", else: ""}>
+                  <span class="check-icon">{if length(@submission.files) > 0, do: "✓", else: ""}</span>
+                  Naskah telah diunggah
+                </li>
+                <li class={if length(@submission.contributors) > 0, do: "checked", else: ""}>
+                  <span class="check-icon">{if length(@submission.contributors) > 0,
+                    do: "✓",
+                    else: ""}</span>
+                  Kontributor telah didaftarkan
+                </li>
+                <li class="checked">
+                  <span class="check-icon">✓</span> Makalah bebas dari plagiarisme
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <%= if @submission.status == :incomplete do %>
+            <div class="ojs-notice-box ojs-notice-warning">
+              <strong>Submission belum lengkap.</strong>
+              <p>
+                Silakan lengkapi semua langkah di atas sebelum menyerahkan ke editor. Anda dapat
+                menyimpan draf dan melanjutkan kapan saja.
+              </p>
+            </div>
+          <% end %>
+
+          <.form
+            for={submission_to_form(@submission)}
+            id="submission-review-form"
+            action={submission_form_action(@submission, @current_tab)}
+            method="post"
+          >
+            <input type="hidden" name="_method" value="put" />
+            <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+            <input type="hidden" name="submission[submit_to_journal]" value="1" />
+
+            <div class="wizard-actions wizard-actions-end">
+              <button
+                type="submit"
+                class="btn-ojs-secondary"
+                name="submission[save_status]"
+                value="draft"
+              >Save for later</button>
+              <button type="submit" class="btn-ojs-primary btn-submit-journal">Submit to Journal</button>
+            </div>
+          </.form>
+        </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var hasId = function (selector) {
+      return document.getElementById((selector + '').replace('#', '')) !== null;
+    };
+
+    // Sample/demo file handlers
+    var btnDemo = document.getElementById('btn-load-demo');
+    var btnPick = document.getElementById('btn-pick-file');
+    var dz = document.getElementById('submission-dropzone');
+
+    var demoFiles = [
+      { name: 'manuscript.docx', genre: 'Manuscript', size: '2.1 MB' },
+      { name: 'figures.zip', genre: 'Figure', size: '4.8 MB' }
+    ];
+
+    function addDemoFile(idx) {
+      if (!hasId('submission-dropzone')) return;
+      var file = demoFiles[idx % demoFiles.length];
+      var panel = document.querySelector('.wizard-panel');
+      if (!panel) return;
+      var section = document.querySelector('.uploaded-files-section');
+      var tbody;
+      if (section) {
+        tbody = document.querySelector('.uploaded-files-table tbody');
+      } else {
+        var html =
+          '<div class="uploaded-files-section">' +
+          '<h3 class="ojs-section-title">Uploaded files (1)</h3>' +
+          '<table class="submissions-table uploaded-files-table">' +
+          '<thead><tr><th>FILE NAME</th><th>GENRE</th><th>SIZE</th><th>DATE UPLOADED</th><th></th></tr></thead>' +
+          '<tbody></tbody></table></div>';
+        var filesForm = document.getElementById('submission-files-form');
+        filesForm.insertAdjacentHTML('beforebegin', html);
+        tbody = document.querySelector('.uploaded-files-table tbody');
+      }
+      var today = new Date().toISOString().slice(0, 10);
+      var existing = tbody.querySelectorAll('tr[data-demo]');
+      if (existing.length >= demoFiles.length) return;
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-demo', '');
+      tr.innerHTML =
+        '<td><div class="file-name-cell">' + file.name + '</div></td>' +
+        '<td>' + file.genre + '</td>' +
+        '<td>' + file.size + '</td>' +
+        '<td>' + today + '</td>' +
+        '<td class="col-actions"><a href="#" class="btn-view">Download</a></td>';
+      tbody.appendChild(tr);
+      var count = document.querySelectorAll('.uploaded-files-table tbody tr').length;
+      var title = document.querySelector('.uploaded-files-section .ojs-section-title');
+      if (title) title.textContent = 'Uploaded files (' + count + ')';
+    }
+
+    if (btnDemo) {
+      btnDemo.addEventListener('click', function (e) {
+        e.preventDefault();
+        addDemoFile(document.querySelectorAll('.uploaded-files-table tbody tr').length);
+      });
+    }
+
+    if (btnPick) {
+      btnPick.addEventListener('click', function (e) {
+        e.preventDefault();
+        addDemoFile(document.querySelectorAll('.uploaded-files-table tbody tr').length);
+      });
+    }
+
+    // Drag & drop visual feedback
+    if (dz) {
+      ['dragenter', 'dragover'].forEach(function (evt) {
+        dz.addEventListener(evt, function (e) {
+          e.preventDefault();
+          dz.classList.add('dragging');
+        });
+      });
+      ['dragleave', 'drop'].forEach(function (evt) {
+        dz.addEventListener(evt, function (e) {
+          e.preventDefault();
+          dz.classList.remove('dragging');
+        });
+      });
+    }
+
+    // Add contributor modal (simple inline editor)
+    var btnAddContributor = document.getElementById('btn-add-contributor');
+    if (btnAddContributor) {
+      btnAddContributor.addEventListener('click', function (e) {
+        e.preventDefault();
+        var panel = document.querySelector('.wizard-panel');
+        if (!panel) return;
+        var list = document.querySelector('.contributors-list');
+        var built = '<div class="contributor-card">' +
+          '<div class="contributor-avatar">?</div>' +
+          '<div class="contributor-info">' +
+          '<div class="contributor-name">Nama Baru</div>' +
+          '<div class="contributor-detail">email@universitas.ac.id</div>' +
+          '<div class="contributor-detail">Universitas</div>' +
+          '</div>' +
+          '<div class="contributor-actions"><a href="#" class="btn-view">Edit</a></div>' +
+          '</div>';
+        if (!list) {
+          list = document.createElement('div');
+          list.className = 'contributors-list';
+          document.getElementById('submission-contributors-form').insertAdjacentHTML('beforebegin',
+            '<div class="contributors-list">' + built + '</div>');
+        } else {
+          list.insertAdjacentHTML('beforeend', built);
+        }
+      });
+    }
+
+    var btnAddEditor = document.getElementById('btn-add-editor');
+    if (btnAddEditor) {
+      btnAddEditor.addEventListener('click', function (e) {
+        e.preventDefault();
+        var name = prompt('Nama editor:');
+        if (!name) return;
+        var list = document.querySelector('.editors-list');
+        var built = '<div class="editor-row">' +
+          '<div class="editor-avatar">' + name.charAt(0) + '</div>' +
+          '<div class="editor-info"><div class="editor-name">' + name + '</div>' +
+          '<div class="editor-role">Editor</div></div>' +
+          '<div class="editor-email">editor@universitas.ac.id</div>' +
+          '<a href="#" class="btn-view">Remove</a>' +
+          '</div>';
+        if (!list) {
+          list = document.createElement('div');
+          list.className = 'editors-list';
+          document.getElementById('submission-editors-form').insertAdjacentHTML('beforebegin',
+            '<div class="editors-list">' + built + '</div>');
+        } else {
+          list.insertAdjacentHTML('beforeend', built);
+        }
+      });
+    }
+  })();
+</script>

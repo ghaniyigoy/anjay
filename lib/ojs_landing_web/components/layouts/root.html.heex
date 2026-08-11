@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={Plug.CSRFProtection.get_csrf_token()} />
     <title>OJS - Open Journal Systems</title>
-    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
+    </script>
   </head>
+
   <body>
     <header class="site-header">
       <div class="header-top">
@@ -15,9 +17,10 @@
           <%= if @current_user do %>
             <div class="user-dropdown">
               <button class="user-dropdown-toggle" onclick="toggleUserDropdown(this)">
-                <span class="username"><%= @current_user.username %></span>
+                <span class="username">{@current_user.username}</span>
                 <span class="arrow">▸</span>
               </button>
+
               <div class="user-dropdown-menu">
                 <%= if @current_user.role == :admin do %>
                   <a href="/admin" class="dropdown-item">Administration</a>
@@ -39,6 +42,7 @@
           <% end %>
         </div>
       </div>
+
       <div class="header-main">
         <div class="logo">
           <h1>OJS</h1>
@@ -51,6 +55,7 @@
       <%= if msg = Phoenix.Flash.get(@flash, :info) do %>
         <div class="flash-message flash-info">{msg}</div>
       <% end %>
+
       <%= if msg = Phoenix.Flash.get(@flash, :error) do %>
         <div class="flash-message flash-error">{msg}</div>
       <% end %>
@@ -60,7 +65,6 @@
     <footer class="site-footer">
       <p>&copy; 2026 Open Journal Systems</p>
     </footer>
-
     <!-- JAVASCRIPT LANGSUNG DI SINI -->
     <script>
       window.toggleUserDropdown = function(button) {

@@ -11,7 +11,10 @@ defmodule OjsLandingWeb.RegistrationController do
 
   def create(conn, %{"journal_path" => journal_path} = params) do
     if params["password"] != params["password_confirm"] do
-      render(conn, :new, error: "Password dan konfirmasi password tidak cocok", journal_path: journal_path)
+      render(conn, :new,
+        error: "Password dan konfirmasi password tidak cocok",
+        journal_path: journal_path
+      )
     else
       case OjsLanding.User.register(params) do
         {:ok, user} ->

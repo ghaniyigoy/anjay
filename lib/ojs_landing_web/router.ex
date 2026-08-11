@@ -40,13 +40,13 @@ defmodule OjsLandingWeb.Router do
     # Reviewer Dashboard Routes
     get "/dashboard/reviewAssignments", ReviewerController, :review_assignments
 
-    # Author Submission Routes
+    # Author Submission Routes (OJS-style)
     get "/dashboard/mySubmissions", AuthorController, :my_submissions
-    get "/submission/new", AuthorController, :new_submission
-    post "/submission/create", AuthorController, :create_submission
-    get "/submission/:id", AuthorController, :edit_submission
-    put "/submission/:id", AuthorController, :update_submission
-    get "/submission/saved", AuthorController, :saved_submission
+    get "/submission/wizard", AuthorController, :new_submission
+    post "/submission/wizard", AuthorController, :create_submission
+    get "/submission/wizard/:id", AuthorController, :edit_submission
+    put "/submission/wizard/:id", AuthorController, :update_submission
+    get "/submission/wizard/:id/saved", AuthorController, :saved_submission
   end
 
   # ============================================

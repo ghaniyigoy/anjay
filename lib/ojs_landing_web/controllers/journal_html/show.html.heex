@@ -1,34 +1,53 @@
 <!-- Journal Header dengan Judul -->
 <div class="journal-page-header">
   <div class="container">
-    <h1 class="journal-page-title"><%= @journal.title %></h1>
-    
+    <h1 class="journal-page-title">{@journal.title}</h1>
     <!-- Navigation Menu -->
     <nav class="journal-nav">
       <ul class="nav-list">
         <li><a href={"/#{@journal_path}/issue/current"} class="nav-link">Current</a></li>
+
         <li><a href={"/#{@journal_path}/issue/archive"} class="nav-link">Archives</a></li>
-        
         <!-- About Dropdown -->
         <li class="dropdown">
           <button class="dropdown-toggle" onclick="toggleDropdown(this)">
             About ▾
           </button>
+
           <ul class="dropdown-menu">
-            <li><a href={"/#{@journal_path}/about"} class="dropdown-item">About the Journal</a></li>
-            <li><a href={"/#{@journal_path}/about/submissions"} class="dropdown-item">Submissions</a></li>
-            <li><a href={"/#{@journal_path}/about/editorialMasthead"} class="dropdown-item">Editorial Masthead</a></li>
-            <li><a href={"/#{@journal_path}/about/privacy"} class="dropdown-item">Privacy Statement</a></li>
+            <li>
+              <a href={"/#{@journal_path}/about"} class="dropdown-item">About the Journal</a>
+            </li>
+
+            <li>
+              <a href={"/#{@journal_path}/about/submissions"} class="dropdown-item">Submissions</a>
+            </li>
+
+            <li>
+              <a href={"/#{@journal_path}/about/editorialMasthead"} class="dropdown-item">Editorial Masthead</a>
+            </li>
+
+            <li>
+              <a href={"/#{@journal_path}/about/privacy"} class="dropdown-item">Privacy Statement</a>
+            </li>
+
             <li><a href={"/#{@journal_path}/about/contact"} class="dropdown-item">Contact</a></li>
           </ul>
         </li>
       </ul>
-      
       <!-- Search -->
       <div class="nav-search">
         <a href="#" class="search-link">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <circle cx="11" cy="11" r="8"></circle>
+
             <path d="m21 21-4.35-4.35"></path>
           </svg>
           Search
@@ -37,61 +56,98 @@
     </nav>
   </div>
 </div>
-
 <!-- Main Content -->
 <div class="journal-content">
   <div class="container">
-    <div class="content-wrapper">
-      <div class="current-issue">
-        <h2 class="section-heading">Current Issue</h2>
-        
-        <div class="articles-list">
-          <%= for article <- @journal.articles || [] do %>
-            <article class="article-card">
-              <div class="article-header">
-                <h3 class="article-title">
-                  <a href={"/#{@journal_path}/article/#{article.id}"}>
-                    <%= article.title %>
-                  </a>
-                </h3>
-              </div>
-              
-              <div class="article-body">
-                <%= if article.abstract do %>
-                  <p class="article-abstract"><%= article.abstract %></p>
-                <% end %>
-                
-                <div class="article-meta">
-                  <%= if article.authors && length(article.authors) > 0 do %>
-                    <div class="article-authors">
-                      <strong>Authors:</strong> <%= Enum.join(article.authors, ", ") %>
-                    </div>
+    <div class="js-grid">
+      <div class="js-main">
+        <div class="current-issue">
+          <h2 class="section-heading">Current Issue</h2>
+
+          <div class="articles-list">
+            <%= for article <- @journal.articles || [] do %>
+              <article class="article-card">
+                <div class="article-header">
+                  <h3 class="article-title">
+                    <a href={"/#{@journal_path}/article/#{article.id}"}>
+                      {article.title}
+                    </a>
+                  </h3>
+                </div>
+
+                <div class="article-body">
+                  <%= if article.abstract do %>
+                    <p class="article-abstract">{article.abstract}</p>
                   <% end %>
-                  
-                  <div class="article-published">
-                    <strong>Published:</strong> <%= article.published_date || "N/A" %>
+
+                  <div class="article-meta">
+                    <%= if article.authors && length(article.authors) > 0 do %>
+                      <div class="article-authors">
+                        <strong>Authors:</strong> {Enum.join(article.authors, ", ")}
+                      </div>
+                    <% end %>
+
+                    <div class="article-published">
+                      <strong>Published:</strong> {article.published_date || "N/A"}
+                    </div>
+
+                    <%= if article.pages do %>
+                      <div class="article-pages">
+                        <strong>Pages:</strong> {article.pages}
+                      </div>
+                    <% end %>
                   </div>
-                  
-                  <%= if article.pages do %>
-                    <div class="article-pages">
-                      <strong>Pages:</strong> <%= article.pages %>
-                    </div>
-                  <% end %>
+
+                  <div class="article-actions">
+                    <a href={"/#{@journal_path}/article/#{article.id}"} class="btn-article">
+                      View Article
+                    </a>
+
+                    <button class="btn-article btn-secondary">
+                      Download PDF
+                    </button>
+                  </div>
                 </div>
-                
-                <div class="article-actions">
-                  <a href={"/#{@journal_path}/article/#{article.id}"} class="btn-article">
-                    View Article
-                  </a>
-                  <button class="btn-article btn-secondary">
-                    Download PDF
-                  </button>
-                </div>
-              </div>
-            </article>
-          <% end %>
+              </article>
+            <% end %>
+          </div>
         </div>
       </div>
+
+      <aside class="js-sidebar">
+        <div class="sidebar-block ojs-submit-block">
+          <h3>Make a Submission</h3>
+          <p class="sidebar-submit-text">
+            Ready to submit? Start your submission to this journal.
+          </p>
+          <a href={"/#{@journal_path}/register"} class="sidebar-submit-btn">Submit Now</a>
+        </div>
+
+        <div class="sidebar-block">
+          <h3>Journal Content</h3>
+          <ul>
+            <li><a href={"/#{@journal_path}/issue/current"}>Current Issue</a></li>
+            <li><a href={"/#{@journal_path}/issue/archive"}>Archives</a></li>
+            <li><a href={"/#{@journal_path}/issues"}>All Issues</a></li>
+          </ul>
+        </div>
+
+        <div class="sidebar-block">
+          <h3>Information</h3>
+          <ul>
+            <li><a href={"/#{@journal_path}/about"}>For Readers</a></li>
+            <li><a href={"/#{@journal_path}/about/submissions"}>For Authors</a></li>
+            <li><a href={"/#{@journal_path}/about/editorialMasthead"}>For Librarians</a></li>
+          </ul>
+        </div>
+
+        <div class="sidebar-block">
+          <h3>About This Journal</h3>
+          <p style="font-size: 0.9rem; color: rgba(0,0,0,0.54); line-height: 1.6; margin: 0;">
+            {String.slice(@journal.description || "", 0, 220)}
+          </p>
+        </div>
+      </aside>
     </div>
   </div>
 </div>
@@ -99,11 +155,10 @@
 <script>
   function toggleDropdown(button) {
     var dropdown = button.parentElement;
-    var menu = dropdown.querySelector('.dropdown-menu');
-    if (menu.style.display === 'block') {
-      menu.style.display = 'none';
+    if (dropdown.classList.contains('open')) {
+      dropdown.classList.remove('open');
     } else {
-      menu.style.display = 'block';
+      dropdown.classList.add('open');
     }
   }
 </script>

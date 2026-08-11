@@ -7,21 +7,29 @@ defmodule OjsLandingWeb.ReviewerController do
     # Filter review assignments berdasarkan view_id
     all_assignments = get_reviewer_assignments(user.username)
 
-    filtered_assignments = case view_id do
-      "reviewer-action-required" ->
-        Enum.filter(all_assignments, fn a -> a.status == :action_required end)
-      "reviewer-assignments-all" ->
-        all_assignments
-      "reviewer-assignments-completed" ->
-        Enum.filter(all_assignments, fn a -> a.status == :completed end)
-      "reviewer-assignments-declined" ->
-        Enum.filter(all_assignments, fn a -> a.status == :declined end)
-      "reviewer-assignments-published" ->
-        Enum.filter(all_assignments, fn a -> a.status == :published end)
-      "reviewer-assignments-archived" ->
-        Enum.filter(all_assignments, fn a -> a.status == :archived end)
-      _ -> all_assignments
-    end
+    filtered_assignments =
+      case view_id do
+        "reviewer-action-required" ->
+          Enum.filter(all_assignments, fn a -> a.status == :action_required end)
+
+        "reviewer-assignments-all" ->
+          all_assignments
+
+        "reviewer-assignments-completed" ->
+          Enum.filter(all_assignments, fn a -> a.status == :completed end)
+
+        "reviewer-assignments-declined" ->
+          Enum.filter(all_assignments, fn a -> a.status == :declined end)
+
+        "reviewer-assignments-published" ->
+          Enum.filter(all_assignments, fn a -> a.status == :published end)
+
+        "reviewer-assignments-archived" ->
+          Enum.filter(all_assignments, fn a -> a.status == :archived end)
+
+        _ ->
+          all_assignments
+      end
 
     conn
     |> put_root_layout(false)
@@ -30,7 +38,8 @@ defmodule OjsLandingWeb.ReviewerController do
       assignments: filtered_assignments,
       all_assignments: all_assignments,
       current_view: view_id || "reviewer-action-required",
-      user: user)
+      user: user
+    )
   end
 
   def review_assignments(conn, _params) do

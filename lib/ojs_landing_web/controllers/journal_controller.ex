@@ -15,6 +15,7 @@ defmodule OjsLandingWeb.JournalController do
 
   def show(conn, %{"journal_path" => journal_path}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
@@ -28,10 +29,15 @@ defmodule OjsLandingWeb.JournalController do
 
   def current_issue(conn, %{"journal_path" => journal_path}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
-      |> render(:show, journal: journal, journal_path: journal_path, page_title: "Current Issue - #{journal.title}")
+      |> render(:show,
+        journal: journal,
+        journal_path: journal_path,
+        page_title: "Current Issue - #{journal.title}"
+      )
     else
       conn
       |> put_flash(:error, "Journal not found")
@@ -41,10 +47,15 @@ defmodule OjsLandingWeb.JournalController do
 
   def archives(conn, %{"journal_path" => journal_path}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
-      |> render(:archives, journal: journal, journal_path: journal_path, page_title: "Archives - #{journal.title}")
+      |> render(:archives,
+        journal: journal,
+        journal_path: journal_path,
+        page_title: "Archives - #{journal.title}"
+      )
     else
       conn
       |> put_flash(:error, "Journal not found")
@@ -54,10 +65,15 @@ defmodule OjsLandingWeb.JournalController do
 
   def about(conn, %{"journal_path" => journal_path}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
-      |> render(:about, journal: journal, journal_path: journal_path, page_title: "About - #{journal.title}")
+      |> render(:about,
+        journal: journal,
+        journal_path: journal_path,
+        page_title: "About - #{journal.title}"
+      )
     else
       conn
       |> put_flash(:error, "Journal not found")
@@ -67,10 +83,15 @@ defmodule OjsLandingWeb.JournalController do
 
   def submissions(conn, %{"journal_path" => journal_path}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
-      |> render(:submissions, journal: journal, journal_path: journal_path, page_title: "Submissions - #{journal.title}")
+      |> render(:submissions,
+        journal: journal,
+        journal_path: journal_path,
+        page_title: "Submissions - #{journal.title}"
+      )
     else
       conn
       |> put_flash(:error, "Journal not found")
@@ -80,10 +101,15 @@ defmodule OjsLandingWeb.JournalController do
 
   def editorial_masthead(conn, %{"journal_path" => journal_path}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
-      |> render(:editorial_masthead, journal: journal, journal_path: journal_path, page_title: "Editorial Masthead - #{journal.title}")
+      |> render(:editorial_masthead,
+        journal: journal,
+        journal_path: journal_path,
+        page_title: "Editorial Masthead - #{journal.title}"
+      )
     else
       conn
       |> put_flash(:error, "Journal not found")
@@ -93,10 +119,15 @@ defmodule OjsLandingWeb.JournalController do
 
   def privacy(conn, %{"journal_path" => journal_path}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
-      |> render(:privacy, journal: journal, journal_path: journal_path, page_title: "Privacy Statement - #{journal.title}")
+      |> render(:privacy,
+        journal: journal,
+        journal_path: journal_path,
+        page_title: "Privacy Statement - #{journal.title}"
+      )
     else
       conn
       |> put_flash(:error, "Journal not found")
@@ -106,10 +137,15 @@ defmodule OjsLandingWeb.JournalController do
 
   def contact(conn, %{"journal_path" => journal_path}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
-      |> render(:contact, journal: journal, journal_path: journal_path, page_title: "Contact - #{journal.title}")
+      |> render(:contact,
+        journal: journal,
+        journal_path: journal_path,
+        page_title: "Contact - #{journal.title}"
+      )
     else
       conn
       |> put_flash(:error, "Journal not found")
@@ -119,10 +155,15 @@ defmodule OjsLandingWeb.JournalController do
 
   def issues(conn, %{"journal_path" => journal_path}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
-      |> render(:issues, journal: journal, journal_path: journal_path, page_title: "Issues - #{journal.title}")
+      |> render(:issues,
+        journal: journal,
+        journal_path: journal_path,
+        page_title: "Issues - #{journal.title}"
+      )
     else
       conn
       |> put_flash(:error, "Journal not found")
@@ -132,10 +173,16 @@ defmodule OjsLandingWeb.JournalController do
 
   def issue_view(conn, %{"journal_path" => journal_path, "issue_id" => issue_id}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
-      |> render(:issue_view, journal: journal, issue_id: issue_id, journal_path: journal_path, page_title: "Issue #{issue_id}")
+      |> render(:issue_view,
+        journal: journal,
+        issue_id: issue_id,
+        journal_path: journal_path,
+        page_title: "Issue #{issue_id}"
+      )
     else
       conn
       |> put_flash(:error, "Journal not found")
@@ -145,10 +192,15 @@ defmodule OjsLandingWeb.JournalController do
 
   def article_view(conn, %{"journal_path" => journal_path, "article_id" => article_id}) do
     journal = find_journal_by_path(journal_path)
+
     if journal do
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
-      |> render(:article_view, journal: journal, article_id: article_id, journal_path: journal_path)
+      |> render(:article_view,
+        journal: journal,
+        article_id: article_id,
+        journal_path: journal_path
+      )
     else
       conn
       |> put_flash(:error, "Journal not found")
@@ -158,6 +210,7 @@ defmodule OjsLandingWeb.JournalController do
 
   defp find_journal_by_path(path) do
     journals = Journal.all()
+
     Enum.find(journals, fn journal ->
       journal_path = journal.path || String.replace(String.downcase(journal.title), " ", "_")
       journal_path == path
