@@ -84,7 +84,8 @@ defmodule OjsLandingWeb.AuthorHTML do
     })
   end
 
-  def submission_form_action(submission, tab), do: "/submission/wizard/#{submission.id}?tab=#{tab}"
+  def submission_form_action(submission, tab),
+    do: "/submission/wizard/#{submission.id}?tab=#{tab}"
 
   def file_count(submission), do: length(submission.files || [])
   def contributors_count(submission), do: length(submission.contributors || [])

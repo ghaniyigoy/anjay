@@ -6576,6 +6576,57 @@ a:focus {
   text-decoration: underline;
 }
 
+/* article detail page (OJS style) */
+.article-detail {
+  padding: 0 0 10px;
+}
+.article-detail-title {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 1.714rem;   /* @font-header */
+  font-weight: 700;
+  color: var(--ojs-text);
+  line-height: 1.25;
+  margin: 0 0 8px;
+}
+.article-detail-authors {
+  font-size: 1rem;
+  color: var(--ojs-text);
+  margin: 0 0 24px;
+}
+.article-detail-section {
+  margin-bottom: 22px;
+}
+.article-detail-label {
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 0.93rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ojs-text);
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 6px;
+  margin: 0 0 12px;
+}
+.article-detail-abstract {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ojs-text);
+  margin: 0;
+}
+.article-detail-meta {
+  font-size: 0.95rem;
+  color: var(--ojs-text);
+  margin: 0 0 24px;
+}
+.article-detail-meta-item {
+  margin-bottom: 6px;
+}
+.article-detail-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 /* -------------------------------------------------- */
 /*  Root / site pages (journal list, login, register)  */
 /*  Plain OJS page: no bordered box, clean rows        */
@@ -7126,5 +7177,505 @@ a:focus {
 
   .ojs-form-actions .btn-ojs-primary {
     width: 100%;
+  }
+}
+
+/* =================================================== */
+/*  Journal Submission Workflow (/submission)          */
+/* =================================================== */
+
+.ojs-submission-layout {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+/* --- Submission picker (left) --- */
+.ojs-submission-picker {
+  flex: 0 0 280px;
+  width: 280px;
+  position: sticky;
+  top: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fafbfc;
+}
+
+.ojs-submission-picker h3 {
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ojs-text, #333);
+  margin: 0;
+  padding: 14px 18px;
+  background: #f0f2f4;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ojs-submission-picker ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.ojs-submission-picker li {
+  border-bottom: 1px solid #eee;
+}
+
+.ojs-submission-picker li:last-child {
+  border-bottom: none;
+}
+
+.ojs-submission-picker li.active {
+  background: #e7f1f8;
+  border-left: 3px solid var(--ojs-primary);
+}
+
+.ojs-submission-picker a {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 18px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ojs-submission-picker a:hover {
+  background: #f0f4f8;
+}
+
+.ojs-sub-pick-id {
+  flex: 0 0 auto;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--ojs-bg-base);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ojs-sub-pick-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ojs-sub-pick-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.82);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ojs-sub-pick-status {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* --- Workflow main --- */
+.ojs-submission-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ojs-submission-header {
+  padding: 4px 2px 18px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ojs-submission-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ojs-submission-heading h1 {
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+.ojs-submission-id {
+  color: var(--ojs-primary);
+}
+
+.ojs-submission-paper-title {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.75);
+  margin: 10px 0 8px;
+}
+
+.ojs-submission-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+/* --- Tabs --- */
+.ojs-submission-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 3px solid #dde3e8;
+  margin-top: 18px;
+}
+
+.ojs-submission-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.ojs-submission-tabs a:hover {
+  color: var(--ojs-primary);
+  background: #f4f7fa;
+}
+
+.ojs-submission-tabs a.active {
+  color: var(--ojs-primary);
+  border-bottom-color: var(--ojs-primary);
+}
+
+.ojs-tab-count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #e0e7ec;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ojs-submission-tabs a.active .ojs-tab-count {
+  background: var(--ojs-primary);
+  color: #fff;
+}
+
+/* --- Panels --- */
+.ojs-submission-tab-panel {
+  display: none;
+}
+
+.ojs-submission-tab-panel.active {
+  display: block;
+}
+
+.ojs-workflow-panel {
+  padding: 24px 2px 4px;
+}
+
+.ojs-workflow-panel-heading h2 {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.82);
+  margin: 0 0 4px;
+}
+
+.ojs-workflow-panel-heading p {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.55);
+  margin: 0 0 18px;
+}
+
+.ojs-workflow-table {
+  margin-top: 6px;
+}
+
+.ojs-workflow-table th {
+  background: #f0f2f4;
+}
+
+.ojs-file-name-cell {
+  font-weight: 600;
+  color: #333;
+}
+
+/* --- Details --- */
+.ojs-details-list {
+  margin: 0;
+  border-top: 1px solid #eee;
+}
+
+.ojs-detail-row {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 16px;
+  padding: 12px 4px;
+  border-bottom: 1px solid #eee;
+}
+
+.ojs-detail-row dt {
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: rgba(0, 0, 0, 0.55);
+  padding-top: 2px;
+}
+
+.ojs-detail-row dd {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.ojs-detail-abstract dd {
+  white-space: pre-line;
+}
+
+/* --- Contributors --- */
+.ojs-contributors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ojs-contributor-card {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid #e3e7ea;
+  border-radius: 6px;
+  background: #fff;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.ojs-contributor-card:hover {
+  border-color: #c9d3da;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.ojs-contributor-avatar,
+.ojs-editor-avatar {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--ojs-bg-base);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ojs-contributor-info {
+  min-width: 0;
+}
+
+.ojs-contributor-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.87);
+  margin-bottom: 4px;
+}
+
+.ojs-contributor-detail {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.58);
+  line-height: 1.55;
+}
+
+.ojs-chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 9px;
+  border-radius: 10px;
+  background: #e7f1f8;
+  color: var(--ojs-primary);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+}
+
+/* --- Editors --- */
+.ojs-editors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ojs-editor-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid #e3e7ea;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.ojs-editor-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ojs-editor-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.ojs-editor-role {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ojs-editor-email {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* --- Review --- */
+.ojs-review-overview {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.ojs-review-metric {
+  flex: 1 1 160px;
+  padding: 14px 16px;
+  border: 1px solid #e3e7ea;
+  border-radius: 6px;
+  background: #fafbfc;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ojs-review-metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ojs-review-metric-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.ojs-review-summary {
+  padding: 16px 18px;
+  border-left: 4px solid var(--ojs-primary);
+  background: #f4f8fb;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 22px;
+}
+
+.ojs-review-summary h3,
+.ojs-review-assignments h3 {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: rgba(0, 0, 0, 0.55);
+  margin: 0 0 8px;
+}
+
+.ojs-review-summary p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.8);
+  margin: 0;
+}
+
+.ojs-review-assignments {
+  margin-top: 6px;
+}
+
+/* --- Empty state --- */
+.ojs-empty-state {
+  padding: 18px;
+  border: 1px dashed #cfd8de;
+  border-radius: 6px;
+  background: #fafbfc;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* --- Responsive --- */
+@media (max-width: 920px) {
+  .ojs-submission-layout {
+    flex-direction: column;
+  }
+
+  .ojs-submission-picker {
+    position: static;
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .ojs-submission-picker ul {
+    max-height: 220px;
+  }
+
+  .ojs-detail-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ojs-submission-tabs {
+    flex-wrap: wrap;
+  }
+
+  .ojs-submission-tabs a {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .ojs-editor-row {
+    flex-wrap: wrap;
+  }
+
+  .ojs-editor-email {
+    flex-basis: 100%;
   }
 }

@@ -20,13 +20,18 @@ defmodule OjsLandingWeb.AuthorController do
   @default_view "active"
 
   def my_submissions(conn, %{"currentViewId" => view_id} = _params) do
-    user = conn.assigns.current_user
-    all_submissions = Submission.get_by_author(user.username)
-    view = normalize_view_id(view_id)
+    case conn.assigns.current_user do
+      nil ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk melihat submission Anda.")
 
-    filtered_submissions = Enum.filter(all_submissions, &(&1.status == view.status))
+      user ->
+        all_submissions = Submission.get_by_author(user.username)
+        view = normalize_view_id(view_id)
 
-    render_dashboard(conn, filtered_submissions, all_submissions, view.id, user)
+        filtered_submissions = Enum.filter(all_submissions, &(&1.status == view.status))
+
+        render_dashboard(conn, filtered_submissions, all_submissions, view.id, user)
+    end
   end
 
   def my_submissions(conn, _params) do
@@ -34,30 +39,40 @@ defmodule OjsLandingWeb.AuthorController do
   end
 
   def new_submission(conn, _params) do
-    user = conn.assigns.current_user
-    all_submissions = Submission.get_by_author(user.username)
+    case conn.assigns.current_user do
+      nil ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk membuat submission.")
 
-    conn
-    |> put_root_layout(false)
-    |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
-    |> render(:new_submission,
-      user: user,
-      all_submissions: all_submissions,
-      views: @views,
-      current_view: @default_view
-    )
+      user ->
+        all_submissions = Submission.get_by_author(user.username)
+
+        conn
+        |> put_root_layout(false)
+        |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+        |> render(:new_submission,
+          user: user,
+          all_submissions: all_submissions,
+          views: @views,
+          current_view: @default_view
+        )
+    end
   end
 
   def create_submission(conn, _params) do
-    user = conn.assigns.current_user
-    submission = Submission.create(user.username)
+    case conn.assigns.current_user do
+      nil ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk membuat submission.")
 
-    conn
-    |> put_flash(
-      :info,
-      "Submission #{submission.id} telah dibuat. Lengkapi detail submission untuk melanjutkan."
-    )
-    |> redirect(to: submission_path(submission.id, "details"))
+      user ->
+        submission = Submission.create(user.username)
+
+        conn
+        |> put_flash(
+          :info,
+          "Submission #{submission.id} telah dibuat. Lengkapi detail submission untuk melanjutkan."
+        )
+        |> redirect(to: submission_path(submission.id, "details"))
+    end
   end
 
   def edit_submission(conn, %{"id" => id} = params) do
@@ -110,6 +125,12 @@ defmodule OjsLandingWeb.AuthorController do
     conn
     |> put_flash(:info, "Submission #{id} disimpan untuk nanti.")
     |> redirect(to: "/dashboard/mySubmissions?currentViewId=incomplete-submissions")
+  end
+
+  defp redirect_to_login(conn, message) do
+    conn
+    |> put_flash(:error, message)
+    |> redirect(to: "/login")
   end
 
   defp render_dashboard(conn, submissions, all_submissions, view_id, user) do

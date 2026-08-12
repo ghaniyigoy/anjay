@@ -42,6 +42,8 @@ defmodule OjsLandingWeb.Router do
 
     # Author Submission Routes (OJS-style)
     get "/dashboard/mySubmissions", AuthorController, :my_submissions
+    get "/submission/new", AuthorController, :new_submission
+    post "/submission/create", AuthorController, :create_submission
     get "/submission/wizard", AuthorController, :new_submission
     post "/submission/wizard", AuthorController, :create_submission
     get "/submission/wizard/:id", AuthorController, :edit_submission
@@ -81,6 +83,9 @@ defmodule OjsLandingWeb.Router do
     # Halaman detail jurnal (Current Issue)
     get "/", JournalController, :show
     get "/issue/current", JournalController, :current_issue
+
+    # Submission workflow (OJS-style, tab-driven: #details #files #contributors #editors #review)
+    get "/submission", JournalController, :submission_workflow
 
     # Archives
     get "/issue/archive", JournalController, :archives

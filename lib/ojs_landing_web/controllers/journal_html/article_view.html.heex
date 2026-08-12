@@ -1,0 +1,146 @@
+<!-- Journal Header -->
+<div class="journal-page-header">
+  <div class="container">
+    <h1 class="journal-page-title">{@journal.title}</h1>
+
+    <nav class="journal-nav">
+      <ul class="nav-list">
+        <li><a href={"/#{@journal_path}/issue/current"} class="nav-link">Current</a></li>
+
+        <li><a href={"/#{@journal_path}/issue/archive"} class="nav-link">Archives</a></li>
+
+        <li class="dropdown">
+          <button class="dropdown-toggle" onclick="toggleDropdown(this)">About ▾</button>
+          <ul class="dropdown-menu">
+            <li>
+              <a href={"/#{@journal_path}/about"} class="dropdown-item">About the Journal</a>
+            </li>
+
+            <li>
+              <a href={"/#{@journal_path}/about/submissions"} class="dropdown-item">Submissions</a>
+            </li>
+
+            <li>
+              <a href={"/#{@journal_path}/about/editorialMasthead"} class="dropdown-item">Editorial Masthead</a>
+            </li>
+
+            <li>
+              <a href={"/#{@journal_path}/about/privacy"} class="dropdown-item">Privacy Statement</a>
+            </li>
+
+            <li><a href={"/#{@journal_path}/about/contact"} class="dropdown-item">Contact</a></li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="nav-search">
+        <a href="#" class="search-link">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          Search
+        </a>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="journal-content">
+  <div class="container">
+    <div class="js-grid">
+      <div class="js-main">
+        <%= if @article do %>
+          <div class="article-detail">
+            <h2 class="article-detail-title">{@article.title}</h2>
+
+            <div class="article-detail-authors">
+              {Enum.join(@article.authors || [], ", ")}
+            </div>
+
+            <%= if @article.abstract do %>
+              <div class="article-detail-section">
+                <h3 class="article-detail-label">Abstract</h3>
+                <p class="article-detail-abstract">{@article.abstract}</p>
+              </div>
+            <% end %>
+
+            <div class="article-detail-meta">
+              <%= if @article.pages do %>
+                <div class="article-detail-meta-item">
+                  <strong>Pages:</strong> {@article.pages}
+                </div>
+              <% end %>
+
+              <div class="article-detail-meta-item">
+                <strong>Published:</strong> {@article.published_date || "N/A"}
+              </div>
+            </div>
+
+            <div class="article-detail-actions">
+              <button class="btn-article">Download PDF</button>
+              <a href={"/#{@journal_path}/issue/current"} class="btn-article btn-secondary">
+                Back to Current Issue
+              </a>
+            </div>
+          </div>
+        <% else %>
+          <div class="article-detail">
+            <h2 class="article-detail-title">Article not found</h2>
+            <p style="color: #666; font-size: 14px;">
+              The requested article could not be found in this journal.
+            </p>
+          </div>
+        <% end %>
+      </div>
+
+      <aside class="js-sidebar">
+        <div class="sidebar-block ojs-submit-block">
+          <h3>Make a Submission</h3>
+          <p class="sidebar-submit-text">
+            Ready to submit? Start your submission to this journal.
+          </p>
+          <a href={"/#{@journal_path}/register"} class="sidebar-submit-btn">Submit Now</a>
+        </div>
+
+        <div class="sidebar-block">
+          <h3>Journal Content</h3>
+          <ul>
+            <li><a href={"/#{@journal_path}/issue/current"}>Current Issue</a></li>
+            <li><a href={"/#{@journal_path}/issue/archive"}>Archives</a></li>
+            <li><a href={"/#{@journal_path}/issues"}>All Issues</a></li>
+          </ul>
+        </div>
+
+        <div class="sidebar-block">
+          <h3>Information</h3>
+          <ul>
+            <li><a href={"/#{@journal_path}/about"}>For Readers</a></li>
+            <li><a href={"/#{@journal_path}/about/submissions"}>For Authors</a></li>
+            <li><a href={"/#{@journal_path}/about/editorialMasthead"}>For Librarians</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleDropdown(button) {
+    var dropdown = button.parentElement;
+    if (dropdown.classList.contains('open')) {
+      dropdown.classList.remove('open');
+    } else {
+      dropdown.classList.add('open');
+    }
+  }
+</script>

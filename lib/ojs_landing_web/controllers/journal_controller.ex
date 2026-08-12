@@ -1,6 +1,7 @@
 defmodule OjsLandingWeb.JournalController do
   use OjsLandingWeb, :controller
   alias OjsLanding.Journal
+  alias OjsLanding.Submission
 
   def index(conn, _params) do
     journals = Journal.all()
@@ -194,12 +195,16 @@ defmodule OjsLandingWeb.JournalController do
     journal = find_journal_by_path(journal_path)
 
     if journal do
+      article = resolve_article(journal, article_id)
+
       conn
       |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
       |> render(:article_view,
         journal: journal,
+        article: article,
         article_id: article_id,
-        journal_path: journal_path
+        journal_path: journal_path,
+        page_title: article_cast(article, :title) || "Article - #{journal.title}"
       )
     else
       conn
@@ -208,6 +213,28 @@ defmodule OjsLandingWeb.JournalController do
     end
   end
 
+  defp resolve_article(%{articles: articles}, article_id) when is_binary(article_id) do
+    case String.downcase(article_id) do
+      "view" ->
+        resolve_article(%{articles: articles}, nil)
+
+      _ ->
+        case Integer.parse(article_id) do
+          {id, ""} -> resolve_article(%{articles: articles}, id)
+          _ -> List.first(articles)
+        end
+    end
+  end
+
+  defp resolve_article(%{articles: articles}, article_id) when is_integer(article_id) do
+    Enum.find(articles, &(&1.id == article_id)) || List.first(articles)
+  end
+
+  defp resolve_article(%{articles: articles}, nil), do: List.first(articles)
+
+  defp article_cast(nil, _field), do: nil
+  defp article_cast(article, field), do: Map.get(article, field)
+
   defp find_journal_by_path(path) do
     journals = Journal.all()
 
@@ -215,5 +242,35 @@ defmodule OjsLandingWeb.JournalController do
       journal_path = journal.path || String.replace(String.downcase(journal.title), " ", "_")
       journal_path == path
     end)
+  end
+
+  def submission_workflow(conn, %{"journal_path" => journal_path} = params) do
+    journal = find_journal_by_path(journal_path)
+
+    if journal do
+      submissions = Submission.all()
+      submission = resolve_submission(params["id"], submissions)
+
+      conn
+      |> put_root_layout(html: {OjsLandingWeb.Layouts, :journal})
+      |> render(:submission,
+        journal: journal,
+        journal_path: journal_path,
+        submissions: submissions,
+        submission: submission,
+        page_title: "Submission #{submission.id} - #{journal.title}"
+      )
+    else
+      conn
+      |> put_flash(:error, "Journal not found")
+      |> redirect(to: "/")
+    end
+  end
+
+  defp resolve_submission(id, submissions) do
+    case id && Submission.get(id) do
+      nil -> Enum.find(submissions, &(&1.id == 8)) || List.first(submissions)
+      submission -> submission
+    end
   end
 end

@@ -24,7 +24,8 @@ Username `alief` adalah admin, sisanya seeded user:
 
 * **Autentikasi** — Login, register, logout, dan profil pengguna
 * **Dashboard** — Arahkan pengguna berdasarkan role (admin, author, editor, reviewer)
-* **Jurnal** — Halaman jurnal, current issue, arsip, daftar isu, dan halaman about (submissions, editorial masthead, privacy, contact)
+* **Jurnal** — Halaman jurnal, current issue, arsip, daftar isu, halaman about (submissions, editorial masthead, privacy, contact), dan halaman detail artikel
+* **Journal Submission Workflow** — Halaman submission per-jurnal dengan tab Details, Files, Contributors, Editors, dan Review (`/:journal_path/submission?id=X#tab`)
 * **Submissions** — Wizard & manajemen submission untuk author
 * **Editorial** — Workflow editorial untuk editor
 * **Review** — Pengelolaan penugasan review untuk reviewer
@@ -33,6 +34,43 @@ Username `alief` adalah admin, sisanya seeded user:
 ## Routing
 
 Global Auth Routes tersedia di root (`/login`, `/register`, `/logout`) maupun per-journal (`/:journal_path/login`, dst).
+
+### Journal Submission Workflow
+
+| URL | Keterangan |
+| --- | --- |
+| `/:journal_path/submission` | Halaman workflow submission (default ke submission pertama) |
+| `/:journal_path/submission?id=8` | Tampilkan submission dengan ID 8 |
+| `/:journal_path/submission?id=8#details` | Tab Details (metadata makalah) |
+| `/:journal_path/submission?id=8#files` | Tab Files (naskah & berkas pendukung) |
+| `/:journal_path/submission?id=8#contributors` | Tab Contributors (penulis) |
+| `/:journal_path/submission?id=8#editors` | Tab Editors (editor penanganan) |
+| `/:journal_path/submission?id=8#review` | Tab Review (round, keputusan editor, assignment reviewer) |
+
+Contoh: `http://localhost:4000/informatika/submission?id=8#review`
+
+### Article View
+
+| URL | Keterangan |
+| --- | --- |
+| `/:journal_path/article/:article_id` | Halaman detail artikel berdasarkan ID |
+| `/:journal_path/article/view` | Alias yang menampilkan artikel pertama dari jurnal |
+
+Contoh: `http://localhost:4000/JPD/article/1` atau `http://localhost:4000/JPD/article/view`
+
+### Author Submission (membutuhkan login)
+
+Membuat & mengelola submission membutuhkan login sebagai **author**; bila belum login akan dialihkan ke `/login`.
+
+| URL | Method | Keterangan |
+| --- | --- | --- |
+| `/dashboard/mySubmissions` | GET | Daftar submission author (dengan filter status) |
+| `/submission/new` | GET | Mulai submission baru (preliminary information) |
+| `/submission/create` | POST | Buat submission baru, lalu redirect ke wizard |
+| `/submission/wizard` | GET/POST | Alias dari `/submission/new` & `/submission/create` |
+| `/submission/wizard/:id?tab=details` | GET/PUT | Wizard detail submission (tab: details, files, contributors, editors, review) |
+
+Contoh: `http://localhost:4000/submission/new`
 
 ## Struktur
 
