@@ -79,14 +79,20 @@ defmodule OjsLandingWeb.AuthorController do
     user = conn.assigns.current_user
     tab = current_tab(params)
 
-    case Submission.get(id) do
-      nil ->
+    case {user, Submission.get(id)} do
+      {nil, _} ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk melihat submission.")
+
+      {_, nil} ->
         conn
         |> put_flash(:error, "Submission tidak ditemukan.")
         |> redirect(to: "/dashboard/mySubmissions")
 
-      submission ->
-        render(conn, :edit_submission,
+      {user, submission} ->
+        conn
+        |> put_root_layout(false)
+        |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+        |> render(:edit_submission,
           submission: submission,
           current_tab: tab,
           tabs: @tabs,
@@ -100,8 +106,11 @@ defmodule OjsLandingWeb.AuthorController do
   def update_submission(conn, %{"id" => id, "submission" => submission_params} = params) do
     tab = current_tab(params)
 
-    case Submission.update(id, submission_params) do
-      {:ok, _submission} ->
+    case {conn.assigns.current_user, Submission.update(id, submission_params)} do
+      {nil, _} ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk memperbarui submission.")
+
+      {_, {:ok, _submission}} ->
         message =
           if submission_params["submit_to_journal"] in ["1", "true"] do
             Submission.set_status(id, :active)
@@ -114,7 +123,7 @@ defmodule OjsLandingWeb.AuthorController do
         |> put_flash(:info, message)
         |> redirect(to: submission_path(id, tab))
 
-      {:error, :not_found} ->
+      {_, {:error, :not_found}} ->
         conn
         |> put_flash(:error, "Submission tidak ditemukan.")
         |> redirect(to: "/dashboard/mySubmissions")

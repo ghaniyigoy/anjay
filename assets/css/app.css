@@ -7161,6 +7161,7 @@ a:focus {
   display: flex;
   gap: 30px;
   align-items: flex-start;
+  width: 100%;
 }
 
 /* --- Submission picker (left) --- */
@@ -7169,10 +7170,9 @@ a:focus {
   width: 280px;
   position: sticky;
   top: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #fafbfc;
+  border: none;
+  border-right: 1px solid var(--ojs-border);
+  background: transparent;
 }
 
 .ojs-submission-picker h3 {
@@ -7182,10 +7182,10 @@ a:focus {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--ojs-text, #333);
-  margin: 0;
-  padding: 14px 18px;
-  background: #f0f2f4;
-  border-bottom: 1px solid #e0e0e0;
+  margin: 0 0 10px;
+  padding: 0;
+  background: transparent;
+  border-bottom: none;
 }
 
 .ojs-submission-picker ul {
@@ -7218,16 +7218,12 @@ a:focus {
   color: inherit;
 }
 
-.ojs-submission-picker a:hover {
-  background: #f0f4f8;
-}
-
 .ojs-sub-pick-id {
   flex: 0 0 auto;
   min-width: 26px;
   height: 26px;
   padding: 0 6px;
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--ojs-bg-base);
   color: #fff;
   font-size: 12px;
@@ -7343,7 +7339,7 @@ a:focus {
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 10px;
+  border-radius: 0;
   background: #e0e7ec;
   color: rgba(0, 0, 0, 0.6);
   font-size: 11px;
@@ -7445,14 +7441,12 @@ a:focus {
   align-items: flex-start;
   padding: 16px;
   border: 1px solid #e3e7ea;
-  border-radius: 6px;
+  border-radius: 0;
   background: #fff;
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .ojs-contributor-card:hover {
   border-color: #c9d3da;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .ojs-contributor-avatar,
@@ -7460,7 +7454,7 @@ a:focus {
   flex: 0 0 auto;
   width: 42px;
   height: 42px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--ojs-bg-base);
   color: #fff;
   font-size: 18px;
@@ -7491,7 +7485,7 @@ a:focus {
   display: inline-block;
   margin-left: 8px;
   padding: 2px 9px;
-  border-radius: 10px;
+  border-radius: 0;
   background: #e7f1f8;
   color: var(--ojs-primary);
   font-size: 11px;
@@ -7512,9 +7506,9 @@ a:focus {
   display: flex;
   gap: 14px;
   align-items: center;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border: 1px solid #e3e7ea;
-  border-radius: 6px;
+  border-radius: 0;
   background: #fff;
 }
 
@@ -7549,9 +7543,9 @@ a:focus {
 
 .ojs-review-metric {
   flex: 1 1 160px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border: 1px solid #e3e7ea;
-  border-radius: 6px;
+  border-radius: 0;
   background: #fafbfc;
   display: flex;
   flex-direction: column;
@@ -7576,7 +7570,7 @@ a:focus {
   padding: 16px 18px;
   border-left: 4px solid var(--ojs-primary);
   background: #f4f8fb;
-  border-radius: 0 6px 6px 0;
+  border-radius: 0;
   margin-bottom: 22px;
 }
 
@@ -7604,8 +7598,8 @@ a:focus {
 /* --- Empty state --- */
 .ojs-empty-state {
   padding: 18px;
-  border: 1px dashed #cfd8de;
-  border-radius: 6px;
+  border: 1px solid #cfd8de;
+  border-radius: 0;
   background: #fafbfc;
   text-align: center;
   font-size: 14px;
@@ -7650,5 +7644,280 @@ a:focus {
 
   .ojs-editor-email {
     flex-basis: 100%;
+  }
+}
+
+/* ============================================
+   Author: Edit Submission Workflow (OJS PKP)
+   Tab-driven wizard: /submission/wizard/:id?tab=
+   ============================================ */
+
+/* --- Status badges (OJS workflow) --- */
+.ojs-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 0;
+  border: 1px solid currentColor;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.6);
+  vertical-align: middle;
+}
+.ojs-status-badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.ojs-status-active,
+.ojs-status-published {
+  background: #e3f0e8;
+  color: #1e7a45;
+}
+.ojs-status-revisions-requested {
+  background: #fdf3e1;
+  color: #a4621e;
+}
+.ojs-status-revisions-submitted {
+  background: #e4effb;
+  color: #1f5fa6;
+}
+.ojs-status-incomplete {
+  background: #f0f0f0;
+  color: #666;
+}
+.ojs-status-scheduled {
+  background: #eef0fb;
+  color: #4449b0;
+}
+.ojs-status-declined {
+  background: #fdebea;
+  color: #b03a2e;
+}
+
+/* --- Form card (details) --- */
+.ojs-form-card {
+  background: #fff;
+  border: 1px solid var(--ojs-border);
+  border-radius: 0;
+  padding: 22px 24px;
+}
+
+.ojs-inline-form {
+  margin-top: 20px;
+}
+
+/* --- Field grid --- */
+.ojs-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+}
+.ojs-field-full {
+  grid-column: 1 / -1;
+}
+.ojs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ojs-field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ojs-text);
+}
+.ojs-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #aaa;
+  border-radius: 0;
+  background: #fff;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ojs-text);
+  box-sizing: border-box;
+}
+.ojs-input:focus,
+.ojs-select:focus,
+.ojs-textarea:focus {
+  outline: 2px solid var(--ojs-primary);
+  outline-offset: -1px;
+  border-color: var(--ojs-primary);
+}
+.ojs-field-hint {
+  font-size: 12px;
+  color: var(--ojs-text-light);
+}
+
+/* --- Dropzone (files) --- */
+.ojs-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 34px 20px;
+  border: 1px dashed #b9c4cc;
+  border-radius: 0;
+  background: #fafbfc;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.55);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.ojs-dropzone.dragging {
+  border-color: var(--ojs-primary);
+  background: #f0f7fc;
+}
+.ojs-dropzone-icon {
+  color: var(--ojs-bg-base);
+}
+.ojs-dropzone-text strong {
+  color: var(--ojs-primary);
+}
+.ojs-dropzone-hint {
+  font-size: 12px;
+}
+.ojs-dropzone-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* --- Uploaded files section --- */
+.uploaded-files-section {
+  margin-top: 22px;
+}
+.ojs-section-title {
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ojs-text);
+  margin: 0 0 10px;
+}
+
+/* --- Contributors / editors --- */
+.ojs-contributor-card .ojs-contributor-info {
+  flex: 1;
+  min-width: 0;
+}
+.ojs-add-editor-box {
+  margin-top: 20px;
+}
+.ojs-editor-search-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.ojs-editor-search-row .ojs-input {
+  flex: 1;
+}
+
+/* --- Review --- */
+.ojs-review-table {
+  margin-top: 4px;
+}
+.ojs-check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ojs-check-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 7px 0;
+  font-size: 14px;
+  color: var(--ojs-text);
+}
+.ojs-check-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  border: 1px solid #cfd8de;
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: transparent;
+}
+.ojs-check-list li.checked {
+  color: rgba(0, 0, 0, 0.75);
+}
+.ojs-check-list li.checked .ojs-check-icon {
+  background: var(--ojs-bg-base);
+  border-color: var(--ojs-bg-base);
+  color: #fff;
+}
+
+/* --- Notice boxes --- */
+.ojs-notice-box {
+  padding: 14px 16px;
+  border-radius: 0;
+  font-size: 14px;
+  margin-top: 18px;
+}
+.ojs-notice-box strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.ojs-notice-box p {
+  margin: 0;
+  line-height: 1.55;
+}
+.ojs-notice-warning {
+  background: #fdf6e4;
+  border: 1px solid #f0dcab;
+  color: #7a5b1d;
+}
+.ojs-notice-info {
+  background: #e8f3fb;
+  border: 1px solid #bcd9ef;
+  color: #1f5fa6;
+}
+
+/* --- Wizard action rows --- */
+.ojs-wizard-actions {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ojs-wizard-actions-end {
+  justify-content: space-between;
+}
+.btn-submit-journal {
+  background: #1e7a45;
+  border-color: #1e7a45;
+}
+.btn-submit-journal:hover {
+  background: #176038;
+  border-color: #176038;
+}
+
+@media (max-width: 640px) {
+  .ojs-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .ojs-editor-search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ojs-wizard-actions-end {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ojs-wizard-actions-end .btn-ojs-primary,
+  .ojs-wizard-actions-end .btn-ojs-secondary {
+    text-align: center;
   }
 }

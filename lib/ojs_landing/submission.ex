@@ -105,6 +105,7 @@ defmodule OjsLanding.Submission do
   unless explicitly provided.
   """
   def update(id, params) do
+    id = normalize_id(id)
     current = get(id)
 
     if is_nil(current) do
@@ -141,6 +142,7 @@ defmodule OjsLanding.Submission do
              :published,
              :declined
            ] do
+    id = normalize_id(id)
     current = get(id)
 
     if is_nil(current) do
@@ -169,6 +171,72 @@ defmodule OjsLanding.Submission do
   """
   def seed do
     [
+      %__MODULE__{
+        id: 14,
+        author_username: "author1",
+        title: "Deteksi Berita Palsu pada Media Sosial Menggunakan Transformer",
+        subtitle: "Studi Komparasi BERT dan GPT terhadap Korpora Bahasa Indonesia",
+        abstract:
+          "Penelitian ini mengembangkan model klasifikasi berbasis arsitektur Transformer untuk mendeteksi berita palsu pada media sosial berbahasa Indonesia. Model BERT yang disetel pada korpora sebesar 120.000 dokumen mencapai akurasi 94,7%, mengungguli pendekatan baseline berbasis TF-IDF dan Word2Vec. Hasil menunjukkan bahwa representasi kontekstual berperan penting dalam menangkap pola kebahasaan indikatif.",
+        section: "Artikel Penelitian",
+        keywords: "berita palsu, transformer, BERT, NLP, deteksi informasi",
+        language: "id",
+        type: :article,
+        status: :active,
+        files: [
+          %{
+            id: 1,
+            filename: "manuscript.pdf",
+            type: "application/pdf",
+            size: "1.4 MB",
+            date: "2026-08-11",
+            genre: "Manuscript",
+            has_revisions: false
+          },
+          %{
+            id: 2,
+            filename: "dataset-berita.csv",
+            type: "text/csv",
+            size: "3.2 MB",
+            date: "2026-08-10",
+            genre: "Research Instrument",
+            has_revisions: false
+          }
+        ],
+        contributors: [
+          %{
+            id: 1,
+            given_name: "Ahmad",
+            family_name: "Fauzi",
+            email: "author1@informatika.ac.id",
+            affiliation: "Universitas Teknologi",
+            country: "Indonesia",
+            role: :author,
+            primary: true
+          },
+          %{
+            id: 2,
+            given_name: "Dewi",
+            family_name: "Lestari",
+            email: "dewi@universitas.ac.id",
+            affiliation: "Universitas Teknologi",
+            country: "Indonesia",
+            role: :author,
+            primary: false
+          }
+        ],
+        editors: [%{id: 1, name: "Prof. Budi Santoso", email: "editor@test.com", role: "Editor"}],
+        review: %{
+          round: 1,
+          status: :in_review,
+          summary: "Sedang dalam proses tinjauan oleh reviewer.",
+          assignments: [
+            %{name: "Dr. Bambang Wijaya", recommendation: "In Progress", date: "2026-08-12"}
+          ]
+        },
+        created_at: ~U[2026-08-10 09:30:00Z],
+        date_submitted: ~U[2026-08-11 10:00:00Z]
+      },
       %__MODULE__{
         id: 11,
         author_username: "author1",
@@ -492,6 +560,17 @@ defmodule OjsLanding.Submission do
       Enum.reduce(subs, 0, fn s, acc -> max(s.id, acc) end) + 1
     end)
   end
+
+  defp normalize_id(id) when is_integer(id), do: id
+
+  defp normalize_id(id) when is_binary(id) do
+    case Integer.parse(id) do
+      {int, _} -> int
+      :error -> id
+    end
+  end
+
+  defp normalize_id(id), do: id
 
   defp maybe_put(current, _key, value) when value in [nil, ""], do: current
   defp maybe_put(current, key, value), do: Map.put(current, key, value)

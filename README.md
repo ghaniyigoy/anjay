@@ -26,7 +26,7 @@ Username `alief` adalah admin, sisanya seeded user:
 * **Dashboard** — Arahkan pengguna berdasarkan role (admin, author, editor, reviewer)
 * **Jurnal** — Halaman jurnal, current issue, arsip, daftar isu, halaman about (submissions, editorial masthead, privacy, contact), dan halaman detail artikel
 * **Journal Submission Workflow** — Halaman submission per-jurnal dengan tab Details, Files, Contributors, Editors, dan Review (`/:journal_path/submission?id=X#tab`)
-* **Submissions** — Wizard & manajemen submission untuk author
+* **Submissions** — Wizard & manajemen submission untuk author (details, files, contributors, editors, review) dengan tampilan flat OJS PKP di dalam dashboard
 * **Editorial** — Workflow editorial untuk editor
 * **Review** — Pengelolaan penugasan review untuk reviewer
 * **Administrasi** — Konteks, pengaturan, sistem info, manajemen jurnal, jobs/failed jobs
@@ -68,7 +68,9 @@ Membuat & mengelola submission membutuhkan login sebagai **author**; bila belum 
 | `/submission/new` | GET | Mulai submission baru (preliminary information, wizard ala OJS 3 PKP) |
 | `/submission/create` | POST | Buat submission baru, lalu redirect ke wizard |
 | `/submission/wizard` | GET/POST | Alias dari `/submission/new` & `/submission/create` |
-| `/submission/wizard/:id?tab=details` | GET/PUT | Wizard detail submission (tab: details, files, contributors, editors, review) |
+| `/submission/wizard/:id?tab=details` | GET/PUT | Wizard detail submission (tab: details, files, contributors, editors, review), dirender di dalam layout dashboard |
+
+Submission seed aktif untuk author1: ID `14` (`/submission/wizard/14?tab=details`, status *Active*).
 
 Contoh: `http://localhost:4000/submission/new`
 

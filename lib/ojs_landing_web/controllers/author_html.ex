@@ -36,17 +36,20 @@ defmodule OjsLandingWeb.AuthorHTML do
 
   def format_date(%DateTime{} = datetime) do
     datetime
-    |> Calendar.strftime("%e %b %Y")
-    |> String.trim()
+    |> Calendar.strftime("%d %b %Y")
+    |> trim_leading_zero_day()
   end
 
   def format_date(%Date{} = date) do
     date
-    |> Calendar.strftime("%e %b %Y")
-    |> String.trim()
+    |> Calendar.strftime("%d %b %Y")
+    |> trim_leading_zero_day()
   end
 
   def format_date(_), do: "—"
+
+  defp trim_leading_zero_day("0" <> rest), do: rest
+  defp trim_leading_zero_day(value), do: value
 
   # --- Dashboard views ------------------------------------------------------
 
@@ -95,6 +98,8 @@ defmodule OjsLandingWeb.AuthorHTML do
   def short_name(%{given_name: name}), do: name
   def short_name(_), do: "?"
 
+  def primary_contact?(contributor), do: Map.get(contributor, :primary) == true
+
   # --- Start A New Submission (OJS PKP preliminary information) ------------
 
   @submission_checklist [
@@ -113,7 +118,21 @@ defmodule OjsLandingWeb.AuthorHTML do
 
   def submission_checklist, do: @submission_checklist
 
+  def tab_label("details"), do: "Details"
+  def tab_label("files"), do: "Files"
+  def tab_label("contributors"), do: "Contributors"
+  def tab_label("editors"), do: "Editors"
+  def tab_label("review"), do: "Review"
+
+  def tab_count("files", submission), do: count_or_nil(file_count(submission))
+  def tab_count("contributors", submission), do: count_or_nil(contributors_count(submission))
+  def tab_count("editors", submission), do: count_or_nil(editors_count(submission))
+  def tab_count(_tab, _submission), do: nil
+
   # --- Private --------------------------------------------------------------
+
+  defp count_or_nil(0), do: nil
+  defp count_or_nil(count), do: count
 
   defp tab_done?("details", submission),
     do: is_binary(submission.title) and submission.title != ""
