@@ -6774,249 +6774,234 @@ a:focus {
 
 /* ============================================
    Author: Start A New Submission (OJS PKP)
-   Preliminary information + submission checklist
+   Authentic 3.x wizard: breadcrumb, step circles,
+   plain form blocks on a white card.
    ============================================ */
-.ojs-intro-box {
-  background: rgba(30, 98, 146, 0.06);
-  border: 1px solid rgba(30, 98, 146, 0.25);
-  border-left: 4px solid var(--ojs-bg-base);
-  border-radius: 2px;
-  padding: 14px 18px;
-  margin: 0 0 24px 0;
-}
 
-.ojs-intro-box p {
+/* --- Breadcrumb (OJS PKP) --- */
+.ojs-breadcrumb {
+  margin: 0 0 14px;
+}
+.ojs-breadcrumb ol {
+  list-style: none;
   margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgba(0, 0, 0, 0.85);
-}
-
-.ojs-intro-box a {
-  color: var(--ojs-primary);
-  font-weight: 500;
-}
-
-.ojs-new-submission-grid {
+  padding: 0;
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.ojs-breadcrumb li {
+  display: flex;
+  align-items: center;
+  color: var(--ojs-text-light);
+}
+.ojs-breadcrumb li + li::before {
+  content: "›";
+  margin: 0 6px;
+  color: var(--ojs-bg-shade);
+  font-size: 14px;
+}
+.ojs-breadcrumb a {
+  color: var(--ojs-primary);
+  text-decoration: none;
+}
+.ojs-breadcrumb a:hover {
+  color: var(--ojs-primary-lift);
+  text-decoration: underline;
+}
+.ojs-breadcrumb li[aria-current="page"] {
+  color: var(--ojs-text-light);
+}
+
+/* --- Page title --- */
+.ojs-wizard-title {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 1.714rem;   /* @font-header */
+  font-weight: 700;
+  color: var(--ojs-text);
+  margin: 0 0 22px;
+}
+
+/* --- Wizard step indicator (OJS PKP circles) --- */
+.ojs-wizard-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 0 0 28px;
+  padding: 14px 0;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+}
+.ojs-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  color: var(--ojs-text-light);
+}
+.ojs-step:first-child {
+  padding-left: 0;
+}
+.ojs-step + .ojs-step {
+  border-left: 1px solid #e0e0e0;
+}
+.ojs-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #bbb;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ojs-text-light);
+  background: #fff;
+}
+.ojs-step-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.ojs-step.is-current .ojs-step-number {
+  background: var(--ojs-bg-base);
+  border-color: var(--ojs-bg-base);
+  color: #fff;
+}
+.ojs-step.is-current .ojs-step-label {
+  color: var(--ojs-text);
+}
+
+/* --- Two-column wizard layout --- */
+.ojs-wizard-layout {
+  display: flex;
+  gap: 30px;
   align-items: flex-start;
 }
-
-.ojs-new-submission-main {
+.ojs-wizard-main {
   flex: 1;
   min-width: 0;
 }
-
-.ojs-new-submission-side {
-  width: 320px;
+.ojs-wizard-side {
+  width: 300px;
   flex-shrink: 0;
 }
 
-.ojs-form-box {
+/* --- Form blocks (OJS PKP plain cards) --- */
+.ojs-wizard-form {
   background: #fff;
   border: 1px solid var(--ojs-border);
   border-radius: 2px;
-  padding: 26px 28px;
-  margin-bottom: 24px;
+  padding: 24px 28px;
 }
-
-.ojs-side-box {
-  padding: 20px 22px;
+.ojs-form-block {
+  margin-bottom: 26px;
 }
-
-.ojs-form-box h3,
-.ojs-privacy-box h3 {
-  font-size: 1rem;
+.ojs-form-block:last-child {
+  margin-bottom: 0;
+}
+.ojs-block-title {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 1.14rem;
   font-weight: 700;
   color: var(--ojs-text);
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-  margin: 0 0 14px 0;
-  font-family: 'Noto Sans', sans-serif;
+  margin: 0 0 6px;
 }
-
-.ojs-form-section {
-  margin-bottom: 30px;
-}
-
-.ojs-form-section:last-child {
-  margin-bottom: 4px;
-}
-
-.ojs-form-help {
-  margin: 0 0 12px 0;
+.ojs-block-help {
+  margin: 0 0 12px;
   font-size: 13px;
   line-height: 1.55;
-  color: rgba(0, 0, 0, 0.62);
+  color: var(--ojs-text-light);
 }
 
 .ojs-select {
   display: block;
   width: 100%;
   max-width: 460px;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid #ccc;
-  border-radius: 2px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #aaa;
+  border-radius: 0;
   background: #fff;
   font-family: 'Noto Sans', sans-serif;
   font-size: 14px;
   color: var(--ojs-text);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  appearance: auto;
 }
-
 .ojs-select:focus {
-  outline: none;
+  outline: 2px solid var(--ojs-primary);
+  outline-offset: -1px;
   border-color: var(--ojs-primary);
-  box-shadow: 0 0 0 3px rgba(0, 103, 152, 0.15);
 }
 
+/* --- Plain checklist (no borders, no badges) --- */
 .ojs-checklist {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid #eee;
-  border-radius: 2px;
+  border: none;
+  border-radius: 0;
 }
-
 .ojs-checklist li {
   margin: 0;
 }
-
-.ojs-checklist li + li {
-  border-top: 1px solid #f0f0f0;
-}
-
 .ojs-checklist-item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 7px 0;
   cursor: pointer;
-  transition: background 0.15s ease;
 }
-
-.ojs-checklist-item:hover {
-  background: #f7fafc;
-}
-
 .ojs-checklist-check {
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
   margin: 2px 0 0 0;
   flex-shrink: 0;
   accent-color: var(--ojs-primary);
   cursor: pointer;
 }
-
 .ojs-checklist-text {
   font-size: 14px;
   line-height: 1.55;
   color: var(--ojs-text);
 }
 
-.ojs-checklist-tag {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 7px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  vertical-align: 1px;
-  border: 1px solid;
-  border-radius: 2px;
-}
-
-.tag-required {
-  color: #b03a2e;
-  border-color: #b03a2e;
-  background: #fdf0ef;
-}
-
-.tag-optional {
-  color: #7f8c8d;
-  border-color: #ccc;
-  background: #f7f7f7;
-}
-
-.ojs-checklist-progress {
-  margin: 12px 0 0 0;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.55);
-}
-
-.ojs-checklist-progress em,
-.ojs-form-actions-hint em {
-  font-style: normal;
-  font-weight: 700;
-}
-
 .ojs-textarea {
   display: block;
   width: 100%;
-  min-height: 96px;
-  padding: 10px 12px;
-  border: 1px solid #ccc;
-  border-radius: 2px;
+  min-height: 90px;
+  padding: 8px 10px;
+  border: 1px solid #aaa;
+  border-radius: 0;
   background: #fff;
   font-family: 'Noto Sans', sans-serif;
   font-size: 14px;
   line-height: 1.5;
   color: var(--ojs-text);
   resize: vertical;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-
 .ojs-textarea:focus {
-  outline: none;
+  outline: 2px solid var(--ojs-primary);
+  outline-offset: -1px;
   border-color: var(--ojs-primary);
-  box-shadow: 0 0 0 3px rgba(0, 103, 152, 0.15);
 }
 
+/* --- Privacy statement box --- */
 .ojs-privacy-box {
   background: #f7f7f7;
   border: 1px solid var(--ojs-border);
-  border-radius: 2px;
-  padding: 16px 20px;
-  margin-top: 4px;
+  border-radius: 0;
+  padding: 14px 16px;
 }
-
-.ojs-privacy-box h3 {
-  border-bottom: none;
-  padding-bottom: 0;
-  margin-bottom: 6px;
-}
-
-.ojs-privacy-box p {
+.ojs-privacy-text {
   margin: 0;
   font-size: 13px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.62);
+  color: var(--ojs-text-light);
+}
+.ojs-privacy-text a {
+  color: var(--ojs-primary);
 }
 
-.ojs-form-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-}
-
-.ojs-form-actions-hint {
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.55);
-  line-height: 1.5;
-}
-
-.ojs-form-actions-hint.hint-ok {
-  color: #1e8449;
-}
-
+/* --- Wizard actions (Save and Continue) --- */
 .btn-ojs-primary {
   display: inline-block;
   background: var(--ojs-bg-base);
@@ -7026,21 +7011,16 @@ a:focus {
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
-  padding: 11px 22px;
-  border-radius: 2px;
+  padding: 10px 26px;
+  border-radius: 0;
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
 .btn-ojs-primary:hover {
   background: #2d74a8;
   border-color: #2d74a8;
-}
-
-.btn-ojs-primary:active {
-  transform: translateY(1px);
 }
 
 .btn-ojs-primary:disabled {
@@ -7055,15 +7035,6 @@ a:focus {
   border-color: #b6c2cc;
 }
 
-.btn-ojs-primary-ready {
-  animation: ojsPulse 0.3s ease;
-}
-
-@keyframes ojsPulse {
-  0% { box-shadow: 0 0 0 0 rgba(30, 98, 146, 0.4); }
-  100% { box-shadow: 0 0 0 6px rgba(30, 98, 146, 0); }
-}
-
 .btn-ojs-secondary {
   display: inline-block;
   background: #fff;
@@ -7073,12 +7044,11 @@ a:focus {
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
-  padding: 11px 22px;
-  border-radius: 2px;
+  padding: 10px 22px;
+  border-radius: 0;
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .btn-ojs-secondary:hover {
@@ -7087,36 +7057,56 @@ a:focus {
   color: #fff;
 }
 
+.ojs-wizard-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #eee;
+}
+
+/* --- Side blocks --- */
+.ojs-side-block {
+  background: #fff;
+  border: 1px solid var(--ojs-border);
+  border-radius: 2px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.ojs-side-block .ojs-block-title {
+  font-size: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
 .ojs-prep-steps {
   list-style: none;
   margin: 0;
   padding: 0;
   counter-reset: ojs-step;
 }
-
 .ojs-prep-steps li {
   counter-increment: ojs-step;
   position: relative;
-  padding: 0 0 14px 36px;
+  padding: 0 0 12px 28px;
   font-size: 13px;
   line-height: 1.5;
   color: rgba(0, 0, 0, 0.72);
 }
-
 .ojs-prep-steps li:last-child {
   padding-bottom: 0;
 }
-
 .ojs-prep-steps li::before {
   content: counter(ojs-step);
   position: absolute;
   left: 0;
   top: 0;
-  width: 24px;
-  height: 24px;
-  background: var(--ojs-bg-base);
-  color: #fff;
-  font-size: 12px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--ojs-bg-base);
+  color: var(--ojs-bg-base);
+  font-size: 11px;
   font-weight: 700;
   border-radius: 50%;
   display: flex;
@@ -7124,58 +7114,41 @@ a:focus {
   justify-content: center;
 }
 
-.ojs-side-help-links {
+.ojs-side-links {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-
-.ojs-side-help-links li {
-  padding: 10px 0;
+.ojs-side-links li {
+  padding: 8px 0;
   border-top: 1px solid #f0f0f0;
 }
-
-.ojs-side-help-links li:first-child {
+.ojs-side-links li:first-child {
   border-top: none;
   padding-top: 0;
 }
-
-.ojs-side-help-links a {
-  display: block;
+.ojs-side-links a {
   font-size: 14px;
-  font-weight: 500;
   color: var(--ojs-primary);
   text-decoration: none;
 }
-
-.ojs-side-help-links a:hover {
+.ojs-side-links a:hover {
   color: var(--ojs-primary-lift);
   text-decoration: underline;
 }
 
-.ojs-side-help-links span {
-  display: block;
-  margin-top: 2px;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.55);
-  line-height: 1.5;
-}
-
 @media (max-width: 900px) {
-  .ojs-new-submission-grid {
+  .ojs-wizard-layout {
     flex-direction: column;
   }
-
-  .ojs-new-submission-side {
+  .ojs-wizard-side {
     width: 100%;
   }
-
-  .ojs-form-actions {
-    flex-direction: column;
-    align-items: stretch;
+  .ojs-wizard-steps {
+    flex-wrap: wrap;
+    row-gap: 10px;
   }
-
-  .ojs-form-actions .btn-ojs-primary {
+  .ojs-wizard-actions .btn-ojs-primary {
     width: 100%;
   }
 }

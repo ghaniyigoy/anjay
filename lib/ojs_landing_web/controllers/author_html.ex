@@ -113,14 +113,6 @@ defmodule OjsLandingWeb.AuthorHTML do
 
   def submission_checklist, do: @submission_checklist
 
-  def checklist_tag(:required), do: "Required"
-  def checklist_tag(:optional), do: "Optional"
-
-  def required_checklist_count do
-    @submission_checklist
-    |> Enum.count(fn {_text, type} -> type == :required end)
-  end
-
   # --- Private --------------------------------------------------------------
 
   defp tab_done?("details", submission),

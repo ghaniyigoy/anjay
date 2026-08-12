@@ -65,7 +65,7 @@ Membuat & mengelola submission membutuhkan login sebagai **author**; bila belum 
 | URL | Method | Keterangan |
 | --- | --- | --- |
 | `/dashboard/mySubmissions` | GET | Daftar submission author (dengan filter status) |
-| `/submission/new` | GET | Mulai submission baru (preliminary information) |
+| `/submission/new` | GET | Mulai submission baru (preliminary information, wizard ala OJS 3 PKP) |
 | `/submission/create` | POST | Buat submission baru, lalu redirect ke wizard |
 | `/submission/wizard` | GET/POST | Alias dari `/submission/new` & `/submission/create` |
 | `/submission/wizard/:id?tab=details` | GET/PUT | Wizard detail submission (tab: details, files, contributors, editors, review) |
