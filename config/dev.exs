@@ -62,3 +62,11 @@ config :phoenix_live_view,
   debug_attributes: true,
   # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
+
+
+
+config :ojs_landing, OjsLanding.Repo,
+  username: "postgres",
+  password: System.get_env("DB_PASSWORD"),
+  hostname: "localhost",
+  database: "ojs_db_pg_2"
