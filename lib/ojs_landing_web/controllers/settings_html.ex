@@ -55,18 +55,17 @@ defmodule OjsLandingWeb.SettingsHTML do
     <div class="settings-page">
       <header class="settings-head">
         <div class="settings-breadcrumb">
-          <a href="/dashboard">Dashboard</a>
-          <span class="settings-breadcrumb-sep">/</span>
+          <a href="/dashboard">Dashboard</a> <span class="settings-breadcrumb-sep">/</span>
           <a href={~p"/#{@journal_path}/management/settings/context"}>Settings</a>
           <span class="settings-breadcrumb-sep">/</span>
           <span>{settings_section_title(@section)}</span>
         </div>
-
+        
         <div class="settings-head-row">
           <h1 class="settings-title">Journal Settings</h1>
         </div>
       </header>
-
+      
       <div class="settings-body">
         <main class="settings-main">
           <nav class="settings-group-tabs" aria-label="Settings groups">
@@ -78,11 +77,11 @@ defmodule OjsLandingWeb.SettingsHTML do
               >{sub_label}</a>
             <% end %>
           </nav>
-
+          
           <div class="settings-content">
             {render_slot(@inner_block)}
           </div>
-
+          
           <footer class="settings-save-bar">
             <div class="settings-save-actions">
               <button type="submit" form="ojs-settings-form" class="btn-settings-primary">Save</button>
@@ -93,7 +92,7 @@ defmodule OjsLandingWeb.SettingsHTML do
                 Cancel
               </a>
             </div>
-            <span class="settings-save-note">All changes will be applied immediately.</span>
+             <span class="settings-save-note">All changes will be applied immediately.</span>
           </footer>
         </main>
       </div>
@@ -190,16 +189,18 @@ defmodule OjsLandingWeb.SettingsHTML do
             <span class="settings-required">*</span>
           <% end %>
         </label>
+        
         <%= if @hint do %>
           <span class="settings-form-hint">{@hint}</span>
         <% end %>
       </div>
-
+      
       <div class="settings-form-control-col">
         <div class={["settings-input-wrap", @size && "settings-input-wrap--fixed"]}>
           <%= if @prefix do %>
             <span class="settings-monogram-prefix">{@prefix}</span>
           <% end %>
+          
           <input
             id={@name}
             name={@name}
@@ -237,7 +238,7 @@ defmodule OjsLandingWeb.SettingsHTML do
           <span class="settings-form-hint">{@hint}</span>
         <% end %>
       </div>
-
+      
       <div class="settings-form-control-col">
         <textarea
           id={@name}
@@ -268,7 +269,7 @@ defmodule OjsLandingWeb.SettingsHTML do
           <span class="settings-form-hint">{@hint}</span>
         <% end %>
       </div>
-
+      
       <div class="settings-form-control-col">
         <select
           id={@name}
@@ -276,6 +277,7 @@ defmodule OjsLandingWeb.SettingsHTML do
           class={["settings-input", @dropdown && "settings-input--dropdown"]}
         >
           <option value="" disabled selected={@value in [nil, ""]}>Please select...</option>
+          
           <%= for {option_value, option_label} <- @options do %>
             <option value={option_value} selected={option_value == @value}>{option_label}</option>
           <% end %>
@@ -300,7 +302,7 @@ defmodule OjsLandingWeb.SettingsHTML do
           <span class="settings-form-hint">{@hint}</span>
         <% end %>
       </div>
-
+      
       <div class="settings-form-control-col">
         <%= for {option_value, option_label} <- @options do %>
           <label class="settings-checkbox">
@@ -309,8 +311,7 @@ defmodule OjsLandingWeb.SettingsHTML do
               name={@name}
               value={option_value}
               checked={option_value in @value}
-            />
-            <span>{option_label}</span>
+            /> <span>{option_label}</span>
           </label>
         <% end %>
       </div>
@@ -334,7 +335,7 @@ defmodule OjsLandingWeb.SettingsHTML do
           <span class="settings-form-hint">{@hint}</span>
         <% end %>
       </div>
-
+      
       <div class={["settings-form-control-col", @inline && "settings-form-control-col--inline"]}>
         <%= for {option_value, option_label} <- @options do %>
           <label class="settings-radio">
@@ -343,8 +344,7 @@ defmodule OjsLandingWeb.SettingsHTML do
               name={@name}
               value={option_value}
               checked={option_value == @value}
-            />
-            <span>{option_label}</span>
+            /> <span>{option_label}</span>
           </label>
         <% end %>
       </div>
@@ -369,11 +369,12 @@ defmodule OjsLandingWeb.SettingsHTML do
           <span class="settings-form-hint">{@hint}</span>
         <% end %>
       </div>
-
+      
       <div class="settings-form-control-col settings-monogram">
         <%= if @prefix do %>
           <span class="settings-monogram-prefix">{@prefix}</span>
         <% end %>
+        
         <input
           id={@name}
           name={@name}
@@ -404,11 +405,12 @@ defmodule OjsLandingWeb.SettingsHTML do
     <section id={@anchor} class="settings-panel">
       <div class="settings-panel-head">
         <h2 class="settings-panel-title">{@title}</h2>
+        
         <%= if @description do %>
           <p class="settings-panel-description">{@description}</p>
         <% end %>
       </div>
-
+      
       <div class="settings-panel-body">
         {render_slot(@inner_block)}
       </div>
@@ -428,16 +430,17 @@ defmodule OjsLandingWeb.SettingsHTML do
       <div class="settings-list-head">
         <h3>{@title}</h3>
       </div>
-
+      
       <div class="settings-table-wrap">
         <table class="settings-table">
           <thead>
             <tr>
               <th :for={col <- @columns}>{col}</th>
+              
               <th class="settings-table-actions-col"></th>
             </tr>
           </thead>
-
+          
           <tbody>
             <%= if Enum.empty?(@rows) do %>
               <tr>

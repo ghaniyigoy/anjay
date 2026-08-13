@@ -12,7 +12,9 @@ defmodule OjsLandingWeb.AdminController do
   end
 
   def settings(conn, _params) do
-    render(conn, :settings)
+    conn
+    |> put_root_layout(html: {OjsLandingWeb.Layouts, :admin})
+    |> render(:settings, page_title: "Site Settings")
   end
 
   def wizard(conn, %{"id" => id}) do
@@ -20,11 +22,15 @@ defmodule OjsLandingWeb.AdminController do
   end
 
   def system_info(conn, _params) do
-    render(conn, :system_info)
+    conn
+    |> put_root_layout(html: {OjsLandingWeb.Layouts, :admin})
+    |> render(:system_info, page_title: "System Information")
   end
 
   def php_info(conn, _params) do
-    render(conn, :php_info)
+    conn
+    |> put_root_layout(html: {OjsLandingWeb.Layouts, :admin})
+    |> render(:php_info, page_title: "PHP Information")
   end
 
   def expire_sessions(conn, _params) do
@@ -46,15 +52,34 @@ defmodule OjsLandingWeb.AdminController do
   end
 
   def jobs(conn, _params) do
-    render(conn, :jobs)
+    conn
+    |> put_root_layout(html: {OjsLandingWeb.Layouts, :admin})
+    |> render(:jobs,
+      page_title: "Jobs",
+      page_subtitle: "View the queued jobs waiting to be executed"
+    )
   end
 
   def failed_jobs(conn, _params) do
-    render(conn, :failed_jobs)
+    conn
+    |> put_root_layout(html: {OjsLandingWeb.Layouts, :admin})
+    |> render(:failed_jobs,
+      page_title: "Failed Jobs",
+      page_subtitle: "View details of jobs that failed to execute"
+    )
   end
 
   def failed_job_details(conn, %{"id" => id}) do
-    render(conn, :failed_job_details, job_id: id)
+    failed_job = OjsLandingWeb.AdminHTML.failed_job(id)
+
+    conn
+    |> put_root_layout(html: {OjsLandingWeb.Layouts, :admin})
+    |> render(:failed_job_details,
+      job_id: id,
+      failed_job: failed_job,
+      page_title: "Failed Job Details",
+      page_subtitle: "Details for a job that failed to execute"
+    )
   end
 
   def create_journal(conn, _params) do

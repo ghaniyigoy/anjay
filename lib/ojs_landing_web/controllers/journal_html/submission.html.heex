@@ -2,37 +2,37 @@
 <div class="journal-page-header">
   <div class="container">
     <h1 class="journal-page-title">{@journal.title}</h1>
-
+    
     <nav class="journal-nav">
       <ul class="nav-list">
         <li><a href={"/#{@journal_path}/issue/current"} class="nav-link">Current</a></li>
-
+        
         <li><a href={"/#{@journal_path}/issue/archive"} class="nav-link">Archives</a></li>
-
+        
         <li class="dropdown">
           <button class="dropdown-toggle" onclick="toggleDropdown(this)">About ▾</button>
           <ul class="dropdown-menu">
             <li>
               <a href={"/#{@journal_path}/about"} class="dropdown-item">About the Journal</a>
             </li>
-
+            
             <li>
               <a href={"/#{@journal_path}/about/submissions"} class="dropdown-item">Submissions</a>
             </li>
-
+            
             <li>
               <a href={"/#{@journal_path}/about/editorialMasthead"} class="dropdown-item">Editorial Masthead</a>
             </li>
-
+            
             <li>
               <a href={"/#{@journal_path}/about/privacy"} class="dropdown-item">Privacy Statement</a>
             </li>
-
+            
             <li><a href={"/#{@journal_path}/about/contact"} class="dropdown-item">Contact</a></li>
           </ul>
         </li>
       </ul>
-
+      
       <div class="nav-search">
         <a href="#" class="search-link">
           <svg
@@ -44,7 +44,7 @@
             stroke-width="2"
           >
             <circle cx="11" cy="11" r="8"></circle>
-
+            
             <path d="m21 21-4.35-4.35"></path>
           </svg>
           Search
@@ -61,11 +61,12 @@
       / <a href={"/#{@journal_path}"}>{@journal.title}</a>
       / <span>Submission</span>
     </div>
-
+    
     <div class="ojs-submission-layout">
       <%!-- Submission picker --%>
       <aside class="ojs-submission-picker">
         <h3>Submissions</h3>
+        
         <ul>
           <%= for sub <- @submissions do %>
             <li class={if sub.id == @submission.id, do: "active"}>
@@ -75,39 +76,38 @@
                   <span class="ojs-sub-pick-title">
                     {not_blank(sub.title, "(Untitled submission)")}
                   </span>
-                  <span class="ojs-sub-pick-status">{status_text(sub.status)}</span>
+                   <span class="ojs-sub-pick-status">{status_text(sub.status)}</span>
                 </span>
               </a>
             </li>
           <% end %>
         </ul>
       </aside>
-
-      <%!-- Workflow main --%>
+       <%!-- Workflow main --%>
       <div class="ojs-submission-main">
         <div class="ojs-submission-header">
           <div class="ojs-submission-heading">
             <h1>Submission <span class="ojs-submission-id">#{@submission.id}</span></h1>
+            
             <span class={["status-badge", status_badge(@submission.status)]}>
               {status_text(@submission.status)}
             </span>
           </div>
-
+          
           <h2 class="ojs-submission-paper-title">
             {not_blank(@submission.title, "(Untitled submission)")}
           </h2>
-
+          
           <div class="ojs-submission-meta">
             <span>Created {format_date(@submission.created_at)}</span>
             <%= if @submission.date_submitted do %>
               <span>Submitted {format_date(@submission.date_submitted)}</span>
             <% end %>
-            <span>Section: {@submission.section}</span>
+             <span>Section: {@submission.section}</span>
             <span>Language: {language_name(@submission.language)}</span>
           </div>
         </div>
-
-        <%!-- Tabs --%>
+         <%!-- Tabs --%>
         <nav class="ojs-submission-tabs" aria-label="Submission workflow tabs">
           <a
             href={"/#{@journal_path}/submission?id=#{@submission.id}#details"}
@@ -122,6 +122,7 @@
               <span class="ojs-tab-count">{length(@submission.files)}</span>
             <% end %>
           </a>
+          
           <a
             href={"/#{@journal_path}/submission?id=#{@submission.id}#contributors"}
             data-tab="contributors"
@@ -131,6 +132,7 @@
               <span class="ojs-tab-count">{length(@submission.contributors)}</span>
             <% end %>
           </a>
+          
           <a
             href={"/#{@journal_path}/submission?id=#{@submission.id}#editors"}
             data-tab="editors"
@@ -140,75 +142,97 @@
               <span class="ojs-tab-count">{length(@submission.editors)}</span>
             <% end %>
           </a>
+          
           <a
             href={"/#{@journal_path}/submission?id=#{@submission.id}#review"}
             data-tab="review"
           >Review</a>
         </nav>
-
-        <%!-- Tab panels --%>
+         <%!-- Tab panels --%>
         <div id="details" class="ojs-submission-tab-panel">
           <div class="ojs-workflow-panel">
             <div class="ojs-workflow-panel-heading">
               <h2>Details</h2>
+              
               <p>Informasi metadata makalah pada submission ini.</p>
             </div>
-
+            
             <dl class="ojs-details-list">
               <div class="ojs-detail-row">
                 <dt>Title</dt>
+                
                 <dd>{not_blank(@submission.title, "—")}</dd>
               </div>
+              
               <div class="ojs-detail-row">
                 <dt>Subtitle</dt>
+                
                 <dd>{not_blank(@submission.subtitle, "—")}</dd>
               </div>
+              
               <div class="ojs-detail-row ojs-detail-abstract">
                 <dt>Abstract</dt>
+                
                 <dd>{not_blank(@submission.abstract, "—")}</dd>
               </div>
+              
               <div class="ojs-detail-row">
                 <dt>Section</dt>
+                
                 <dd>{@submission.section}</dd>
               </div>
+              
               <div class="ojs-detail-row">
                 <dt>Language</dt>
+                
                 <dd>{language_name(@submission.language)}</dd>
               </div>
+              
               <div class="ojs-detail-row">
                 <dt>Keywords</dt>
+                
                 <dd>{not_blank(@submission.keywords, "—")}</dd>
               </div>
+              
               <div class="ojs-detail-row">
                 <dt>Type</dt>
+                
                 <dd>{type_text(@submission.type)}</dd>
               </div>
+              
               <div class="ojs-detail-row">
                 <dt>Status</dt>
+                
                 <dd>{status_text(@submission.status)}</dd>
               </div>
             </dl>
           </div>
         </div>
-
+        
         <div id="files" class="ojs-submission-tab-panel">
           <div class="ojs-workflow-panel">
             <div class="ojs-workflow-panel-heading">
               <h2>Files</h2>
+              
               <p>Naskah dan berkas pendukung yang dilampirkan pada submission.</p>
             </div>
-
+            
             <%= if length(@submission.files) > 0 do %>
               <table class="submissions-table ojs-workflow-table">
                 <thead>
                   <tr>
                     <th>FILE NAME</th>
+                    
                     <th>GENRE</th>
+                    
                     <th>SIZE</th>
+                    
                     <th>DATE UPLOADED</th>
+                    
                     <th></th>
                   </tr>
                 </thead>
+                
                 <tbody>
                   <%= for file <- @submission.files do %>
                     <tr>
@@ -217,9 +241,13 @@
                           {file.filename}
                         </div>
                       </td>
+                      
                       <td>{file.genre}</td>
+                      
                       <td>{file.size}</td>
+                      
                       <td>{file.date}</td>
+                      
                       <td class="col-actions">
                         <a href="#" class="btn-view">Download</a>
                       </td>
@@ -232,14 +260,15 @@
             <% end %>
           </div>
         </div>
-
+        
         <div id="contributors" class="ojs-submission-tab-panel">
           <div class="ojs-workflow-panel">
             <div class="ojs-workflow-panel-heading">
               <h2>Contributors</h2>
+              
               <p>Penulis dan peneliti yang berkontribusi pada makalah ini.</p>
             </div>
-
+            
             <%= if length(@submission.contributors) > 0 do %>
               <div class="ojs-contributors-list">
                 <%= for contributor <- @submission.contributors do %>
@@ -247,6 +276,7 @@
                     <div class="ojs-contributor-avatar">
                       {String.first(short_name(contributor))}
                     </div>
+                    
                     <div class="ojs-contributor-info">
                       <div class="ojs-contributor-name">
                         {contributor.given_name} {contributor.family_name}
@@ -254,8 +284,11 @@
                           <span class="ojs-chip">Primary Contact</span>
                         <% end %>
                       </div>
+                      
                       <div class="ojs-contributor-detail">{contributor.email}</div>
+                      
                       <div class="ojs-contributor-detail">{contributor.affiliation}</div>
+                      
                       <div class="ojs-contributor-detail">
                         {contributor.country}
                         <%= if contributor.role do %>
@@ -271,23 +304,27 @@
             <% end %>
           </div>
         </div>
-
+        
         <div id="editors" class="ojs-submission-tab-panel">
           <div class="ojs-workflow-panel">
             <div class="ojs-workflow-panel-heading">
               <h2>Editors</h2>
+              
               <p>Editor yang menangani submission ini.</p>
             </div>
-
+            
             <%= if length(@submission.editors) > 0 do %>
               <div class="ojs-editors-list">
                 <%= for editor <- @submission.editors do %>
                   <div class="ojs-editor-row">
                     <div class="ojs-editor-avatar">{String.first(editor.name || "?")}</div>
+                    
                     <div class="ojs-editor-info">
                       <div class="ojs-editor-name">{editor.name}</div>
+                      
                       <div class="ojs-editor-role">{editor.role}</div>
                     </div>
+                    
                     <div class="ojs-editor-email">{editor.email}</div>
                   </div>
                 <% end %>
@@ -300,20 +337,22 @@
             <% end %>
           </div>
         </div>
-
+        
         <div id="review" class="ojs-submission-tab-panel">
           <div class="ojs-workflow-panel">
             <div class="ojs-workflow-panel-heading">
               <h2>Review</h2>
+              
               <p>Ringkasan proses tinjauan pada submission ini.</p>
             </div>
-
+            
             <%= if @submission.review do %>
               <div class="ojs-review-overview">
                 <div class="ojs-review-metric">
                   <span class="ojs-review-metric-label">Round</span>
                   <span class="ojs-review-metric-value">{@submission.review.round}</span>
                 </div>
+                
                 <div class="ojs-review-metric">
                   <span class="ojs-review-metric-label">Status</span>
                   <span class="ojs-review-metric-value">
@@ -321,30 +360,37 @@
                   </span>
                 </div>
               </div>
-
+              
               <%= if not_blank(@submission.review.summary, "") != "" do %>
                 <div class="ojs-review-summary">
                   <h3>Editor Decision</h3>
+                  
                   <p>{@submission.review.summary}</p>
                 </div>
               <% end %>
-
+              
               <div class="ojs-review-assignments">
                 <h3>Reviewer Assignments</h3>
+                
                 <%= if length(@submission.review.assignments || []) > 0 do %>
                   <table class="submissions-table ojs-workflow-table">
                     <thead>
                       <tr>
                         <th>REVIEWER</th>
+                        
                         <th>RECOMMENDATION</th>
+                        
                         <th>DATE</th>
                       </tr>
                     </thead>
+                    
                     <tbody>
                       <%= for assignment <- @submission.review.assignments do %>
                         <tr>
                           <td>{assignment.name}</td>
+                          
                           <td>{assignment.recommendation}</td>
+                          
                           <td>{assignment.date}</td>
                         </tr>
                       <% end %>

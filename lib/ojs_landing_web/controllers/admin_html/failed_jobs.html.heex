@@ -1,11 +1,88 @@
-<div class="admin-page">
-  <h1 class="admin-page-title">{@page_title || "Admin Page"}</h1>
-  
-  <div class="admin-card">
-    <div class="admin-card-content">
-      <p>Halaman ini masih dalam pengembangan.</p>
+<div class="settings-page">
+  <header class="settings-head">
+    <div class="settings-breadcrumb">
+      <a href="/admin">Administration</a>
+      <span class="settings-breadcrumb-sep">/</span>
+      <span>Failed Jobs</span>
+    </div>
+
+    <div class="settings-head-row">
+      <h1 class="settings-title">Failed Jobs</h1>
+
+      <div class="system-info-actions">
+        <a href="/admin/jobs" class="btn-settings-secondary">View Jobs</a>
+        <a href="/admin/failedJobs" class="btn-settings-secondary is-active">View Failed Jobs</a>
+      </div>
+    </div>
+
+    <p class="settings-page-description">
+      View details of jobs that failed to execute and retry or remove them.
+    </p>
+  </header>
+
+  <div class="settings-main">
+    <div class="settings-content jobs-content">
+      <section class="settings-panel">
+        <div class="settings-panel-head">
+          <h2 class="settings-panel-title">Failed jobs</h2>
+
+          <p class="settings-panel-description">
+            There's a total of <strong>{length(failed_jobs())}</strong> failed job(s).
+          </p>
+        </div>
+
+        <div class="failed-jobs-actions">
+          <%= if length(failed_jobs()) > 0 do %>
+            <a href="/admin/failedJobs" class="btn-settings-primary">Requeue All Failed Jobs</a>
+          <% end %>
+        </div>
+
+        <div class="settings-table-wrap">
+          <table class="settings-table jobs-table failed-jobs-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Job</th>
+                <th>Queue</th>
+                <th>Connection</th>
+                <th>Failed At</th>
+                <th class="settings-table-actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <%= for job <- failed_jobs() do %>
+                <tr>
+                  <td class="jobs-id">{job.id}</td>
+                  <td class="jobs-name">{job.display_name}</td>
+                  <td>
+                    <span class="settings-status">{job.queue}</span>
+                  </td>
+                  <td class="jobs-connection">{job.connection}</td>
+                  <td class="jobs-date">{job.failed_at}</td>
+                  <td>
+                    <span class="settings-row-actions">
+                      <a href="/admin/failedJobs" class="settings-row-action">Try Again</a>
+                      <a
+                        href={"/admin/failedJobDetails/#{job.id}"}
+                        class="settings-row-action"
+                      >Details</a>
+                      <a
+                        href="/admin/failedJobs"
+                        class="settings-row-action settings-row-action--danger"
+                        onclick="return confirm('Are you sure you want to delete this failed job?');"
+                      >Delete</a>
+                    </span>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <%= if length(failed_jobs()) == 0 do %>
+          <div class="settings-table-empty">There are no failed jobs.</div>
+        <% end %>
+      </section>
     </div>
   </div>
-  
-  <a href="/admin" class="btn-admin btn-admin-secondary" style="margin-top: 20px;">← Back to Admin</a>
 </div>

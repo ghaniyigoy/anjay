@@ -53,7 +53,6 @@
     </nav>
   </div>
 </div>
-
 <!-- Main Content -->
 <div class="journal-content">
   <div class="container">
@@ -70,6 +69,7 @@
             <%= if @article.abstract do %>
               <div class="article-detail-section">
                 <h3 class="article-detail-label">Abstract</h3>
+
                 <p class="article-detail-abstract">{@article.abstract}</p>
               </div>
             <% end %>
@@ -96,6 +96,7 @@
         <% else %>
           <div class="article-detail">
             <h2 class="article-detail-title">Article not found</h2>
+
             <p style="color: #666; font-size: 14px;">
               The requested article could not be found in this journal.
             </p>
@@ -106,6 +107,7 @@
       <aside class="js-sidebar">
         <div class="sidebar-block ojs-submit-block">
           <h3>Make a Submission</h3>
+
           <p class="sidebar-submit-text">
             Ready to submit? Start your submission to this journal.
           </p>
@@ -114,18 +116,24 @@
 
         <div class="sidebar-block">
           <h3>Journal Content</h3>
+
           <ul>
             <li><a href={"/#{@journal_path}/issue/current"}>Current Issue</a></li>
+
             <li><a href={"/#{@journal_path}/issue/archive"}>Archives</a></li>
+
             <li><a href={"/#{@journal_path}/issues"}>All Issues</a></li>
           </ul>
         </div>
 
         <div class="sidebar-block">
           <h3>Information</h3>
+
           <ul>
             <li><a href={"/#{@journal_path}/about"}>For Readers</a></li>
+
             <li><a href={"/#{@journal_path}/about/submissions"}>For Authors</a></li>
+
             <li><a href={"/#{@journal_path}/about/editorialMasthead"}>For Librarians</a></li>
           </ul>
         </div>

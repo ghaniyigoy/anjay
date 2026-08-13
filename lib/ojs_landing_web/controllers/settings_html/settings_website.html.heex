@@ -92,10 +92,10 @@
         ]}
         hint="Select plugins to include in `<head>` for indexing and metadata services."
       />
-
       <%= if Enum.member?(indexing_plugins_selected(@section), "crossref") do %>
         <div class="settings-subblock">
           <h3 class="settings-subblock-title">Crossref DOI Registration Plugin</h3>
+
           <.input_field
             label="API Username"
             name="crossrefUsername"
@@ -124,7 +124,9 @@
               <span class="settings-plugin-name">{row.name}</span>
               <span class="settings-plugin-version">v{row.version}</span>
             </td>
+
             <td>{row.description}</td>
+
             <td>
               <span class={["settings-status", row.enabled && "is-enabled"]}>
                 {if row.enabled, do: "Enabled", else: "Disabled"}

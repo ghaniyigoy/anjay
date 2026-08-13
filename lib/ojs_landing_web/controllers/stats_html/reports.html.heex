@@ -1,9 +1,9 @@
 <div class="editor-dashboard-container stats-page">
   <.stats_sidebar section={:reports} journal_path={@journal_path} />
-
   <div class="editor-main-content stats-main">
     <.stats_breadcrumb section="Reports" />
     <h1 class="page-heading">Reports</h1>
+
     <p class="stats-subtitle">
       Generate and download reports for the journal. Select a report type below to download the data
       in CSV format.
@@ -20,17 +20,24 @@
           <thead>
             <tr>
               <th>Report</th>
+
               <th>Description</th>
+
               <th>Format</th>
+
               <th>Download</th>
             </tr>
           </thead>
+
           <tbody>
             <%= for row <- @rows do %>
               <tr>
                 <td><span class="stats-item-title">{row.name}</span></td>
+
                 <td class="stats-report-desc">{row.description}</td>
+
                 <td><span class="stats-badge">{row.format}</span></td>
+
                 <td>
                   <a class="btn-settings-secondary stats-export-btn" href={row.url}>
                     Download
@@ -40,6 +47,7 @@
             <% end %>
           </tbody>
         </table>
+
         <div class="table-footer">
           Showing <strong>0 to {length(@rows)}</strong> of <strong>{length(@rows)}</strong>
         </div>

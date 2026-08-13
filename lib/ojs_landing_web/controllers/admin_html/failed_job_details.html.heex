@@ -1,11 +1,58 @@
-<div class="admin-page">
-  <h1 class="admin-page-title">Failed Job Details</h1>
-  
-  <div class="admin-card">
-    <div class="admin-card-content">
-      <p>Job ID: {@job_id}</p>
+<div class="settings-page">
+  <header class="settings-head">
+    <div class="settings-breadcrumb">
+      <a href="/admin">Administration</a>
+      <span class="settings-breadcrumb-sep">/</span>
+      <a href="/admin/failedJobs">Failed Jobs</a>
+      <span class="settings-breadcrumb-sep">/</span>
+      <span>Details</span>
+    </div>
+
+    <div class="settings-head-row">
+      <h1 class="settings-title">Failed Job Details</h1>
+
+      <div class="system-info-actions">
+        <a href="/admin/failedJobs" class="btn-settings-secondary">Back to Failed Jobs</a>
+      </div>
+    </div>
+
+    <p class="settings-page-description">
+      Details for failed job #{@failed_job.id}.
+    </p>
+  </header>
+
+  <div class="settings-main">
+    <div class="settings-content jobs-content">
+      <section class="settings-panel">
+        <div class="settings-panel-head">
+          <h2 class="settings-panel-title">Failed job #{@failed_job.id}</h2>
+
+          <p class="settings-panel-description">
+            Attribute and value details for this failed job.
+          </p>
+        </div>
+
+        <div class="settings-table-wrap">
+          <table class="settings-table jobs-table failed-job-details-table">
+            <thead>
+              <tr>
+                <th style="width: 240px;">Attribute</th>
+                <th>Attribute Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <%= for {attribute, value} <- failed_job_details_rows(@failed_job) do %>
+                <tr>
+                  <td class="jobs-detail-attribute">{attribute}</td>
+                  <td class="jobs-detail-value">
+                    <pre class="jobs-detail-pre"><%= value %></pre>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </div>
-  
-  <a href="/admin/failedJobs" class="btn-admin btn-admin-secondary" style="margin-top: 20px;">← Back</a>
 </div>

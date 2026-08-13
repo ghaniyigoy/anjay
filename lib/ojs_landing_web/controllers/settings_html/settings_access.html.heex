@@ -18,8 +18,11 @@
         <%= for row <- journal_users() do %>
           <tr>
             <td>{row.name}</td>
+
             <td>{row.username}</td>
+
             <td>{row.email}</td>
+
             <td>
               <span class="settings-role">{row.role}</span>
             </td>
@@ -51,7 +54,9 @@
               <span class="settings-role-name">{row.name}</span>
               <span class="settings-role-id">{row.system_id}</span>
             </td>
+
             <td>{row.users}</td>
+
             <td>
               <span class="settings-row-actions">
                 <a href="#" class="settings-row-action">Edit</a>
@@ -119,6 +124,7 @@
       />
       <div class="settings-subblock">
         <h3 class="settings-subblock-title">ORCID API 2.0 Settings</h3>
+
         <.select_field
           label="API Environment"
           name="orcidApiEnv"

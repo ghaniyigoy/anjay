@@ -1,9 +1,9 @@
 <div class="editor-dashboard-container stats-page">
   <.stats_sidebar section={:issues} journal_path={@journal_path} />
-
   <div class="editor-main-content stats-main">
     <.stats_breadcrumb section="Issues" />
     <h1 class="page-heading">Issues</h1>
+
     <p class="stats-subtitle">
       This report provides a summary of the views and downloads of your issues for the selected date
       range, including issue landing pages and issue galley files.
@@ -15,10 +15,7 @@
       to={@to}
       metric={@metric}
       export_url={"/#{@journal_path}/stats/issues/issues?export=csv"}
-    />
-
-    <.bar_chart series={@series} mode={:views} />
-
+    /> <.bar_chart series={@series} mode={:views} />
     <div class="stats-report-panel">
       <div class="stats-panel-heading">
         <h2>Issues</h2>
@@ -30,24 +27,32 @@
           <thead>
             <tr>
               <th class="stats-col-id">ID</th>
+
               <th>Issue</th>
+
               <th>Views</th>
+
               <th>Downloads</th>
             </tr>
           </thead>
+
           <tbody>
             <%= for row <- @rows do %>
               <tr>
                 <td class="stats-col-id">{row.id}</td>
+
                 <td>
                   <span class="stats-item-title">{row.label}</span>
                 </td>
+
                 <td>{row.views}</td>
+
                 <td>{row.downloads}</td>
               </tr>
             <% end %>
           </tbody>
         </table>
+
         <div class="table-footer">
           Showing <strong>0 to {length(@rows)}</strong> of <strong>{length(@rows)}</strong>
         </div>

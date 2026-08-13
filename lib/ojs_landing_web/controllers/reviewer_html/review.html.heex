@@ -1,13 +1,13 @@
 <div class="review-page">
   <div class="review-breadcrumb">
     <a href="/dashboard/reviewAssignments">My Assignments</a>
-    <span class="review-breadcrumb-sep">/</span>
-    <span>Review #{@assignment.id}</span>
+    <span class="review-breadcrumb-sep">/</span> <span>Review #{@assignment.id}</span>
   </div>
 
   <div class="review-page-header">
     <div>
       <h1 class="review-page-title">Submission Review</h1>
+
       <p class="review-page-subtitle">
         Round {@assignment.round} · Due {Date.to_string(@assignment.due_date)}
       </p>
@@ -29,6 +29,7 @@
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
       </span>
+
       <div class="review-stage-body">
         <span class="review-stage-label">Submission</span>
         <span class="review-stage-value">1. {truncate_title(@assignment.title)}</span>
@@ -83,18 +84,24 @@
 
         <form method="POST" action={"/review/#{@assignment.id}"}>
           <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
-
           <div class="review-field">
             <label class="review-label" for="recommendation">
               Recommendation <span class="review-req">*</span>
             </label>
+
             <p class="review-help">Select the overall recommendation for this submission.</p>
+
             <select id="recommendation" name="recommendation" class="review-select" required>
               <option value="" disabled selected>Select a recommendation…</option>
+
               <option value="Accept">Accept</option>
+
               <option value="Minor Revisions">Minor Revisions</option>
+
               <option value="Major Revisions">Major Revisions</option>
+
               <option value="Resubmit Elsewhere">Resubmit Elsewhere</option>
+
               <option value="Decline">Decline</option>
             </select>
           </div>
@@ -120,8 +127,7 @@
                         name={"criterion_#{index}"}
                         value="Yes"
                         checked={index == 0}
-                      />
-                      <span>Yes</span>
+                      /> <span>Yes</span>
                     </label>
 
                     <label class="review-radio">
@@ -178,49 +184,59 @@
     <aside class="review-side-col">
       <div class="review-panel review-side-panel">
         <h2 class="review-panel-title">Submission</h2>
+
         <dl class="review-meta-list">
           <div class="review-meta-item">
             <dt>Title</dt>
+
             <dd>{@assignment.title}</dd>
           </div>
 
           <div class="review-meta-item">
             <dt>Author</dt>
+
             <dd>{@assignment.author}</dd>
           </div>
 
           <div class="review-meta-item">
             <dt>Journal</dt>
+
             <dd>{@assignment.journal}</dd>
           </div>
 
           <div class="review-meta-item">
             <dt>Section</dt>
+
             <dd>{@assignment.section}</dd>
           </div>
 
           <div class="review-meta-item">
             <dt>Language</dt>
+
             <dd>{@assignment.language}</dd>
           </div>
 
           <div class="review-meta-item">
             <dt>Keywords</dt>
+
             <dd>{@assignment.keywords}</dd>
           </div>
 
           <div class="review-meta-item">
             <dt>Assigned</dt>
+
             <dd>{Date.to_string(@assignment.date_assigned)}</dd>
           </div>
 
           <div class="review-meta-item">
             <dt>Due</dt>
+
             <dd>{Date.to_string(@assignment.due_date)}</dd>
           </div>
         </dl>
 
         <h3 class="review-block-subtitle">Abstract</h3>
+
         <p class="review-abstract">{@assignment.abstract}</p>
       </div>
 
@@ -233,12 +249,14 @@
               <span class={["review-file-type", file_type_class(file.type)]}>
                 {file.type}
               </span>
+
               <span class="review-file-body">
                 <span class="review-file-name">{file.name}</span>
                 <span class="review-file-meta">
                   {file.size} · {file.date}
                 </span>
               </span>
+
               <a href="#" class="review-file-download" title="Download {file.name}">
                 <svg
                   width="16"

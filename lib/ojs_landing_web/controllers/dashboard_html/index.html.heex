@@ -2,11 +2,11 @@
   <div class="dashboard-header">
     <div class="container">
       <h1 class="dashboard-title">Dashboard</h1>
-      
+
       <p class="dashboard-subtitle">Welcome, {@user.given_name} {@user.family_name}</p>
     </div>
   </div>
-  
+
   <div class="dashboard-content">
     <div class="container">
       <div class="dashboard-grid">
@@ -14,25 +14,25 @@
           <div class="card-header">
             <h2 class="card-title">My Profile</h2>
           </div>
-          
+
           <div class="card-body">
             <div class="profile-info">
               <div class="info-row">
                 <strong>Name:</strong> <span>{@user.given_name} {@user.family_name}</span>
               </div>
-              
+
               <div class="info-row">
                 <strong>Email:</strong> <span>{@user.email}</span>
               </div>
-              
+
               <div class="info-row">
                 <strong>Username:</strong> <span>{@user.username}</span>
               </div>
-              
+
               <div class="info-row">
                 <strong>Affiliation:</strong> <span>{@user.affiliation}</span>
               </div>
-              
+
               <div class="info-row">
                 <strong>Role:</strong>
                 <span class={["role-badge", role_class(@user.role)]}>{format_role(@user.role)}</span>
@@ -40,12 +40,12 @@
             </div>
           </div>
         </div>
-        
+
         <div class="dashboard-card">
           <div class="card-header">
             <h2 class="card-title">Quick Actions</h2>
           </div>
-          
+
           <div class="card-body">
             <div class="quick-actions">
               <%= if @user.role == :author do %>
@@ -54,14 +54,14 @@
                   <span class="action-text">My Submissions</span>
                 </a>
               <% end %>
-              
+
               <%= if @user.role == :admin do %>
                 <a href="/admin" class="action-btn">
                   <span class="action-icon">⚙️</span>
                   <span class="action-text">Site Administration</span>
                 </a>
               <% end %>
-              
+
               <a href="/profile" class="action-btn">
                 <span class="action-icon"></span> <span class="action-text">Edit Profile</span>
               </a>

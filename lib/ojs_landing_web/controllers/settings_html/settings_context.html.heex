@@ -63,7 +63,7 @@
         hint="Whether the editor's profile is publicly visible."
       />
     </.settings_panel>
-
+    
     <.settings_panel
       anchor="contact"
       title="Contact"
@@ -110,7 +110,7 @@
         hint="The phone number for support requests."
       />
     </.settings_panel>
-
+    
     <.settings_panel
       anchor="sections"
       title="Sections"
@@ -125,8 +125,11 @@
         <%= for row <- sections(@journal) do %>
           <tr id={"section-row-#{row.id}"}>
             <td>{row.name}</td>
+            
             <td>{row.abbreviation}</td>
+            
             <td>{row.policy}</td>
+            
             <td>
               <span class="settings-row-actions">
                 <a href="#" class="settings-row-action">Edit</a>
@@ -136,12 +139,12 @@
           </tr>
         <% end %>
       </.settings_table>
-
+      
       <div class="settings-list-add">
         <button type="button" class="btn-settings-link">+ Add Section</button>
       </div>
     </.settings_panel>
-
+    
     <.settings_panel
       anchor="categories"
       title="Categories"
@@ -156,8 +159,11 @@
         <%= for row <- categories(@journal) do %>
           <tr id={"category-row-#{row.id}"}>
             <td>{row.name}</td>
+            
             <td>{row.description}</td>
+            
             <td>{row.parent}</td>
+            
             <td>
               <span class="settings-row-actions">
                 <a href="#" class="settings-row-action">Edit</a>
@@ -167,7 +173,7 @@
           </tr>
         <% end %>
       </.settings_table>
-
+      
       <div class="settings-list-add">
         <button type="button" class="btn-settings-link">+ Add Category</button>
       </div>

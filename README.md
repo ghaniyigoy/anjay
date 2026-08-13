@@ -34,7 +34,10 @@ Username `alief` adalah admin, sisanya seeded user:
 * **Manage DOIs** — Halaman manajemen DOI bergaya OJS PKP 3.5 (grid editorial dengan tab Articles | Issues | Galleys, filter status, checkbox, dan panah biru untuk aksi per-baris), dapat diakses oleh admin & editor
 * **DOI Artikel** — Halaman pendaftaran DOI untuk artikel bergaya OJS PKP 3.5 (sidebar Dasbor Editor dengan submenu DOI, bilah peringatan prefiks, filter Status & Pendaftaran, daftar artikel dengan checkbox & dropdown publikasi), dapat diakses oleh admin & editor
 * **Statistics Dashboard** — Dashboard statistik jurnal bergaya OJS PKP 3.5 (Publications, Issues, Context, Editorial, Users, COUNTER R5, Reports) dengan filter tanggal, chart, dan export CSV, dapat diakses oleh **admin & editor**
-* **Administrasi** — Konteks, pengaturan, sistem info, manajemen jurnal, jobs/failed jobs
+* **Site Settings** — Pengaturan situs bergaya OJS PKP 3.5 (14 panel: Site Setup, Site Contact, Logo & Footer, Banners, Sidebar, Navigation Menus, Plugins, Plugin Gallery, Theme, Language, Registration & Password, Redirect, Advanced, Bulk Email) di dalam layout admin OJS dengan main tab bar horizontal (satu panel aktif), khusus **admin**
+* **System Information** — Informasi sistem bergaya OJS PKP 3.5 (version, configuration settings, extended information, maintenance tasks) di dalam layout admin OJS, khusus **admin**
+* **Jobs & Failed Jobs** — Halaman antrean pekerjaan bergaya OJS PKP 3.5 (tabel queued jobs dengan kolom ID/Job/Queue/Attempts/Created At, tabel failed jobs dengan aksi Try Again/Details/Delete + Requeue All) di dalam layout admin OJS, khusus **admin**
+* **Administrasi** — Konteks, site settings, sistem info, manajemen jurnal, jobs/failed jobs
 
 ## Routing
 
@@ -193,6 +196,87 @@ Setiap baris terbitan:
 | Articles | Jumlah artikel pada terbitan |
 | Actions | Aksi View (menuju halaman issue), Edit, Delete / Unpublish |
 
+### Site Settings (admin)
+
+Halaman pengaturan situs (level instalasi OJS) bergaya OJS PKP 3.5. Hanya dapat diakses oleh akun **`admin`**; pengguna lain atau yang belum login akan dialihkan ke `/login`.
+
+**Navigasi:** tombol **Site Settings** di dashboard admin (`/admin`), atau langsung melalui URL di bawah.
+
+Jalur lengkap: `/admin/settings`.
+
+Contoh: `http://localhost:4000/admin/settings`
+
+**Tampilan halaman:**
+- Dirender di dalam **layout admin OJS** (`Layouts.admin`) dengan header & dropdown pengguna khas administrasi.
+- Breadcrumb `Administration / Site Settings` + judul **Site Settings**.
+- **Main tab bar horizontal** di atas konten berisi 14 panel (Site Setup, Site Contact, ...); klik tab menampilkan **satu panel aktif** saja (didukung hash URL, mis. `#plugins`).
+- Kolom konten menampilkan panel aktif dengan baris form OJS PKP (label di kiri + hint + kontrol), save bar sticky (Save / Cancel) di bawah.
+
+14 panel Site Settings:
+
+| Anchor | Panel | Isi |
+| --- | --- | --- |
+| `#setup` | **Site Setup** | Nama & deskripsi situs, tema, kontak situs, min password length, redirect URL |
+| `#siteContact` | **Site Contact** | Kontak (nama, email, telepon, alamat, afiliasi) |
+| `#logoFooter` | **Logo & Footer** | Logo situs, homepage image, thumbnail jurnal, page footer |
+| `#banners` | **Banners** | Homepage banner & content banner (unggah + tampilkan) |
+| `#sidebar` | **Sidebar** | Blok sidebar yang aktif (reader tools, language toggle, web feed, dll.) |
+| `#navigation` | **Navigation Menus** | Menu Primary & User Navigation (item + path) |
+| `#plugins` | **Plugins** | Daftar plugin terpasang (status Enabled/Disabled + aksi) |
+| `#pluginGallery` | **Plugin Gallery** | Kartu plugin PKP community dengan tab kategori & tombol Install |
+| `#theme` | **Theme** | Pilihan tema, tipografi, dan warna |
+| `#language` | **Language** | Primary locale & supported locales |
+| `#registration` | **Registration & Password** | Registrasi situs, min password length, password recovery, notice |
+| `#redirect` | **Redirect** | Redirect ke jurnal tujuan atau URL |
+| `#advanced` | **Advanced** | Site style sheet, favicon, additional content, disable images in emails |
+| `#bulkEmail` | **Bulk Email** | Izin bulk email per jurnal |
+
+Data untuk dropdown (tema, bahasa, blok sidebar, galeri plugin, daftar jurnal) bersifat presentasional di `AdminHTML` (helper `site_themes/0`, `site_languages/0`, `site_plugin_gallery/0`, dst).
+
+### System Information (admin)
+
+Halaman informasi sistem (level instalasi OJS) bergaya OJS PKP 3.5. Hanya dapat diakses oleh akun **`admin`**; pengguna lain atau yang belum login akan dialihkan ke `/login`.
+
+**Navigasi:** tombol **View System Information** pada kartu "System Information" di dashboard admin (`/admin`), atau langsung melalui URL di bawah.
+
+Jalur lengkap: `/admin/systemInfo`.
+
+Contoh: `http://localhost:4000/admin/systemInfo`
+
+**Tampilan halaman:**
+- Dirender di dalam **layout admin OJS** (`Layouts.admin`) dengan breadcrumb `Administration / System Information`.
+- Panel **System Information** dengan aksi tautan ke Server Information, PHP Information (`/admin/phpinfo`), dan Maintenance Tasks.
+- Panel **Server Information** berisi tiga tabel label/nilai:
+  - **Version Information** — OJS Landing version, Elixir version, Erlang/OTP version, operating system, server software (Bandit), environment.
+  - **Configuration Settings** — system architecture, schedulers, logical processors, total & used memory, atom count, process count, Erlang node, uptime.
+  - **Extended Information** — jumlah loaded applications, hosted journals, registered users, dan installed plugins.
+- Panel **Maintenance Tasks** dengan tautan Clear Data Cache, Clear Template Cache, dan Expire User Sessions.
+
+Data sistem diambil real-time dari runtime (Elixir/OTP) oleh helper di `AdminHTML` (`system_info_version/0`, `system_info_configuration/0`, `system_info_extended/0`).
+
+### Jobs & Failed Jobs (admin)
+
+Halaman antrean pekerjaan (level instalasi OJS) bergaya OJS PKP 3.5. Hanya dapat diakses oleh akun **`admin`**; pengguna lain atau yang belum login akan dialihkan ke `/login`.
+
+**Navigasi:** kartu **Jobs** di dashboard admin (`/admin`) berisi tombol **View Jobs** dan **View Failed Jobs**, atau langsung melalui URL di bawah.
+
+| URL | Keterangan |
+| --- | --- |
+| `/admin/jobs` | Daftar pekerjaan yang sedang menunggu dieksekusi (queued jobs) |
+| `/admin/failedJobs` | Daftar pekerjaan yang gagal dieksekusi (failed jobs) |
+| `/admin/failedJobDetails/:id` | Detail attribute/value untuk satu failed job tertentu |
+
+Contoh: `http://localhost:4000/admin/jobs`
+
+**Tampilan halaman:**
+- Dirender di dalam **layout admin OJS** (`Layouts.admin`) dengan breadcrumb `Administration / Jobs`.
+- Tombol tab atas **View Jobs | View Failed Jobs** (yang aktif disorot) untuk berpindah antara kedua halaman.
+- **Jobs**: deskripsi jumlah total (`There's a total of N job(s) on the queue`) + tabel kolom **ID, Job, Queue, Attempts, Created At**.
+- **Failed Jobs**: deskripsi jumlah total + tombol **Requeue All Failed Jobs** + tabel kolom **ID, Job, Queue, Connection, Failed At, Actions** dengan aksi **Try Again**, **Details** (menuju `/admin/failedJobDetails/:id`), dan **Delete** (dengan konfirmasi).
+- **Failed Job Details**: tabel **Attribute | Attribute Value** dengan nilai (termasuk exception/payload) ditampilkan dalam blok `<pre>` monospace.
+
+Data jobs/failed jobs bersifat dummy/presentasional di helper `AdminHTML` (`queued_jobs/0`, `failed_jobs/0`, `failed_job/1`, `failed_job_details_rows/1`).
+
 ### Author Submission (membutuhkan login)
 
 Membuat & mengelola submission membutuhkan login sebagai **author**; bila belum login akan dialihkan ke `/login`.
@@ -245,6 +329,33 @@ Contoh: `http://localhost:4000/submission/new`
 * `lib/ojs_landing_web/controllers/stats_html/` — template per laporan (publications, issues, context, editorial, users, counter_r5, reports)
 * `assets/css/app.css` — gaya `.stats-*` (filter bar, chart, panel laporan, kartu ringkasan, tabel)
 * `test/ojs_landing_web/controllers/stats_controller_test.exs` — test akses, konten per laporan, sidebar, dan export CSV
+
+## Site Settings (referensi)
+
+* `lib/ojs_landing_web/controllers/admin_controller.ex` — guard akses admin (`:require_admin`) + action `settings/2` yang men-set root layout admin OJS (`Layouts.admin`)
+* `lib/ojs_landing_web/controllers/admin_html.ex` — view module dengan komponen `site_settings_layout/1` (breadcrumb, main tab bar horizontal dengan tampilan satu panel aktif + hash), `site_settings_panel/1`, komponen form `site_*_field`, plus data helper (`site_settings_panels/0`, `site_themes/0`, `site_sidebar_blocks/0`, `site_languages/0`, `site_installed_plugins/0`, `site_plugin_gallery/0`, `site_journal_options/0`)
+* `lib/ojs_landing_web/controllers/admin_html/settings.html.heex` — template 14 panel Site Settings
+* `lib/ojs_landing_web/components/layouts/admin.html.heex` — layout admin OJS (header biru tua, dropdown user, footer) yang dipakai halaman Site Settings
+* `assets/css/app.css` — gaya `.site-settings-*` (main tab bar horizontal) + `.plugin-gallery-*` (tabs & kartu galeri plugin), responsif di bawah 860px
+* `test/ojs_landing_web/controllers/admin_controller_test.exs` — test akses role, layout admin, sidebar nav, dan ke-14 panel
+
+## System Information (referensi)
+
+* `lib/ojs_landing_web/controllers/admin_controller.ex` — guard akses admin (`:require_admin`) + action `system_info/2` yang men-set root layout admin OJS (`Layouts.admin`)
+* `lib/ojs_landing_web/controllers/admin_html.ex` — view module dengan helper data sistem real-time (`system_info_version/0`, `system_info_configuration/0`, `system_info_extended/0`, `format_bytes/1`, `format_uptime/0`) dan komponen `system_info_table/1`
+* `lib/ojs_landing_web/controllers/admin_html/system_info.html.heex` — template System Information (breadcrumb, panel aksi, tabel version/configuration/extended, maintenance tasks)
+* `assets/css/app.css` — gaya `.system-info-*` (aksi tombol, tabel label/nilai)
+* `test/ojs_landing_web/controllers/admin_controller_test.exs` — test halaman system info, konten baris, dan tautan maintenance
+
+## Jobs & Failed Jobs (referensi)
+
+* `lib/ojs_landing_web/controllers/admin_controller.ex` — guard akses admin (`:require_admin`) + action `jobs/2`, `failed_jobs/2`, dan `failed_job_details/2` yang men-set root layout admin OJS (`Layouts.admin`)
+* `lib/ojs_landing_web/controllers/admin_html.ex` — view module dengan helper data jobs dummy (`queued_jobs/0`, `failed_jobs/0`, `failed_job/1`, `failed_job_details_rows/1`)
+* `lib/ojs_landing_web/controllers/admin_html/jobs.html.heex` — template queued jobs (breadcrumb, tab View Jobs/Failed Jobs, tabel ID/Job/Queue/Attempts/Created At)
+* `lib/ojs_landing_web/controllers/admin_html/failed_jobs.html.heex` — template failed jobs (aksi Try Again/Details/Delete + Requeue All Failed Jobs)
+* `lib/ojs_landing_web/controllers/admin_html/failed_job_details.html.heex` — template detail failed job (tabel Attribute | Attribute Value dengan blok `<pre>`)
+* `assets/css/app.css` — gaya `.jobs-*` (tabel, nama job monospace, tombol tab aktif, aksi danger) + `.settings-page-description`
+* `test/ojs_landing_web/controllers/admin_controller_test.exs` — test akses role, layout admin, konten tabel, dan halaman detail
 
 ## Referensi Teknis
 

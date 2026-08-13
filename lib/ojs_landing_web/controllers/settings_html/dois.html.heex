@@ -1,95 +1,86 @@
 <div id="dois" class="manage-issues-page doi-manage-page">
   <header class="manage-issues-header">
     <div class="manage-issues-breadcrumb">
-      <a href="/dashboard">Dashboard</a>
-      <span class="manage-issues-breadcrumb-sep">/</span>
+      <a href="/dashboard">Dashboard</a> <span class="manage-issues-breadcrumb-sep">/</span>
       <span>DOIs</span>
     </div>
-
+    
     <div class="manage-issues-heading">
       <h1 class="manage-issues-title">DOIs</h1>
-
+      
       <p class="manage-issues-subtitle">
         Register and manage Digital Object Identifiers (DOIs) for the content
         published in {@journal.title}.
       </p>
     </div>
   </header>
-
+  
   <nav class="ojs-submission-tabs manage-issues-tabs" aria-label="DOI object types">
     <a href="#articles" data-tab="articles" class="active">
       Articles <span class="ojs-tab-count">{length(@article_items)}</span>
     </a>
-
+    
     <a href="#issues" data-tab="issues">
       Issues <span class="ojs-tab-count">{length(@issue_items)}</span>
     </a>
-
+    
     <a href="#galleys" data-tab="galleys">
       Galleys <span class="ojs-tab-count">{length(@galley_items)}</span>
     </a>
   </nav>
-
-  <%!-- Articles --%>
+   <%!-- Articles --%>
   <div id="articles" class="ojs-submission-tab-panel manage-issues-panel doi-panel active">
     <div class="doi-layout">
       <%!-- Filters sidebar --%>
       <aside class="doi-filters">
         <h3 class="doi-filters-title">Filters</h3>
-
+        
         <div class="doi-filter-group">
           <h4 class="doi-filter-label">Status</h4>
-
+          
           <label class="doi-filter-option">
-            <input type="checkbox" checked />
-            <span>All</span>
+            <input type="checkbox" checked /> <span>All</span>
           </label>
-
+          
           <label class="doi-filter-option">
-            <input type="checkbox" />
-            <span>Needs DOI</span>
+            <input type="checkbox" /> <span>Needs DOI</span>
             <span class="doi-filter-count">{@status_counts.needs_doi}</span>
           </label>
-
+          
           <label class="doi-filter-option">
-            <input type="checkbox" />
-            <span>DOI Assigned</span>
+            <input type="checkbox" /> <span>DOI Assigned</span>
             <span class="doi-filter-count">{@status_counts.assigned}</span>
           </label>
-
+          
           <label class="doi-filter-option">
-            <input type="checkbox" />
-            <span>Registered</span>
+            <input type="checkbox" /> <span>Registered</span>
             <span class="doi-filter-count">{@status_counts.registered}</span>
           </label>
-
+          
           <label class="doi-filter-option">
-            <input type="checkbox" />
-            <span>Unregistered</span>
+            <input type="checkbox" /> <span>Unregistered</span>
             <span class="doi-filter-count">{@status_counts.unregistered}</span>
           </label>
-
+          
           <label class="doi-filter-option">
-            <input type="checkbox" />
-            <span>Submitted</span>
+            <input type="checkbox" /> <span>Submitted</span>
           </label>
-
+          
           <label class="doi-filter-option">
-            <input type="checkbox" />
-            <span>Error</span>
+            <input type="checkbox" /> <span>Error</span>
           </label>
-
+          
           <label class="doi-filter-option">
-            <input type="checkbox" />
-            <span>Stale</span>
+            <input type="checkbox" /> <span>Stale</span>
           </label>
         </div>
-
+        
         <div class="doi-filter-group">
           <h4 class="doi-filter-label">Issue</h4>
-
+          
           <select class="settings-input doi-filter-select">
             <option value="">All Issues</option>
+            
             <%= for issue <- @issue_items do %>
               <option value={issue.id}>
                 Vol. {issue.volume}, No. {issue.number} ({issue.year})
@@ -98,16 +89,14 @@
           </select>
         </div>
       </aside>
-
-      <%!-- List panel --%>
+       <%!-- List panel --%>
       <div class="doi-list-panel">
         <div class="doi-toolbar">
           <div class="doi-toolbar-left">
             <input type="checkbox" class="doi-select-all" aria-label="Select all" />
-
             <button type="button" class="btn-settings-secondary" disabled>Bulk Actions</button>
           </div>
-
+          
           <div class="doi-toolbar-right">
             <div class="search-box">
               <svg
@@ -120,10 +109,10 @@
                 stroke-width="2"
               >
                 <circle cx="11" cy="11" r="8"></circle>
-
+                
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
-
+              
               <input
                 type="text"
                 placeholder="Search DOIs, titles, authors..."
@@ -132,31 +121,31 @@
             </div>
           </div>
         </div>
-
+        
         <%= if length(@article_items) > 0 do %>
           <div class="submissions-table-wrapper doi-table-wrap">
             <table class="submissions-table doi-table">
               <thead>
                 <tr>
                   <th class="doi-col-select"></th>
-
+                  
                   <th class="doi-col-toggle"></th>
-
+                  
                   <th>Title</th>
-
+                  
                   <th class="doi-col-code">DOI</th>
-
+                  
                   <th class="doi-col-status">Status</th>
                 </tr>
               </thead>
-
+              
               <tbody>
                 <%= for item <- @article_items do %>
                   <tr id={"doi-row-#{item.id}"}>
                     <td class="doi-col-select">
                       <input type="checkbox" aria-label={"Select #{item.title}"} />
                     </td>
-
+                    
                     <td class="doi-col-toggle">
                       <button
                         type="button"
@@ -177,22 +166,23 @@
                         </svg>
                       </button>
                     </td>
-
+                    
                     <td>
                       <div class="doi-item-title">
                         <a href={~p"/#{@journal_path}/article/#{item.id}"}>{item.title}</a>
                       </div>
-
+                      
                       <div class="doi-item-meta">
                         {Enum.join(item.authors, ", ")}
                         <%= if item.published_date do %>
                           · {item.published_date}
                         <% end %>
+                        
                         <%= if item.pages do %>
                           · pp. {item.pages}
                         <% end %>
                       </div>
-
+                      
                       <div class="doi-row-actions">
                         <%= if item.status == :needs_doi do %>
                           <a href="#" class="settings-row-action">Assign DOI</a>
@@ -205,11 +195,11 @@
                           >
                             View
                           </a>
-                          <a href="#" class="settings-row-action">Register</a>
+                           <a href="#" class="settings-row-action">Register</a>
                         <% end %>
                       </div>
                     </td>
-
+                    
                     <td class="doi-col-code">
                       <span class="doi-code">
                         <%= if item.doi do %>
@@ -219,7 +209,7 @@
                         <% end %>
                       </span>
                     </td>
-
+                    
                     <td class="doi-col-status">
                       <.doi_status_badge status={item.status} />
                     </td>
@@ -227,7 +217,7 @@
                 <% end %>
               </tbody>
             </table>
-
+            
             <div class="table-footer">
               Showing <strong>0 to {length(@article_items)}</strong>
               of <strong>{length(@article_items)}</strong>
@@ -239,61 +229,57 @@
       </div>
     </div>
   </div>
-
-  <%!-- Issues --%>
+   <%!-- Issues --%>
   <div id="issues" class="ojs-submission-tab-panel manage-issues-panel doi-panel">
     <div class="doi-layout">
       <aside class="doi-filters">
         <h3 class="doi-filters-title">Filters</h3>
-
+        
         <div class="doi-filter-group">
           <h4 class="doi-filter-label">Status</h4>
-
+          
           <label class="doi-filter-option">
-            <input type="checkbox" checked />
-            <span>All</span>
+            <input type="checkbox" checked /> <span>All</span>
           </label>
-
+          
           <label class="doi-filter-option">
-            <input type="checkbox" />
-            <span>Registered</span>
+            <input type="checkbox" /> <span>Registered</span>
           </label>
         </div>
       </aside>
-
+      
       <div class="doi-list-panel">
         <div class="doi-toolbar">
           <div class="doi-toolbar-left">
             <input type="checkbox" class="doi-select-all" aria-label="Select all" />
-
             <button type="button" class="btn-settings-secondary" disabled>Bulk Actions</button>
           </div>
         </div>
-
+        
         <%= if length(@issue_items) > 0 do %>
           <div class="submissions-table-wrapper doi-table-wrap">
             <table class="submissions-table doi-table">
               <thead>
                 <tr>
                   <th class="doi-col-select"></th>
-
+                  
                   <th class="doi-col-toggle"></th>
-
+                  
                   <th>Issue</th>
-
+                  
                   <th class="doi-col-code">DOI</th>
-
+                  
                   <th class="doi-col-status">Status</th>
                 </tr>
               </thead>
-
+              
               <tbody>
                 <%= for issue <- @issue_items do %>
                   <tr id={"doi-issue-row-#{issue.id}"}>
                     <td class="doi-col-select">
                       <input type="checkbox" aria-label={"Select #{issue.title}"} />
                     </td>
-
+                    
                     <td class="doi-col-toggle">
                       <button
                         type="button"
@@ -314,23 +300,23 @@
                         </svg>
                       </button>
                     </td>
-
+                    
                     <td>
                       <div class="doi-item-title">{issue.title}</div>
-
+                      
                       <div class="doi-item-meta">
                         Vol. {issue.volume}, No. {issue.number} ({issue.year})
                       </div>
-
+                      
                       <div class="doi-row-actions">
                         <a href="#" class="settings-row-action">Register</a>
                       </div>
                     </td>
-
+                    
                     <td class="doi-col-code">
                       <span class="doi-code">{issue.doi}</span>
                     </td>
-
+                    
                     <td class="doi-col-status"><.doi_status_badge status={issue.status} /></td>
                   </tr>
                 <% end %>
@@ -343,8 +329,7 @@
       </div>
     </div>
   </div>
-
-  <%!-- Galleys --%>
+   <%!-- Galleys --%>
   <div id="galleys" class="ojs-submission-tab-panel manage-issues-panel doi-panel">
     <div class="ojs-empty-state">No galleys have been assigned DOIs.</div>
   </div>

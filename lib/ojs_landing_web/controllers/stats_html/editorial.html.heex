@@ -1,9 +1,9 @@
 <div class="editor-dashboard-container stats-page">
   <.stats_sidebar section={:editorial} journal_path={@journal_path} />
-
   <div class="editor-main-content stats-main">
     <.stats_breadcrumb section="Editorial" />
     <h1 class="page-heading">Editorial</h1>
+
     <p class="stats-subtitle">
       This report provides a summary of the editorial activity of the journal, including submissions
       received, accepted, declined, and published, along with the average number of days to editorial
@@ -17,30 +17,40 @@
       export_url={"/#{@journal_path}/stats/editorial/editorial?export=csv"}
       show_metric={false}
     />
-
     <div class="stats-summary-cards">
       <div class="stats-summary-card">
         <div class="stats-summary-value">{@editorial.summary.received}</div>
+
         <div class="stats-summary-label">Submissions Received</div>
       </div>
+
       <div class="stats-summary-card">
         <div class="stats-summary-value">{@editorial.summary.accepted}</div>
+
         <div class="stats-summary-label">Submissions Accepted</div>
       </div>
+
       <div class="stats-summary-card">
         <div class="stats-summary-value">{@editorial.summary.declined}</div>
+
         <div class="stats-summary-label">Submissions Declined</div>
       </div>
+
       <div class="stats-summary-card">
         <div class="stats-summary-value">{@editorial.summary.published}</div>
+
         <div class="stats-summary-label">Submissions Published</div>
       </div>
+
       <div class="stats-summary-card">
         <div class="stats-summary-value">{@editorial.summary.days_first_avg}</div>
+
         <div class="stats-summary-label">Avg. Days to First Decision</div>
       </div>
+
       <div class="stats-summary-card">
         <div class="stats-summary-value">{@editorial.summary.days_final_avg}</div>
+
         <div class="stats-summary-label">Avg. Days to Final Decision</div>
       </div>
     </div>
@@ -56,28 +66,42 @@
           <thead>
             <tr>
               <th>Month</th>
+
               <th>Received</th>
+
               <th>Accepted</th>
+
               <th>Declined</th>
+
               <th>Published</th>
+
               <th>Days to First Decision</th>
+
               <th>Days to Final Decision</th>
             </tr>
           </thead>
+
           <tbody>
             <%= for row <- @editorial.rows do %>
               <tr>
                 <td><span class="stats-item-title">{row.label}</span></td>
+
                 <td>{row.received}</td>
+
                 <td>{row.accepted}</td>
+
                 <td>{row.declined}</td>
+
                 <td>{row.published}</td>
+
                 <td>{row.days_first}</td>
+
                 <td>{row.days_final}</td>
               </tr>
             <% end %>
           </tbody>
         </table>
+
         <div class="table-footer">
           Showing <strong>0 to {length(@editorial.rows)}</strong>
           of <strong>{length(@editorial.rows)}</strong>

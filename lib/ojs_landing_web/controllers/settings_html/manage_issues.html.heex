@@ -1,42 +1,37 @@
 <div id="issues" class="manage-issues-page">
   <header class="manage-issues-header">
     <div class="manage-issues-breadcrumb">
-      <a href="/dashboard">Dashboard</a>
-      <span class="manage-issues-breadcrumb-sep">/</span>
+      <a href="/dashboard">Dashboard</a> <span class="manage-issues-breadcrumb-sep">/</span>
       <span>Issues</span>
     </div>
-
+    
     <div class="manage-issues-heading">
       <h1 class="manage-issues-title">Issues</h1>
-
+      
       <p class="manage-issues-subtitle">
         Create, edit and publish the issues of {@journal.title}.
       </p>
     </div>
   </header>
-
-  <% groups = issue_groups(@issues) %>
-
+   <% groups = issue_groups(@issues) %>
   <nav class="ojs-submission-tabs manage-issues-tabs" aria-label="Issue views">
     <a href="#future" data-tab="future" class="active">
       Future Issues <span class="ojs-tab-count">{length(groups.future)}</span>
     </a>
-
+    
     <a href="#back-issues" data-tab="back-issues">
       Back Issues <span class="ojs-tab-count">{length(groups.back)}</span>
     </a>
   </nav>
-
-  <%!-- Future Issues --%>
+   <%!-- Future Issues --%>
   <div id="future" class="ojs-submission-tab-panel manage-issues-panel active">
     <div class="manage-issues-toolbar">
       <span class="manage-issues-toolbar-hint">
         Unpublished issues that have not yet been made available to readers.
       </span>
-
-      <button type="button" class="btn-ojs-primary manage-issues-create">Create Issue</button>
+       <button type="button" class="btn-ojs-primary manage-issues-create">Create Issue</button>
     </div>
-
+    
     <%= if length(groups.future) > 0 do %>
       <div class="manage-issues-list">
         <%= for issue <- groups.future do %>
@@ -59,18 +54,18 @@
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-
+            
             <div class="manage-issue-main">
               <span class="settings-issue-label">{issue_volume_label(issue)}</span>
               <span class="manage-issue-title">{issue.title}</span>
               <span class="manage-issue-count">{issue_article_count(issue)} article(s)</span>
             </div>
-
+            
             <div id={"issue-actions-#{issue.id}"} class="manage-issue-actions">
               <a href={~p"/#{@journal_path}/issue/#{issue.id}"} class="settings-row-action">
                 View
               </a>
-              <a href="#" class="settings-row-action">Edit</a>
+               <a href="#" class="settings-row-action">Edit</a>
               <a href="#" class="settings-row-action">Unpublish</a>
             </div>
           </div>
@@ -80,13 +75,12 @@
       <div class="ojs-empty-state">No future issues have been created yet.</div>
     <% end %>
   </div>
-
-  <%!-- Back Issues --%>
+   <%!-- Back Issues --%>
   <div id="back-issues" class="ojs-submission-tab-panel manage-issues-panel">
     <div class="manage-issues-toolbar">
       <span class="manage-issues-toolbar-hint">All published issues of this journal.</span>
     </div>
-
+    
     <%= if length(groups.back) > 0 do %>
       <div class="manage-issues-list">
         <%= for issue <- groups.back do %>
@@ -109,18 +103,18 @@
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-
+            
             <div class="manage-issue-main">
               <span class="settings-issue-label">{issue_volume_label(issue)}</span>
               <span class="manage-issue-title">{issue.title}</span>
               <span class="manage-issue-count">{issue_article_count(issue)} article(s)</span>
             </div>
-
+            
             <div id={"issue-actions-#{issue.id}"} class="manage-issue-actions">
               <a href={~p"/#{@journal_path}/issue/#{issue.id}"} class="settings-row-action">
                 View
               </a>
-              <a href="#" class="settings-row-action">Edit</a>
+               <a href="#" class="settings-row-action">Edit</a>
               <a href="#" class="settings-row-action">Unpublish</a>
             </div>
           </div>

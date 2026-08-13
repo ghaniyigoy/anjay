@@ -13,8 +13,11 @@
           stroke-width="2"
         >
           <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+
           <rect x="14" y="3" width="7" height="5" rx="1"></rect>
+
           <rect x="14" y="12" width="7" height="9" rx="1"></rect>
+
           <rect x="3" y="16" width="7" height="5" rx="1"></rect>
         </svg>
         <span class="sidebar-title">Dasbor Editor</span>
@@ -37,7 +40,9 @@
         >
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
           </path>
+
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+
           <line x1="12" y1="22.08" x2="12" y2="12"></line>
         </svg>
         <span class="sidebar-title">Terbitan</span>
@@ -56,7 +61,9 @@
           stroke-width="2"
         >
           <circle cx="12" cy="12" r="10"></circle>
+
           <line x1="2" y1="12" x2="22" y2="12"></line>
+
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
           </path>
         </svg>
@@ -88,12 +95,14 @@
               stroke-width="2"
             >
               <circle cx="12" cy="12" r="3"></circle>
+
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
               </path>
             </svg>
             Pengaturan
           </a>
         </li>
+
         <li>
           <a href={OjsLandingWeb.EditorHTML.journal_stats_path()}>
             <svg
@@ -106,12 +115,15 @@
               stroke-width="2"
             >
               <line x1="18" y1="20" x2="18" y2="10"></line>
+
               <line x1="12" y1="20" x2="12" y2="4"></line>
+
               <line x1="6" y1="20" x2="6" y2="14"></line>
             </svg>
             Statistik
           </a>
         </li>
+
         <li>
           <a href="#">
             <svg
@@ -124,13 +136,17 @@
               stroke-width="2"
             >
               <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+
               <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+
               <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+
               <rect x="3" y="14" width="7" height="7" rx="1"></rect>
             </svg>
             Perangkat
           </a>
         </li>
+
         <li>
           <a href="#">
             <svg
@@ -150,7 +166,6 @@
       </ul>
     </div>
   </aside>
-
   <!-- Main Content -->
   <div class="editor-main-content doi-article-main">
     <!-- Warning bar -->
@@ -166,9 +181,12 @@
       >
         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
         </path>
+
         <line x1="12" y1="9" x2="12" y2="13"></line>
+
         <line x1="12" y1="17" x2="12.01" y2="17"></line>
       </svg>
+
       <span>
         DOI tidak dapat dibuat kecuali jika anda menyediakan prefiks DOI yang dibuat. Tambahkan prefiks DOI.
       </span>
@@ -176,8 +194,7 @@
 
     <nav class="ojs-submission-tabs doi-article-tabs" aria-label="Objek DOI">
       <a href="#articles" class="active">Artikel
-      <span class="ojs-tab-count">{length(@articles)}</span></a>
-      <a href="#issues">Terbitan</a>
+      <span class="ojs-tab-count">{length(@articles)}</span></a> <a href="#issues">Terbitan</a>
       <a href="#galleys">Galeri</a>
     </nav>
 
@@ -201,6 +218,7 @@
               stroke-width="2"
             >
               <circle cx="11" cy="11" r="8"></circle>
+
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
             <input type="text" placeholder="Cari" class="search-input" />
@@ -228,7 +246,9 @@
             stroke-width="2"
           >
             <circle cx="12" cy="12" r="10"></circle>
+
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
           </svg>
         </h3>
@@ -241,6 +261,7 @@
 
         <div class="doi-filter-group">
           <h4 class="doi-filter-label">Pendaftaran</h4>
+
           <a href="#" class="doi-filter-link">Tidak terdaftar ({@registration_counts.unregistered})</a>
           <a href="#" class="doi-filter-link">Dikirimkan ({@registration_counts.submitted})</a>
           <a href="#" class="doi-filter-link">Didaftarkan ({@registration_counts.registered})</a>
@@ -250,6 +271,7 @@
 
         <div class="doi-filter-group">
           <h4 class="doi-filter-label">Terbitan</h4>
+
           <input
             type="text"
             class="settings-input doi-filter-issue-input"
@@ -257,7 +279,6 @@
           />
         </div>
       </aside>
-
       <!-- List panel -->
       <div class="doi-list-panel">
         <div class="submissions-table-wrapper doi-table-wrap">
@@ -267,7 +288,9 @@
                 <th class="doi-col-select">
                   <input type="checkbox" class="doi-select-all" aria-label="Pilih semua" />
                 </th>
+
                 <th>Judul</th>
+
                 <th class="doi-col-publication">Publikasi</th>
               </tr>
             </thead>
@@ -278,11 +301,13 @@
                   <td class="doi-col-select">
                     <input type="checkbox" aria-label={"Pilih #{item.title}"} />
                   </td>
+
                   <td>
                     <div class="doi-article-title-cell">
                       <span class="doi-item-title">{item.title}</span>
                       <span class="doi-article-id">{item.id}</span>
                     </div>
+
                     <div class="doi-item-meta">
                       <%= if item.doi do %>
                         <span class="doi-code">{item.doi}</span>
@@ -291,6 +316,7 @@
                       <% end %>
                     </div>
                   </td>
+
                   <td class="doi-col-publication">
                     <select
                       class="doi-publication-select"
@@ -298,6 +324,7 @@
                       data-published={item.published}
                     >
                       <option value="published" selected={item.published}>Diterbitkan</option>
+
                       <option value="unpublished" selected={!item.published}>
                         Tidak Diterbitkan
                       </option>

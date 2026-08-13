@@ -24,11 +24,14 @@ defmodule OjsLandingWeb.StatsHTML do
             stroke-width="2"
           >
             <line x1="18" y1="20" x2="18" y2="10"></line>
+
             <line x1="12" y1="20" x2="12" y2="4"></line>
+
             <line x1="6" y1="20" x2="6" y2="14"></line>
           </svg>
           <span class="sidebar-title">Statistics</span>
         </div>
+
         <ul class="sidebar-menu" style="display: block">
           <li class={stats_active(@section, :publications)}>
             <a href={"/#{@journal_path}/stats/publications/publications"}>Publications</a>
@@ -47,11 +50,8 @@ defmodule OjsLandingWeb.StatsHTML do
   def stats_breadcrumb(assigns) do
     ~H"""
     <div class="settings-breadcrumb">
-      <a href="/dashboard/editorial">Dashboard</a>
-      <span class="settings-breadcrumb-sep">/</span>
-      <span>Statistics</span>
-      <span class="settings-breadcrumb-sep">/</span>
-      <span>{@section}</span>
+      <a href="/dashboard/editorial">Dashboard</a> <span class="settings-breadcrumb-sep">/</span>
+      <span>Statistics</span> <span class="settings-breadcrumb-sep">/</span> <span>{@section}</span>
     </div>
     """
   end
@@ -83,6 +83,7 @@ defmodule OjsLandingWeb.StatsHTML do
         <span class="stats-chart-title">
           {chart_title(@mode)}
         </span>
+
         <span class="stats-chart-legend">
           <%= if @mode in [:views, :downloads] do %>
             <span class="stats-legend-dot stats-legend-views"></span>
@@ -93,12 +94,14 @@ defmodule OjsLandingWeb.StatsHTML do
           <% end %>
         </span>
       </div>
+
       <div class="stats-chart-bars">
         <%= for point <- @series do %>
           <div class="stats-chart-col">
             <div class="stats-chart-col-label">
               {point.label}
             </div>
+
             <div class="stats-chart-bar-wrap">
               <%= if @mode in [:views, :downloads] do %>
                 <div
@@ -106,6 +109,7 @@ defmodule OjsLandingWeb.StatsHTML do
                   style={bar_height(point.views || 0, @max_val)}
                 >
                 </div>
+
                 <div
                   class="stats-chart-bar stats-chart-bar-downloads"
                   style={bar_height(point.downloads || 0, @max_val)}
@@ -150,10 +154,12 @@ defmodule OjsLandingWeb.StatsHTML do
           value={@from}
         />
       </div>
+
       <div class="stats-field">
         <label for="to">End Date</label>
         <input class="settings-input stats-date-input" type="date" id="to" name="to" value={@to} />
       </div>
+
       <%= if @show_metric do %>
         <div class="stats-field">
           <label for="metric">Metric Type</label>
@@ -163,10 +169,12 @@ defmodule OjsLandingWeb.StatsHTML do
             name="metric"
           >
             <option value="views" selected={@metric == "views"}>Views</option>
+
             <option value="downloads" selected={@metric == "downloads"}>Downloads</option>
           </select>
         </div>
       <% end %>
+
       <div class="stats-field stats-field-actions">
         <button type="submit" class="btn-settings-secondary">Apply</button>
         <a class="btn-settings-secondary stats-export-btn" href={@export_url}>Export CSV</a>

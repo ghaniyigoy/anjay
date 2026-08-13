@@ -9148,6 +9148,362 @@ tr.is-open .doi-row-actions {
 }
 
 /* ============================================
+   Site Settings (OJS 3.5 admin, main tabs layout)
+   ============================================ */
+.site-settings-page {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 28px 30px 60px;
+  font-family: 'Noto Sans', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.site-settings-head {
+  margin-bottom: 22px;
+}
+
+.site-settings-card {
+  background: #fff;
+  border: 1px solid #d8dee4;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.site-settings-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 10px 14px 0;
+  border-bottom: 1px solid #e6eaef;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+.site-settings-tab {
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #5a6472;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: color 0.13s ease, border-color 0.13s ease, background 0.13s ease;
+}
+
+.site-settings-tab:hover {
+  color: #006798;
+  background: #f2f7fb;
+}
+
+.site-settings-tab.is-active {
+  color: #006798;
+  border-bottom-color: #006798;
+}
+
+.site-settings-content {
+  padding: 10px 26px 20px;
+}
+
+.site-settings-content .settings-panel {
+  display: none;
+}
+
+.site-settings-content .settings-panel.is-shown {
+  display: block;
+}
+
+.site-settings-form {
+  margin: 0;
+}
+
+/* ============================================
+   Plugin Gallery (Site Settings)
+   ============================================ */
+.plugin-gallery-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid #e1e6eb;
+  border-radius: 8px;
+  background: #fafbfc;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.plugin-gallery-tab {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5a6472;
+  text-decoration: none;
+  border-radius: 999px;
+  transition: color 0.13s ease, background 0.13s ease;
+}
+
+.plugin-gallery-tab:hover {
+  color: #006798;
+  background: #e8f0f6;
+}
+
+.plugin-gallery-tab.is-active {
+  color: #fff;
+  background: #006798;
+}
+
+.plugin-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 14px;
+}
+
+.plugin-gallery-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e1e6eb;
+  border-radius: 10px;
+  padding: 16px;
+  background: #fff;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.plugin-gallery-card:hover {
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  border-color: #bcd4e3;
+  transform: translateY(-2px);
+}
+
+.plugin-gallery-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.plugin-gallery-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1f27;
+}
+
+.plugin-gallery-category {
+  font-size: 11px;
+  font-weight: 700;
+  color: #006798;
+  background: #eef4f9;
+  border: 1px solid #d5e4ef;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.plugin-gallery-description {
+  font-size: 12.5px;
+  color: #5a6472;
+  line-height: 1.55;
+  margin: 0 0 12px 0;
+  flex: 1;
+}
+
+.plugin-gallery-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.plugin-gallery-status {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #9a6b00;
+  background: #fff4e5;
+  border: 1px solid #f2ddb3;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.plugin-gallery-install {
+  padding: 8px 18px;
+  font-size: 13px;
+  width: 100%;
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .site-settings-tabs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .site-settings-tab {
+    border-bottom: 1px solid #e6eaef;
+    margin-bottom: 0;
+  }
+
+  .site-settings-tab.is-active {
+    border-bottom-color: #e6eaef;
+    border-left: 3px solid #006798;
+  }
+
+  .plugin-gallery-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   System Information (OJS admin)
+   ============================================ */
+.system-info-content {
+  padding-bottom: 34px;
+}
+
+.system-info-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.system-info-actions .btn-settings-secondary {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.system-info-table {
+  max-width: 720px;
+}
+
+.system-info-table tbody tr:hover {
+  background: transparent;
+}
+
+.system-info-label {
+  width: 42%;
+  text-align: left;
+  padding: 11px 14px;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: #2a2f38;
+  border-bottom: 1px solid #f1f3f6;
+}
+
+.system-info-value {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  color: #333;
+  word-break: break-word;
+}
+
+/* ============================================
+   Jobs & Failed Jobs (OJS 3.5 admin)
+   ============================================ */
+.settings-page-description {
+  font-size: 14px;
+  color: #6a7480;
+  margin: 10px 0 0 0;
+  line-height: 1.55;
+}
+
+.settings-head-row .system-info-actions {
+  margin-top: 0;
+}
+
+.system-info-actions .btn-settings-secondary.is-active {
+  background: #006798;
+  color: #fff;
+  border-color: #006798;
+}
+
+.system-info-actions .btn-settings-secondary.is-active:hover {
+  background: #00527a;
+  border-color: #00527a;
+}
+
+.jobs-content {
+  padding-bottom: 34px;
+}
+
+.jobs-table .jobs-id {
+  width: 70px;
+  color: #8a94a1;
+  font-variant-numeric: tabular-nums;
+}
+
+.jobs-table .jobs-name {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12.5px;
+  color: #2a2f38;
+  word-break: break-word;
+}
+
+.jobs-table .jobs-attempts {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.jobs-table .jobs-date {
+  color: #5a6472;
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+
+.jobs-table .jobs-connection {
+  color: #5a6472;
+}
+
+.settings-row-action--danger {
+  color: #d3232f;
+}
+
+.settings-row-action--danger:hover {
+  background: #fdecee;
+  border-color: #f3c2c7;
+}
+
+.failed-jobs-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+
+.failed-jobs-actions .btn-settings-primary {
+  text-decoration: none;
+}
+
+.jobs-detail-attribute {
+  font-weight: 600;
+  color: #2a2f38;
+  white-space: nowrap;
+}
+
+.jobs-detail-value {
+  padding: 0 !important;
+}
+
+.jobs-detail-pre {
+  margin: 0;
+  padding: 11px 14px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12.5px;
+  color: #333;
+  background: #fafbfc;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.55;
+}
+
+.failed-job-details-table td {
+  padding: 0;
+}
+
+.failed-job-details-table .jobs-detail-attribute {
+  padding: 12px 14px;
+}
+
+/* ============================================
    Manage Issues (OJS-style tabs + #back)
    ============================================ */
 .manage-issues-page {

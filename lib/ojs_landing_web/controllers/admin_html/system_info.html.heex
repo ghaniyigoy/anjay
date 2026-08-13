@@ -1,11 +1,74 @@
-<div class="admin-page">
-  <h1 class="admin-page-title">{@page_title || "Admin Page"}</h1>
-  
-  <div class="admin-card">
-    <div class="admin-card-content">
-      <p>Halaman ini masih dalam pengembangan.</p>
+<div class="settings-page">
+  <header class="settings-head">
+    <div class="settings-breadcrumb">
+      <a href="/admin">Administration</a>
+      <span class="settings-breadcrumb-sep">/</span>
+      <span>System Information</span>
+    </div>
+
+    <div class="settings-head-row">
+      <h1 class="settings-title">System Information</h1>
+    </div>
+  </header>
+
+  <div class="settings-main">
+    <div class="settings-content system-info-content">
+      <section class="settings-panel">
+        <div class="settings-panel-head">
+          <h2 class="settings-panel-title">System Information</h2>
+
+          <p class="settings-panel-description">
+            View information about the version and configuration settings of the application and server.
+          </p>
+        </div>
+
+        <div class="system-info-actions">
+          <a href="#serverInformation" class="btn-settings-secondary">Server Information</a>
+          <a href="/admin/phpinfo" class="btn-settings-secondary">PHP Information</a>
+          <a href="#maintenanceTasks" class="btn-settings-secondary">Maintenance Tasks</a>
+        </div>
+      </section>
+
+      <section id="serverInformation" class="settings-panel">
+        <div class="settings-panel-head">
+          <h2 class="settings-panel-title">Server Information</h2>
+
+          <p class="settings-panel-description">
+            Version and configuration details about this installation of OJS Landing.
+          </p>
+        </div>
+
+        <.system_info_table
+          title="Version Information"
+          rows={system_info_version()}
+        />
+
+        <.system_info_table
+          title="Configuration Settings"
+          rows={system_info_configuration()}
+        />
+
+        <.system_info_table
+          title="Extended Information"
+          rows={system_info_extended()}
+        />
+      </section>
+
+      <section id="maintenanceTasks" class="settings-panel">
+        <div class="settings-panel-head">
+          <h2 class="settings-panel-title">Maintenance Tasks</h2>
+
+          <p class="settings-panel-description">
+            Delete cached files or expire user sessions to troubleshoot problems with the application.
+          </p>
+        </div>
+
+        <div class="system-info-actions">
+          <a href="/admin/clearDataCache" class="btn-settings-secondary">Clear Data Cache</a>
+          <a href="/admin/clearTemplateCache" class="btn-settings-secondary">Clear Template Cache</a>
+          <a href="/admin/expireSessions" class="btn-settings-secondary">Expire User Sessions</a>
+        </div>
+      </section>
     </div>
   </div>
-  
-  <a href="/admin" class="btn-admin btn-admin-secondary" style="margin-top: 20px;">← Back to Admin</a>
 </div>

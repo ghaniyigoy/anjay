@@ -1,0 +1,549 @@
+<.site_settings_layout active="setup">
+  <form id="site-settings-form" class="site-settings-form">
+    <.site_settings_panel
+      anchor="setup"
+      title="Site Setup"
+      description="Configure the name and description of your site, the site theme and the primary contact details."
+    >
+      <.site_input_field
+        label="Site Name"
+        name="site[siteName]"
+        value="Open Journal Systems"
+        required={true}
+        hint="The name of your OJS installation, shown in the header of the reader interface."
+      />
+
+      <.site_textarea_field
+        label="Site Description"
+        name="site[siteDescription]"
+        value="A multi-journal scholarly publishing platform hosted with Open Journal Systems."
+        hint="A short introduction to your site, displayed on the site homepage."
+      />
+
+      <.site_select_field
+        label="Site Theme"
+        name="site[siteTheme]"
+        value="defaultTheme"
+        options={site_themes()}
+        hint="The theme used across all journals hosted on this site."
+      />
+
+      <.site_input_field
+        label="Site Contact Name"
+        name="site[siteContactName]"
+        value="Alief Admin"
+        hint="The name of the person to contact about the operation of this site."
+      />
+
+      <.site_input_field
+        label="Site Contact Email"
+        name="site[siteContactEmail]"
+        value="alief@admin.com"
+        type="email"
+        required={true}
+      />
+
+      <.site_input_field
+        label="Min Password Length"
+        name="site[minPasswordLength]"
+        value="6"
+        type="number"
+        size={4}
+        hint="The minimum number of characters required in a new user's password."
+      />
+
+      <.site_input_field
+        label="Redirect URL"
+        name="site[redirect]"
+        placeholder="https://example.org"
+        hint="If set, visitors to the site root will be redirected to this address."
+      />
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="siteContact"
+      title="Site Contact"
+      description="Contact details used across the site for public enquiries about the platform."
+    >
+      <.site_input_field
+        label="Contact Name"
+        name="site[contactName]"
+        value="Alief Admin"
+        required={true}
+      />
+
+      <.site_input_field
+        label="Contact Email"
+        name="site[contactEmail]"
+        value="alief@admin.com"
+        type="email"
+        required={true}
+      />
+
+      <.site_input_field
+        label="Contact Phone"
+        name="site[contactPhone]"
+        value="+62 21 555 0123"
+        type="tel"
+      />
+
+      <.site_textarea_field
+        label="Contact Address"
+        name="site[contactAddress]"
+        value="Jl. Teknologi No. 12, Jakarta, Indonesia"
+        rows={2}
+      />
+
+      <.site_input_field
+        label="Contact Affiliation"
+        name="site[contactAffiliation]"
+        value="OJS Administrator"
+        hint="The organizational affiliation of the site contact."
+      />
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="logoFooter"
+      title="Logo & Footer"
+      description="Upload branding assets and the footer content shown on the site front-end."
+    >
+      <.site_input_field
+        label="Site Logo"
+        name="site[siteLogo]"
+        type="file"
+        hint="An image displayed in the header of the site. If none is uploaded the site name is used."
+      />
+
+      <.site_input_field
+        label="Homepage Image"
+        name="site[homepageImage]"
+        type="file"
+        hint="An image shown on the site homepage."
+      />
+
+      <.site_input_field
+        label="Journal Thumbnail"
+        name="site[journalThumbnail]"
+        type="file"
+        hint="A small thumbnail used when listing hosted journals."
+      />
+
+      <.site_textarea_field
+        label="Page Footer"
+        name="site[pageFooter]"
+        value="Powered by Open Journal Systems 3.5"
+        rows={2}
+        hint="Text or HTML displayed in the footer of every page."
+      />
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="banners"
+      title="Banners"
+      description="Upload banner images that appear on the homepage and in the content area."
+    >
+      <.site_input_field
+        label="Homepage Banner"
+        name="site[homepageBanner]"
+        type="file"
+        hint="A wide image displayed at the top of the site homepage."
+      />
+
+      <.site_checkbox_field
+        label="Display Homepage Banner"
+        name="site[displayHomepageBanner]"
+        value={["1"]}
+        options={[{"1", "Show the homepage banner on the site homepage"}]}
+      />
+
+      <.site_input_field
+        label="Content Banner"
+        name="site[contentBanner]"
+        type="file"
+        hint="A banner displayed above the main content area of every page."
+      />
+
+      <.site_checkbox_field
+        label="Display Content Banner"
+        name="site[displayContentBanner]"
+        value={["0"]}
+        options={[{"1", "Show the content banner on the site pages"}]}
+      />
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="sidebar"
+      title="Sidebar"
+      description="Choose the blocks shown in the right sidebar of the reader interface."
+    >
+      <.site_checkbox_field
+        label="Sidebar Blocks"
+        name="site[enable_blocks][]"
+        value={site_selected_blocks()}
+        options={site_block_options()}
+        hint="Active blocks are displayed in the sidebar; drag to reorder once saved."
+      />
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="navigation"
+      title="Navigation Menus"
+      description="Configure the site-wide navigation menus available to all hosted journals."
+    >
+      <div class="settings-subblock">
+        <h4 class="settings-subblock-title">Primary Navigation Menu</h4>
+        <div class="settings-list-head">
+          <h3>Menu Items</h3>
+          <button type="button" class="btn-settings-link">+ Add Item</button>
+        </div>
+        <div class="settings-table-wrap">
+          <table class="settings-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Path</th>
+                <th class="settings-table-actions-col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Home</td>
+                <td>{"/{journal path}"}</td>
+                <td><span class="settings-row-action">Edit</span></td>
+              </tr>
+              <tr>
+                <td>About</td>
+                <td>{"/{journal path}/about"}</td>
+                <td><span class="settings-row-action">Edit</span></td>
+              </tr>
+              <tr>
+                <td>Login</td>
+                <td>{"/{journal path}/login"}</td>
+                <td><span class="settings-row-action">Edit</span></td>
+              </tr>
+              <tr>
+                <td>Register</td>
+                <td>{"/{journal path}/register"}</td>
+                <td><span class="settings-row-action">Edit</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="settings-subblock">
+        <h4 class="settings-subblock-title">User Navigation Menu</h4>
+        <div class="settings-list-head">
+          <h3>Menu Items</h3>
+          <button type="button" class="btn-settings-link">+ Add Item</button>
+        </div>
+        <div class="settings-table-wrap">
+          <table class="settings-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Path</th>
+                <th class="settings-table-actions-col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>View Profile</td>
+                <td>/profile</td>
+                <td><span class="settings-row-action">Edit</span></td>
+              </tr>
+              <tr>
+                <td>Logout</td>
+                <td>/logout</td>
+                <td><span class="settings-row-action">Edit</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="plugins"
+      title="Plugins"
+      description="Enable or disable the plugins installed on this site. Some plugins are required by the system and cannot be disabled."
+    >
+      <div class="settings-list-head">
+        <h3>Installed Plugins</h3>
+        <a href="#pluginGallery" class="btn-settings-link">Open Plugin Gallery</a>
+      </div>
+
+      <div class="settings-table-wrap">
+        <table class="settings-table">
+          <thead>
+            <tr>
+              <th>Plugin</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th class="settings-table-actions-col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for plugin <- site_installed_plugins() do %>
+              <tr>
+                <td>
+                  <span class="settings-plugin-name">{plugin.name}</span>
+                  <span class="settings-plugin-version">{plugin.version}</span>
+                  <div class="settings-form-hint">{plugin.description}</div>
+                </td>
+                <td>{plugin.category}</td>
+                <td>
+                  <span class={["settings-status", plugin.enabled && "is-enabled"]}>
+                    {if plugin.enabled, do: "Enabled", else: "Disabled"}
+                  </span>
+                </td>
+                <td>
+                  <span class="settings-row-actions">
+                    <%= if plugin.enabled do %>
+                      <a href="#" class="settings-row-action">Disable</a>
+                    <% else %>
+                      <a href="#" class="settings-row-action">Enable</a>
+                    <% end %>
+                  </span>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="pluginGallery"
+      title="Plugin Gallery"
+      description="Browse and install plugins developed by the PKP community. Installed plugins appear in the Plugins panel above."
+    >
+      <div class="plugin-gallery-tabs">
+        <a href="#pluginGallery" class="plugin-gallery-tab is-active">All</a>
+        <a href="#pluginGallery" class="plugin-gallery-tab">Generic</a>
+        <a href="#pluginGallery" class="plugin-gallery-tab">Theme</a>
+        <a href="#pluginGallery" class="plugin-gallery-tab">Imported</a>
+      </div>
+
+      <div class="plugin-gallery-grid">
+        <%= for plugin <- site_plugin_gallery() do %>
+          <div class="plugin-gallery-card">
+            <div class="plugin-gallery-card-head">
+              <span class="plugin-gallery-name">{plugin.display_name}</span>
+              <span class="plugin-gallery-category">{plugin.category}</span>
+            </div>
+            <p class="plugin-gallery-description">{plugin.description}</p>
+            <div class="plugin-gallery-foot">
+              <span class="settings-plugin-version">{plugin.version}</span>
+              <span class="plugin-gallery-status">{plugin.status}</span>
+            </div>
+            <button type="button" class="btn-settings-primary plugin-gallery-install">Install</button>
+          </div>
+        <% end %>
+      </div>
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="theme"
+      title="Theme"
+      description="Select the theme and visual options applied to the site."
+    >
+      <.site_radio_field
+        label="Site Theme"
+        name="site[siteTheme]"
+        value="defaultTheme"
+        options={site_themes()}
+      />
+
+      <.site_select_field
+        label="Typography"
+        name="site[typography]"
+        value="notoSerif"
+        dropdown={true}
+        options={[
+          {"notoSans", "Noto Sans"},
+          {"notoSerif", "Noto Serif"},
+          {"lato", "Lato"}
+        ]}
+      />
+
+      <.site_select_field
+        label="Colour"
+        name="site[colour]"
+        value="blue"
+        dropdown={true}
+        options={[
+          {"blue", "Blue"},
+          {"green", "Green"},
+          {"red", "Red"},
+          {"purple", "Purple"}
+        ]}
+      />
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="language"
+      title="Language"
+      description="Set the default language and the languages supported on this site."
+    >
+      <.site_select_field
+        label="Primary Locale"
+        name="site[sitePrimaryLocale]"
+        value="id_ID"
+        options={site_languages()}
+        hint="The language used by default across the site."
+      />
+
+      <.site_checkbox_field
+        label="Supported Locales"
+        name="site[supportedLocales][]"
+        value={Enum.map(site_languages(), fn {code, _} -> code end)}
+        options={site_languages()}
+        hint="Enabled languages are available to all journals hosted on this site."
+      />
+
+      <div class="settings-list-add">
+        <button type="button" class="btn-settings-link">+ Install Locale</button>
+      </div>
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="registration"
+      title="Registration & Password"
+      description="Control how users register on the site and the password rules applied."
+    >
+      <.site_radio_field
+        label="Site Registration"
+        name="site[registrationEnabled]"
+        value="enabled"
+        inline={true}
+        options={[
+          {"enabled", "Enabled"},
+          {"disabled", "Disabled"}
+        ]}
+      />
+
+      <.site_input_field
+        label="Min Password Length"
+        name="site[minPasswordLength]"
+        value="6"
+        type="number"
+        size={4}
+        hint="The minimum number of characters required in a new user's password."
+      />
+
+      <.site_checkbox_field
+        label="Password Recovery"
+        name="site[passwordRecovery]"
+        value={["1"]}
+        options={[{"1", "Allow users to recover forgotten passwords by email"}]}
+      />
+
+      <.site_textarea_field
+        label="Registration Notice"
+        name="site[registrationNotice]"
+        value="Welcome to our publishing platform. Registrations are reviewed before approval."
+        rows={3}
+        hint="Shown to users on the registration form."
+      />
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="redirect"
+      title="Redirect"
+      description="Optionally redirect all visitors from the site root to another journal or address."
+    >
+      <.site_select_field
+        label="Redirect Site"
+        name="site[redirectJournal]"
+        value="none"
+        dropdown={true}
+        options={[{"none", "None"} | site_journal_options()]}
+        hint="Select a hosted journal to send site visitors to."
+      />
+
+      <.site_input_field
+        label="Redirect URL"
+        name="site[redirect]"
+        placeholder="https://example.org"
+        hint="Takes precedence over the selected journal when both are set."
+      />
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="advanced"
+      title="Advanced"
+      description="Advanced site options including custom style sheets, the favicon and additional content."
+    >
+      <.site_input_field
+        label="Site Style Sheet"
+        name="site[siteStyleSheet]"
+        type="file"
+        hint="Upload a CSS file applied across the whole site."
+      />
+
+      <.site_input_field
+        label="Favicon"
+        name="site[favicon]"
+        type="file"
+        hint="A small icon displayed in the browser tab."
+      />
+
+      <.site_textarea_field
+        label="Additional Content"
+        name="site[additionalContent]"
+        value=""
+        rows={3}
+        hint="HTML or text displayed at the bottom of the site homepage content area."
+      />
+
+      <.site_checkbox_field
+        label="Email Images"
+        name="site[disableImagesInEmails]"
+        value={["0"]}
+        options={[{"1", "Disable images in outgoing emails"}]}
+      />
+    </.site_settings_panel>
+
+    <.site_settings_panel
+      anchor="bulkEmail"
+      title="Bulk Email"
+      description="Allow editors to send bulk email messages to users of the journals hosted on this site."
+    >
+      <div class="settings-list-head">
+        <h3>Journals</h3>
+      </div>
+
+      <div class="settings-table-wrap">
+        <table class="settings-table">
+          <thead>
+            <tr>
+              <th>Journal</th>
+              <th>Path</th>
+              <th>Enable Bulk Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for {path, title} <- site_journal_options() do %>
+              <tr>
+                <td><span class="settings-plugin-name">{title}</span></td>
+                <td>/{path}</td>
+                <td>
+                  <label class="settings-checkbox">
+                    <input
+                      type="checkbox"
+                      name="site[bulkEmail][]"
+                      value={path}
+                      checked="checked"
+                    />
+                    <span>Enabled</span>
+                  </label>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </.site_settings_panel>
+  </form>
+</.site_settings_layout>
