@@ -1,0 +1,55 @@
+<div class="editor-dashboard-container stats-page">
+  <.stats_sidebar section={:context} journal_path={@journal_path} />
+
+  <div class="editor-main-content stats-main">
+    <.stats_breadcrumb section="Context" />
+    <h1 class="page-heading">Context</h1>
+    <p class="stats-subtitle">
+      This report provides a summary of the views and downloads of the journal context, including the
+      home page, issue landing pages, and search results for the selected date range.
+    </p>
+
+    <.stats_filter_bar
+      action={"/#{@journal_path}/stats/context/context"}
+      from={@from}
+      to={@to}
+      metric={@metric}
+      export_url={"/#{@journal_path}/stats/context/context?export=csv"}
+    />
+
+    <.bar_chart series={@series} mode={:views} />
+
+    <div class="stats-report-panel">
+      <div class="stats-panel-heading">
+        <h2>Context</h2>
+        <span class="ojs-tab-count">{length(@rows)}</span>
+      </div>
+
+      <div class="submissions-table-wrapper stats-table-wrap">
+        <table class="submissions-table stats-table">
+          <thead>
+            <tr>
+              <th>Context</th>
+              <th>Views</th>
+              <th>Downloads</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for row <- @rows do %>
+              <tr>
+                <td>
+                  <span class="stats-item-title">{row.page}</span>
+                </td>
+                <td>{row.views}</td>
+                <td>{row.downloads}</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        <div class="table-footer">
+          Showing <strong>0 to {length(@rows)}</strong> of <strong>{length(@rows)}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

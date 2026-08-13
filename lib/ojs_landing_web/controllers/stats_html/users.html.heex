@@ -1,0 +1,66 @@
+<div class="editor-dashboard-container stats-page">
+  <.stats_sidebar section={:users} journal_path={@journal_path} />
+
+  <div class="editor-main-content stats-main">
+    <.stats_breadcrumb section="Users" />
+    <h1 class="page-heading">Users</h1>
+    <p class="stats-subtitle">
+      This report provides a summary of the users registered with this journal, grouped by role.
+    </p>
+
+    <div class="stats-filter-bar">
+      <div class="stats-field stats-field-actions">
+        <a
+          class="btn-settings-secondary stats-export-btn"
+          href={"/#{@journal_path}/stats/users/users?export=csv"}
+        >
+          Export CSV
+        </a>
+      </div>
+    </div>
+
+    <div class="stats-summary-cards">
+      <div class="stats-summary-card">
+        <div class="stats-summary-value">{total_users(@rows)}</div>
+        <div class="stats-summary-label">Total Registered Users</div>
+      </div>
+      <div class="stats-summary-card">
+        <div class="stats-summary-value">{role_count(@rows, :author)}</div>
+        <div class="stats-summary-label">Authors</div>
+      </div>
+      <div class="stats-summary-card">
+        <div class="stats-summary-value">{role_count(@rows, :reviewer)}</div>
+        <div class="stats-summary-label">Reviewers</div>
+      </div>
+    </div>
+
+    <div class="stats-report-panel">
+      <div class="stats-panel-heading">
+        <h2>Users by Role</h2>
+        <span class="ojs-tab-count">{length(@rows)}</span>
+      </div>
+
+      <div class="submissions-table-wrapper stats-table-wrap">
+        <table class="submissions-table stats-table">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Users</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for row <- @rows do %>
+              <tr>
+                <td><span class="stats-item-title">{row.role}</span></td>
+                <td>{row.count}</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        <div class="table-footer">
+          Showing <strong>0 to {length(@rows)}</strong> of <strong>{length(@rows)}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

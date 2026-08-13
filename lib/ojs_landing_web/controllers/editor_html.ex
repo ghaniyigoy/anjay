@@ -48,6 +48,11 @@ defmodule OjsLandingWeb.EditorHTML do
     "/#{journal.path}/dois"
   end
 
+  def journal_stats_path do
+    [journal | _] = OjsLanding.Journal.all()
+    "/#{journal.path}/stats/publications/publications"
+  end
+
   def journal_settings_links do
     base = journal_settings_path() |> String.replace("/context", "")
 
@@ -57,6 +62,20 @@ defmodule OjsLandingWeb.EditorHTML do
       {"Workflow", "#{base}/workflow"},
       {"Distribution", "#{base}/distribution"},
       {"Users & Roles", "#{base}/access"}
+    ]
+  end
+
+  def journal_stats_links do
+    base = journal_stats_path() |> String.replace("/publications", "")
+
+    [
+      {"Publications", "#{base}/publications/publications"},
+      {"Issues", "#{base}/issues/issues"},
+      {"Context", "#{base}/context/context"},
+      {"Editorial", "#{base}/editorial/editorial"},
+      {"Users", "#{base}/users/users"},
+      {"COUNTER R5", "#{base}/counterR5/counterR5"},
+      {"Reports", "#{base}/reports"}
     ]
   end
 end

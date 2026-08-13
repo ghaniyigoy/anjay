@@ -100,6 +100,47 @@ defmodule OjsLanding.Journal do
             published_date: "2024-01-15"
           }
         ]
+      },
+      %__MODULE__{
+        id: 3,
+        title: "Kucing & Kelinci",
+        description: "Jurnal yang membahas tentang kucing dan kelinci.",
+        issn: "2715-2468",
+        publisher: "Fakultas Kedokteran Hewan",
+        editor: "Dr. Meong Banyak",
+        path: "kucingkelinci",
+        articles: [
+          %{
+            id: 1,
+            title: "Faiha1 — The kucingkelinci",
+            authors: ["Faiha", "Kucing Kelinci"],
+            abstract:
+              "Studi tentang perilaku kucing dan kelinci yang hidup berdampingan dalam satu rumah.",
+            pages: "1-10",
+            published_date: "2025-01-20",
+            doi: "10.1234/kucingkelinci.v1i1.1"
+          },
+          %{
+            id: 2,
+            title: "Perbandingan Pola Tidur Kucing dan Kelinci",
+            authors: ["Faiha", "Bella"],
+            abstract:
+              "Artikel ini membandingkan siklus tidur kucing domestik dengan kelinci peliharaan.",
+            pages: "11-25",
+            published_date: "2025-01-20",
+            doi: "10.1234/kucingkelinci.v1i1.2"
+          },
+          %{
+            id: 3,
+            title: "Nutrisi Ideal untuk Kucing dan Kelinci",
+            authors: ["Faiha", "Kucing Kelinci"],
+            abstract:
+              "Pembahasan tentang kebutuhan nutrisi harian kucing dan kelinci peliharaan.",
+            pages: "26-40",
+            published_date: "2025-06-15",
+            doi: "10.1234/kucingkelinci.v1i2.3"
+          }
+        ]
       }
     ]
   end

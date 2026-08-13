@@ -169,6 +169,28 @@ defmodule OjsLanding.Issue do
         published_date: nil,
         status: :scheduled,
         articles: []
+      },
+      %__MODULE__{
+        id: 5,
+        journal_id: 3,
+        title: "Kucing & Kelinci: Volume 1, Nomor 2",
+        volume: 1,
+        number: 2,
+        year: 2025,
+        published_date: "2025-06-15",
+        status: :published,
+        articles: []
+      },
+      %__MODULE__{
+        id: 6,
+        journal_id: 3,
+        title: "Kucing & Kelinci: Volume 1, Nomor 1",
+        volume: 1,
+        number: 1,
+        year: 2025,
+        published_date: "2025-01-20",
+        status: :published,
+        articles: []
       }
     ]
   end

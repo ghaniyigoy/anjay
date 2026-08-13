@@ -1,0 +1,60 @@
+<div class="editor-dashboard-container stats-page">
+  <.stats_sidebar section={:publications} journal_path={@journal_path} />
+
+  <div class="editor-main-content stats-main">
+    <.stats_breadcrumb section="Publications" />
+    <h1 class="page-heading">Publications</h1>
+    <p class="stats-subtitle">
+      This report provides a summary of the views and downloads of your publications for the selected
+      date range. Views are counted for abstract pages and galleys; downloads are counted for galley
+      file downloads.
+    </p>
+
+    <.stats_filter_bar
+      action={"/#{@journal_path}/stats/publications/publications"}
+      from={@from}
+      to={@to}
+      metric={@metric}
+      export_url={"/#{@journal_path}/stats/publications/publications?export=csv"}
+    />
+
+    <.bar_chart series={@series} mode={:views} />
+
+    <div class="stats-report-panel">
+      <div class="stats-panel-heading">
+        <h2>Publications</h2>
+        <span class="ojs-tab-count">{length(@rows)}</span>
+      </div>
+
+      <div class="submissions-table-wrapper stats-table-wrap">
+        <table class="submissions-table stats-table">
+          <thead>
+            <tr>
+              <th class="stats-col-id">ID</th>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Views</th>
+              <th>Downloads</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for row <- @rows do %>
+              <tr>
+                <td class="stats-col-id">{row.id}</td>
+                <td>
+                  <span class="stats-item-title">{row.title}</span>
+                </td>
+                <td><span class="stats-badge">{row.type}</span></td>
+                <td>{row.views}</td>
+                <td>{row.downloads}</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        <div class="table-footer">
+          Showing <strong>0 to {length(@rows)}</strong> of <strong>{length(@rows)}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

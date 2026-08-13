@@ -33,6 +33,7 @@ Username `alief` adalah admin, sisanya seeded user:
 * **Manage Issues** — Manajemen terbitan (issues) jurnal per volume/nomor dengan tab OJS PKP 3.5 (Future | Back Issues), tiap baris punya panah biru untuk membuka aksi (Edit, Preview, Publish/Unpublish)
 * **Manage DOIs** — Halaman manajemen DOI bergaya OJS PKP 3.5 (grid editorial dengan tab Articles | Issues | Galleys, filter status, checkbox, dan panah biru untuk aksi per-baris), dapat diakses oleh admin & editor
 * **DOI Artikel** — Halaman pendaftaran DOI untuk artikel bergaya OJS PKP 3.5 (sidebar Dasbor Editor dengan submenu DOI, bilah peringatan prefiks, filter Status & Pendaftaran, daftar artikel dengan checkbox & dropdown publikasi), dapat diakses oleh admin & editor
+* **Statistics Dashboard** — Dashboard statistik jurnal bergaya OJS PKP 3.5 (Publications, Issues, Context, Editorial, Users, COUNTER R5, Reports) dengan filter tanggal, chart, dan export CSV, dapat diakses oleh **admin & editor**
 * **Administrasi** — Konteks, pengaturan, sistem info, manajemen jurnal, jobs/failed jobs
 
 ## Routing
@@ -100,6 +101,33 @@ Contoh: `http://localhost:4000/dashboard/doiArticles`
 - Tabel artikel dengan checkbox, judul, badge ID, dan dropdown publikasi (Diterbitkan / Tidak Diterbitkan).
 
 Data artikel DOI bersifat dummy/presentasional di `DoiArticleController.get_articles/0`.
+
+### Statistics Dashboard (admin & editor)
+
+Dashboard statistik jurnal bergaya OJS PKP 3.5. Dapat diakses oleh akun **`admin`** dan **`editor`**; pengguna lain atau yang belum login akan dialihkan ke `/login`.
+
+**Navigasi:** pilihan laporan dipilih dari item **Statistics** di sidebar dashboard editor (dapat diperluas seperti **Settings**, memuat Publications, Issues, Context, Editorial, Users, COUNTER R5, Reports), atau langsung melalui URL di bawah.
+
+| URL | Keterangan |
+| --- | --- |
+| `/:journal_path/stats/publications/publications` | Laporan Publications — views & downloads per artikel + chart bulanan |
+| `/:journal_path/stats/issues/issues` | Laporan Issues — views & downloads per terbitan |
+| `/:journal_path/stats/context/context` | Laporan Context — views homepage, issue, dan hasil pencarian |
+| `/:journal_path/stats/editorial/editorial` | Laporan Editorial — kartu ringkasan + tabel aktivitas editorial bulanan (received, accepted, declined, published, days to decision) |
+| `/:journal_path/stats/users/users` | Laporan Users — jumlah pengguna terdaftar per role |
+| `/:journal_path/stats/counterR5/counterR5` | Laporan COUNTER R5 — tab Journal Report 1 (TR / IR) |
+| `/:journal_path/stats/reports` | Daftar jenis laporan yang bisa diunduh (CSV) |
+
+Contoh: `http://localhost:4000/kucingkelinci/stats/publications/publications`
+
+**Tampilan halaman:**
+- Breadcrumb `Dashboard / Statistics / <Laporan>` di bagian atas, dengan link **Dashboard** untuk kembali ke dashboard editor.
+- Sidebar **Statistics** dengan submenu Publications saja (item aktif disorot biru).
+- Filter bar tanggal (Start Date / End Date), dropdown Metric Type (kecuali Editorial & Users), dan tombol **Export CSV**.
+- Chart batang CSS untuk tren bulanan (Views vs Downloads, atau total untuk COUNTER R5).
+- Panel tabel laporan dengan kolom sesuai jenis laporan dan footer *Showing*.
+
+Data statistik bersifat dummy deterministik di `OjsLanding.Stats` (diturunkan dari jurnal, issue, dan user seed). Export CSV tersedia di tiap laporan via `?export=csv`.
 
 ### Review Assignment (membutuhkan login reviewer)
 
@@ -209,6 +237,15 @@ Contoh: `http://localhost:4000/submission/new`
 * `lib/ojs_landing_web/components/layouts/dashboard.html.heex` — layout dashboard (header biru tua dengan judul jurnal, ikon info, lonceng notifikasi, inisial pengguna)
 * `test/ojs_landing_web/controllers/doi_article_controller_test.exs` — test akses & konten halaman
 
+## Statistics Dashboard (referensi)
+
+* `lib/ojs_landing/stats.ex` — data dummy deterministik per laporan (publications, issues, context, editorial, users, counter R5, reports) + `to_csv/2`
+* `lib/ojs_landing_web/controllers/stats_controller.ex` — guard akses admin/editor + render 7 laporan + export CSV via `?export=csv`
+* `lib/ojs_landing_web/controllers/stats_html.ex` — view module dengan komponen `stats_sidebar/1` (submenu Publications), `stats_breadcrumb/1` (link kembali ke dashboard), `bar_chart/1`, `stats_filter_bar/1` + helper `total_users/1`, `role_count/2`
+* `lib/ojs_landing_web/controllers/stats_html/` — template per laporan (publications, issues, context, editorial, users, counter_r5, reports)
+* `assets/css/app.css` — gaya `.stats-*` (filter bar, chart, panel laporan, kartu ringkasan, tabel)
+* `test/ojs_landing_web/controllers/stats_controller_test.exs` — test akses, konten per laporan, sidebar, dan export CSV
+
 ## Referensi Teknis
 
 Arsitektur aplikasi untuk pengembang yang ingin memahami atau memperluas kode.
@@ -219,8 +256,9 @@ Aplikasi **tidak menggunakan database (Ecto/PostgreSQL)**. Semua data bersifat *
 
 * **`OjsLanding.User`** — `Agent` berisi data user ter-seed; registrasi baru disimpan dalam proses (`Agent.update/2`) sehingga bertahan antar request selama server hidup.
 * **`OjsLanding.Submission`** — `Agent` berisi submission ter-seed; `create/2`, `update/2`, dan `set_status/3` menyimpan ke dalam proses.
-* **`OjsLanding.Journal`** — *plain struct* dengan daftar statis (`Journal.all/0`), berisi artikel per jurnal.
+* **`OjsLanding.Journal`** — *plain struct* dengan daftar statis (`Journal.all/0`), berisi artikel per jurnal (termasuk jurnal `kucingkelinci`).
 * **`OjsLanding.Issue`** — *plain struct* terbitan (volume/nomor/status) dengan data statis.
+* **`OjsLanding.Stats`** — *plain module* penghasil data statistik dummy deterministik untuk dashboard statistik.
 
 Konsekuensi: setiap *restart server* mengembalikan data ke kondisi seed.
 
@@ -232,11 +270,12 @@ Konsekuensi: setiap *restart server* mengembalikan data ke kondisi seed.
 | `OjsLanding.Submission` | Agent | Submission author (`get_by_author/1`, `create/2`, `update/2`) |
 | `OjsLanding.Journal` | struct | Data jurnal & artikel statis (`all/0`, `get!/1`) |
 | `OjsLanding.Issue` | struct | Data terbitan statis (`all/0`, `for_journal/1`, `current/1`) |
+| `OjsLanding.Stats` | modul | Data statistik dummy deterministik untuk dashboard statistik (publications, issues, context, editorial, users, counter R5, reports) |
 | `OjsLanding.Application` | OTP app | Supervisor tree; memulai `User` & `Submission` sebelum endpoint |
 
 ### Lapisan web (`lib/ojs_landing_web/`)
 
-* **`router.ex`** — tiga `scope` utama: root (`/`), admin (`/admin`), dan per-journal (`/:journal_path`). Semua melewati pipeline `:browser` yang memuat `OjsLandingWeb.Plugs.Auth`.
+* **`router.ex`** — tiga `scope` utama: root (`/`), admin (`/admin`), dan per-journal (`/:journal_path`). Semua melewati pipeline `:browser` yang memuat `OjsLandingWeb.Plugs.Auth`. Scope per-journal memuat route statistik (`/stats/*`).
 * **`plugs/auth.ex`** — tiga guard: default (set `current_user` dari session), `:require_admin`, dan `:require_editor_admin` (admin **atau** editor, selain itu redirect ke `/login`).
 * **`components/layouts.ex`** — `Layouts` (root, dashboard, admin, journal). Dashboard dipakai halaman editor/admin dengan header biru tua.
 * **`components/core_components.ex`** — komponen UI bawaan Phoenix (`<.input>`, `<.icon>`, `<.flash>`, dll).
