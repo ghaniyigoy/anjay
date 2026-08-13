@@ -1,0 +1,138 @@
+<.settings_layout
+  section={@section}
+  journal_path={@journal_path}
+  journal_title={@journal.title}
+>
+  <form id="ojs-settings-form" phx-no-curly-interpolation>
+    <.settings_panel
+      anchor="setup"
+      title="Website Setup"
+      description="General website, homepage, and statistics settings."
+    >
+      <.input_field
+        label="Journal Name"
+        name="websiteJournalName"
+        value={@journal.title}
+        hint="The name of the journal, as it appears in the website header."
+        autosize
+      />
+      <.select_field
+        label="Site Language"
+        name="siteLanguage"
+        value="id"
+        options={[{"id", "Bahasa Indonesia"}, {"en", "English"}]}
+        hint="The primary language of the journal website. More languages can be enabled below."
+      />
+      <.checkbox_field
+        label="Web Feeds"
+        name="webFeeds"
+        value={["announcements"]}
+        options={[
+          {"announcements", "Display announcements in web feeds"},
+          {"issues", "Display issue tables of contents in web feeds"},
+          {"search", "Display search results in web feeds"}
+        ]}
+        hint="Enable RSS/Atom feeds for the journal."
+      />
+      <.checkbox_field
+        label="Journal Homepage"
+        name="homepage"
+        value={["announcements"]}
+        options={[
+          {"announcements", "Display announcements on the journal homepage"},
+          {"description", "Display an issue description on the archive page"},
+          {"publish", "Display a 'Publish' area on the homepage"}
+        ]}
+        hint="Choose which components appear on the journal homepage."
+      />
+      <.input_field
+        label="Homepage Image"
+        name="homepageImage"
+        value="/images/journal-home.jpg"
+        hint="URL of an image to display on the journal homepage."
+      />
+      <.input_field
+        label="Google Analytics Tracking Code"
+        name="googleAnalytics"
+        value=""
+        placeholder="UA-12345678-1"
+        hint="Provide your Google Analytics tracking code to collect site statistics."
+      />
+      <.checkbox_field
+        label="Display Statistics"
+        name="displayStats"
+        value={["views"]}
+        options={[{"views", "Display article view counts"}]}
+        hint="Show usage statistics to readers."
+      />
+      <.textarea_field
+        label="Additional Page Content"
+        name="pageContent"
+        value=""
+        hint="Additional HTML content to include at the bottom of every page."
+        rows={2}
+      />
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="plugins"
+      title="Plugins"
+      description="Enable, disable, and configure plugins for this journal."
+    >
+      <.checkbox_field
+        label="Indexing Plugins"
+        name="indexingPlugins"
+        value={["googlescholar", "doaj"]}
+        options={[
+          {"googlescholar", "Google Scholar indexing"},
+          {"doaj", "DOAJ index plugin"},
+          {"crossref", "Crossref DOI registration"},
+          {"openAIRE", "OpenAIRE index plugin"},
+          {"orcid", "ORCID profile linking"}
+        ]}
+        hint="Select plugins to include in `<head>` for indexing and metadata services."
+      />
+
+      <%= if Enum.member?(indexing_plugins_selected(@section), "crossref") do %>
+        <div class="settings-subblock">
+          <h3 class="settings-subblock-title">Crossref DOI Registration Plugin</h3>
+          <.input_field
+            label="API Username"
+            name="crossrefUsername"
+            value=""
+            hint="Username supplied by Crossref."
+          />
+          <.input_field
+            label="API Password"
+            name="crossrefPassword"
+            value=""
+            type="password"
+            hint="Password supplied by Crossref."
+          />
+        </div>
+      <% end %>
+
+      <.settings_table
+        title="Installed Plugins"
+        columns={["Plugin", "Description", "Status"]}
+        rows={installable_plugins()}
+        empty_text="No plugins installed."
+      >
+        <%= for row <- installable_plugins() do %>
+          <tr>
+            <td>
+              <span class="settings-plugin-name">{row.name}</span>
+              <span class="settings-plugin-version">v{row.version}</span>
+            </td>
+            <td>{row.description}</td>
+            <td>
+              <span class={["settings-status", row.enabled && "is-enabled"]}>
+                {if row.enabled, do: "Enabled", else: "Disabled"}
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </.settings_table>
+    </.settings_panel>
+  </form>
+</.settings_layout>

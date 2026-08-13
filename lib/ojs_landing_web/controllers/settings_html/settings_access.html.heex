@@ -1,0 +1,143 @@
+<.settings_layout
+  section={@section}
+  journal_path={@journal_path}
+  journal_title={@journal.title}
+>
+  <form id="ojs-settings-form" phx-no-curly-interpolation>
+    <.settings_panel
+      anchor="users"
+      title="Users"
+      description="Manage user accounts that are enrolled in or can access this journal."
+    >
+      <.settings_table
+        title="Users"
+        columns={["Name", "Username", "Email", "Role"]}
+        rows={journal_users()}
+        empty_text="No users enrolled."
+      >
+        <%= for row <- journal_users() do %>
+          <tr>
+            <td>{row.name}</td>
+            <td>{row.username}</td>
+            <td>{row.email}</td>
+            <td>
+              <span class="settings-role">{row.role}</span>
+            </td>
+          </tr>
+        <% end %>
+      </.settings_table>
+
+      <div class="settings-list-add">
+        <button type="button" class="btn-settings-link">+ Add User</button>
+        <button type="button" class="btn-settings-secondary">Enroll User</button>
+        <button type="button" class="btn-settings-secondary">Unenroll User</button>
+      </div>
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="roles"
+      title="Roles"
+      description="Define the roles users can hold within this journal and their permissions."
+    >
+      <.settings_table
+        title="Roles"
+        columns={["Role", "Users", "Options"]}
+        rows={journal_roles()}
+        empty_text="No roles available."
+      >
+        <%= for row <- journal_roles() do %>
+          <tr>
+            <td>
+              <span class="settings-role-name">{row.name}</span>
+              <span class="settings-role-id">{row.system_id}</span>
+            </td>
+            <td>{row.users}</td>
+            <td>
+              <span class="settings-row-actions">
+                <a href="#" class="settings-row-action">Edit</a>
+                <a href="#" class="settings-row-action">Merge Users</a>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </.settings_table>
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="access"
+      title="Access"
+      description="Configure journal-wide access and permissions."
+    >
+      <.radio_field
+        label="Site Access"
+        name="siteAccess"
+        value="open"
+        options={[
+          {"open", "Open access"},
+          {"restrict", "Restrict access to readers and roles"}
+        ]}
+        hint="Default access level for the journal site."
+      />
+      <.checkbox_field
+        label="New User Registration"
+        name="userRegistration"
+        value={["authors", "readers"]}
+        options={[
+          {"readers", "Allow readers to create accounts"},
+          {"authors", "Allow authors to create accounts and submit manuscripts"},
+          {"reviewers", "Allow users to register as reviewers"}
+        ]}
+      />
+      <.radio_field
+        label="Account Matching"
+        name="accountMatching"
+        value="allow"
+        options={[
+          {"allow", "Allow site administrators to set a cookie on reader accounts"},
+          {"block", "Block reader account cookie"}
+        ]}
+      />
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="orcidSettings"
+      title="ORCID"
+      description="Connect the journal with ORCID to collect researcher identifiers."
+    >
+      <.radio_field
+        label="Enable ORCID"
+        name="orcidEnabled"
+        value="yes"
+        options={[{"yes", "Enable ORCID integration"}, {"no", "Disable ORCID integration"}]}
+      />
+      <.input_field
+        label="ORCID API Client ID"
+        name="orcidClientId"
+        value=""
+        placeholder="0000-0000-0000-0000"
+        hint="Your ORCID API 2.0 Client ID (PUBLIC API)."
+      />
+      <div class="settings-subblock">
+        <h3 class="settings-subblock-title">ORCID API 2.0 Settings</h3>
+        <.select_field
+          label="API Environment"
+          name="orcidApiEnv"
+          value="public"
+          options={[
+            {"public", "Public API (authenticated user access)"},
+            {"member", "Member API (requires ORCID membership)"}
+          ]}
+        />
+        <.checkbox_field
+          label="Reviewer ORCID"
+          name="orcidOptions"
+          value={["authors", "reviewers"]}
+          options={[
+            {"authors", "Require authors to connect ORCID during submission"},
+            {"reviewers", "Allow reviewers to connect ORCID to their reviews"}
+          ]}
+        />
+      </div>
+    </.settings_panel>
+  </form>
+</.settings_layout>

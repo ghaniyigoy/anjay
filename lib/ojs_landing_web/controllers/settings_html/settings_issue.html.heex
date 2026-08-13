@@ -1,0 +1,42 @@
+<.settings_layout
+  section="issues"
+  journal_path={@journal_path}
+  journal_title={@journal.title}
+>
+  <form id="ojs-settings-form" phx-no-curly-interpolation>
+    <.settings_panel
+      anchor="issues"
+      title="Issues"
+      description="Manage the published and scheduled issues of this journal."
+    >
+      <.settings_table
+        title="Issues"
+        columns={["Issue", "Status", "Articles", "Published", "Options"]}
+        rows={@issues}
+        empty_text="No issues have been created."
+      >
+        <%= for issue <- @issues do %>
+          <tr id={"issue-row-#{issue.id}"}>
+            <td>
+              <span class="settings-issue-label">{issue_volume_label(issue)}</span>
+            </td>
+            <td><.issue_status_badge status={issue.status} /></td>
+            <td>{issue_article_count(issue)}</td>
+            <td>{issue_published_date(issue)}</td>
+            <td>
+              <span class="settings-row-actions">
+                <a href={~p"/#{@journal_path}/issue/#{issue.id}"} class="settings-row-action">View</a>
+                <a href="#" class="settings-row-action">Edit</a>
+                <a href="#" class="settings-row-action">Delete</a>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </.settings_table>
+
+      <div class="settings-list-add">
+        <button type="button" class="btn-settings-link">+ Create Issue</button>
+      </div>
+    </.settings_panel>
+  </form>
+</.settings_layout>

@@ -11,6 +11,19 @@ defmodule OjsLandingWeb.Layouts do
   # and other static content.
   embed_templates "layouts/*"
 
+  def user_initials(%{given_name: given, family_name: family}) do
+    first = given && String.first(given)
+    second = family && family != "" && String.first(family)
+
+    cond do
+      first && second -> String.upcase(first <> second)
+      first -> String.upcase(first)
+      true -> "?"
+    end
+  end
+
+  def user_initials(_), do: "?"
+
   @doc """
   Renders your app layout.
 
@@ -42,21 +55,21 @@ defmodule OjsLandingWeb.Layouts do
           <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
         </a>
       </div>
-      
+
       <div class="flex-none">
         <ul class="flex flex-column px-1 space-x-4 items-center">
           <li>
             <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
           </li>
-          
+
           <li>
             <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
           </li>
-          
+
           <li>
             <.theme_toggle />
           </li>
-          
+
           <li>
             <a href="https://phoenix.hexdocs.pm/overview.html" class="btn btn-primary">
               Get Started <span aria-hidden="true">&rarr;</span>
@@ -71,7 +84,7 @@ defmodule OjsLandingWeb.Layouts do
         {render_slot(@inner_block)}
       </div>
     </main>
-     <.flash_group flash={@flash} />
+    <.flash_group flash={@flash} />
     """
   end
 
@@ -103,7 +116,7 @@ defmodule OjsLandingWeb.Layouts do
         {gettext("Attempting to reconnect")}
         <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
       </.flash>
-      
+
       <.flash
         id="server-error"
         kind={:error}
@@ -138,7 +151,7 @@ defmodule OjsLandingWeb.Layouts do
       >
         <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>
-      
+
       <button
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}
@@ -146,7 +159,7 @@ defmodule OjsLandingWeb.Layouts do
       >
         <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>
-      
+
       <button
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}

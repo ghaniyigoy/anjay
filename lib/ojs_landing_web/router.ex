@@ -34,8 +34,15 @@ defmodule OjsLandingWeb.Router do
     get "/dashboard", DashboardController, :index
     get "/profile", ProfileController, :index
 
+    # Reviewer Review Routes
+    get "/review/:id", ReviewerController, :review
+    post "/review/:id", ReviewerController, :submit_review
+
     # Editor Dashboard Routes
     get "/dashboard/editorial", EditorController, :editorial
+
+    # Editor DOI Article Registration Routes
+    get "/dashboard/doiArticles", DoiArticleController, :index
 
     # Reviewer Dashboard Routes
     get "/dashboard/reviewAssignments", ReviewerController, :review_assignments
@@ -84,6 +91,10 @@ defmodule OjsLandingWeb.Router do
     get "/", JournalController, :show
     get "/issue/current", JournalController, :current_issue
 
+    # Journal management settings (OJS-style: Journal / Website / Workflow / Distribution / Users & Roles)
+    get "/management/settings", SettingsController, :index
+    get "/management/settings/:section", SettingsController, :show
+
     # Submission workflow (OJS-style, tab-driven: #details #files #contributors #editors #review)
     get "/submission", JournalController, :submission_workflow
 
@@ -99,7 +110,9 @@ defmodule OjsLandingWeb.Router do
 
     # Issues jurnal
     get "/issues", JournalController, :issues
+    get "/dois", SettingsController, :dois
     get "/issue/:issue_id", JournalController, :issue_view
+    get "/manageIssues", SettingsController, :manage_issues
 
     # Article routes
     get "/article/:article_id", JournalController, :article_view

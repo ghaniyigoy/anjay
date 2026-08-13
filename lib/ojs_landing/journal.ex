@@ -11,7 +11,48 @@ defmodule OjsLanding.Journal do
         publisher: "Universitas Teknologi",
         editor: "Dr. Ahmad Santoso",
         path: "informatika",
-        articles: []
+        articles: [
+          %{
+            id: 1,
+            title: "Sistem Rekomendasi Berbasis Collaborative Filtering untuk E-Learning",
+            authors: ["Alief Rachman", "Dr. Siti Aminah"],
+            abstract:
+              "Penelitian ini mengembangkan sistem rekomendasi berbasis collaborative filtering untuk meningkatkan personalisasi pembelajaran pada platform e-learning.",
+            pages: "1-12",
+            published_date: "2024-06-10",
+            doi: "10.1234/informatika.v1i1.1"
+          },
+          %{
+            id: 2,
+            title: "Analisis Keamanan Jaringan Menggunakan Metode Penetration Testing",
+            authors: ["Budi Hartono", "Rina Wulandari"],
+            abstract:
+              "Studi ini menganalisis kerentanan keamanan jaringan melalui pendekatan penetration testing untuk mengidentifikasi celah keamanan pada infrastruktur TI.",
+            pages: "13-27",
+            published_date: "2024-06-10",
+            doi: "10.1234/informatika.v1i1.2"
+          },
+          %{
+            id: 3,
+            title: "Implementasi Machine Learning untuk Prediksi Penyakit Jantung",
+            authors: ["Dewi Kartika", "Agus Setiawan", "Maya Lestari"],
+            abstract:
+              "Penelitian menerapkan algoritma machine learning untuk memprediksi risiko penyakit jantung berdasarkan data klinis pasien dengan akurasi tinggi.",
+            pages: "28-41",
+            published_date: "2024-06-10",
+            doi: "10.1234/informatika.v1i1.3"
+          },
+          %{
+            id: 4,
+            title: "Pengembangan Aplikasi Mobile Berbasis Flutter untuk Manajemen Inventori",
+            authors: ["Eko Prasetyo", "Fitri Handayani"],
+            abstract:
+              "Artikel membahas pengembangan aplikasi manajemen inventori berbasis mobile menggunakan framework Flutter dengan arsitektur MVVM.",
+            pages: "42-55",
+            published_date: "2024-06-10",
+            doi: "10.1234/informatika.v1i1.4"
+          }
+        ]
       },
       %__MODULE__{
         id: 2,

@@ -32,4 +32,31 @@ defmodule OjsLandingWeb.EditorHTML do
   def stage_color(:copyediting), do: "#e67e22"
   def stage_color(:production), do: "#e74c3c"
   def stage_color(_), do: "#95a5a6"
+
+  def journal_settings_path do
+    [journal | _] = OjsLanding.Journal.all()
+    "/#{journal.path}/management/settings/context"
+  end
+
+  def journal_manage_issues_path do
+    [journal | _] = OjsLanding.Journal.all()
+    "/#{journal.path}/manageIssues"
+  end
+
+  def journal_dois_path do
+    [journal | _] = OjsLanding.Journal.all()
+    "/#{journal.path}/dois"
+  end
+
+  def journal_settings_links do
+    base = journal_settings_path() |> String.replace("/context", "")
+
+    [
+      {"Journal", "#{base}/context"},
+      {"Website", "#{base}/website"},
+      {"Workflow", "#{base}/workflow"},
+      {"Distribution", "#{base}/distribution"},
+      {"Users & Roles", "#{base}/access"}
+    ]
+  end
 end

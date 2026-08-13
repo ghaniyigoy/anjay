@@ -1,0 +1,241 @@
+<.settings_layout
+  section={@section}
+  journal_path={@journal_path}
+  journal_title={@journal.title}
+>
+  <form id="ojs-settings-form" phx-no-curly-interpolation>
+    <.settings_panel
+      anchor="submission"
+      title="Submission"
+      description="Default policies and requirements for authors submitting to this journal."
+    >
+      <.checkbox_field
+        label="Author Submission"
+        name="submissionRequirements"
+        value={["originalWork", "correctFormat", "noPeerReview", "notPlagiarized"]}
+        options={[
+          {"originalWork",
+           "Authors must confirm the submission has not been published elsewhere"},
+          {"correctFormat", "Authors must confirm the file matches the submission guidelines"},
+          {"noPeerReview",
+           "Authors must confirm the submission is not under consideration elsewhere"},
+          {"notPlagiarized",
+           "Authors must confirm the submission does not plagiarize other work"},
+          {"metadata", "Authors must supply all required metadata (references, keywords, etc.)"}
+        ]}
+        hint="Checklist items that authors must accept before submitting."
+      />
+      <.input_field
+        label="Abstract Word Limit"
+        name="abstractWordLimit"
+        value="300"
+        type="number"
+        hint="Maximum number of words allowed in an abstract."
+      />
+      <.checkbox_field
+        label="Submission Files"
+        name="submissionFiles"
+        value={["supplementary", "galley"]}
+        options={[
+          {"supplementary", "Allow supplementary files to be submitted"},
+          {"galley", "Allow galleys to be uploaded during submission"}
+        ]}
+      />
+      <.input_field
+        label="Allowed File Extensions"
+        name="fileExtensions"
+        value=".doc, .docx, .pdf, .tex, .odt, .rtf"
+        hint="Comma-separated list of file extensions authors may upload."
+      />
+      <.radio_field
+        label="Author Identity"
+        name="authorIdentity"
+        value="shown"
+        options={[
+          {"shown", "Show author names to reviewers"},
+          {"hidden", "Hide author names from reviewers (double-anonymous)"}
+        ]}
+        inline
+      />
+      <.checkbox_field
+        label="Copyright Notice"
+        name="copyrightNotice"
+        value={["confirm"]}
+        options={[
+          {"confirm", "Require authors to confirm the copyright notice before submission"},
+          {"form", "Display the copyright notice during submission"}
+        ]}
+        hint="The copyright notice to display to authors."
+      />
+      <.select_field
+        label="Copyright Holder"
+        name="copyrightHolder"
+        value={@journal.title}
+        options={[{@journal.title, @journal.title}, {"Author(s)", "Author(s)"}]}
+        hint="The party that holds copyright for published articles."
+      />
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="review"
+      title="Review"
+      description="Default review mode, timelines, and reviewer access for submissions."
+    >
+      <.radio_field
+        label="Default Review Mode"
+        name="reviewMode"
+        value="double"
+        options={[
+          {"double", "Double-anonymous: reviewers and authors are anonymous to each other"},
+          {"single", "Single-anonymous: reviewers are anonymous to authors"},
+          {"open", "Open: reviewers and authors are visible to each other"}
+        ]}
+        hint="The default peer review model for submissions."
+      />
+      <.input_field
+        label="Default Review Deadline"
+        name="reviewDeadline"
+        value="2"
+        type="number"
+        suffix="weeks"
+        hint="Default time reviewers have to complete their review."
+      />
+      <.input_field
+        label="Number of Reviewers"
+        name="reviewerCount"
+        value="2"
+        type="number"
+        hint="Default number of reviewers assigned to each submission."
+      />
+      <.checkbox_field
+        label="Reviewer Access"
+        name="reviewerAccess"
+        value={["accepted", "onlineFirst"]}
+        options={[
+          {"accepted", "Notify reviewers when a decision has been made"},
+          {"onlineFirst", "Allow reviewers to see published versions of submissions"},
+          {"selfRegister", "Allow self-registration as reviewer"}
+        ]}
+      />
+      <.checkbox_field
+        label="Review Forms"
+        name="reviewForms"
+        value={["recommendation"]}
+        options={[
+          {"recommendation", "Require reviewers to provide a recommendation"},
+          {"comments", "Require reviewers to provide comments to the author"},
+          {"editorComments", "Provide a separate comments field for editors only"}
+        ]}
+        hint="Default elements included in review assignments."
+      />
+      <.settings_table
+        title="Review Forms"
+        columns={["Form", "Description", "Options"]}
+        rows={review_forms()}
+        empty_text="No review forms have been created."
+      >
+        <%= for row <- review_forms() do %>
+          <tr>
+            <td>{row.name}</td>
+            <td>{row.description}</td>
+            <td>
+              <span class="settings-row-actions">
+                <a href="#" class="settings-row-action">Edit</a>
+                <a href="#" class="settings-row-action">Delete</a>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </.settings_table>
+
+      <div class="settings-list-add">
+        <button type="button" class="btn-settings-link">+ Create Review Form</button>
+      </div>
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="library"
+      title="Library"
+      description="Files available to editors, reviewers, and staff. Files can be organized by type."
+    >
+      <.settings_table
+        title="Library Files"
+        columns={["Name", "File Type", "Size", "Options"]}
+        rows={library_files()}
+        empty_text="No library files have been added."
+      >
+        <%= for row <- library_files() do %>
+          <tr>
+            <td>
+              <span class="settings-file-icon">📄</span> {row.name}
+            </td>
+            <td>{row.type}</td>
+            <td>{row.size}</td>
+            <td>
+              <span class="settings-row-actions">
+                <a href="#" class="settings-row-action">Edit</a>
+                <a href="#" class="settings-row-action">Delete</a>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </.settings_table>
+
+      <div class="settings-list-add">
+        <button type="button" class="btn-settings-link">+ Add a Library File</button>
+      </div>
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="emails"
+      title="Emails"
+      description="Default email templates and settings used when the journal sends mail."
+    >
+      <.input_field
+        label="Bounce Address"
+        name="bounceAddress"
+        value=""
+        type="email"
+        hint="All emails sent by the journal will be copied to this address."
+      />
+      <.textarea_field
+        label="Email Signature"
+        name="emailSignature"
+        value={"\n--\n#{@journal.title}\n#{@journal.publisher}"}
+        hint="Signature appended to every email sent by the journal."
+        rows={4}
+      />
+      <.select_field
+        label="Default Email Template Language"
+        name="emailLanguage"
+        value="id"
+        options={[{"id", "Bahasa Indonesia"}, {"en", "English"}]}
+        hint="The language used for new email templates."
+      />
+      <.settings_table
+        title="Email Templates"
+        columns={["Name", "Subject", "Options"]}
+        rows={email_templates()}
+        empty_text="No email templates available."
+      >
+        <%= for row <- email_templates() do %>
+          <tr>
+            <td>{row.name}</td>
+            <td>{row.subject}</td>
+            <td>
+              <span class="settings-row-actions">
+                <a href="#" class="settings-row-action">Edit</a>
+                <a href="#" class="settings-row-action">Reset</a>
+                <a href="#" class="settings-row-action">Disable</a>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </.settings_table>
+
+      <div class="settings-list-add">
+        <button type="button" class="btn-settings-link">+ Add Email Template</button>
+      </div>
+    </.settings_panel>
+  </form>
+</.settings_layout>

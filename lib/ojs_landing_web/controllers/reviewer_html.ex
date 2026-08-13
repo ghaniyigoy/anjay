@@ -23,4 +23,17 @@ defmodule OjsLandingWeb.ReviewerHTML do
   def status_color(:declined), do: "#e74c3c"
   def status_color(:published), do: "#3498db"
   def status_color(:archived), do: "#95a5a6"
+
+  def truncate_title(title, limit \\ 32) when is_binary(title) do
+    if String.length(title) > limit do
+      String.slice(title, 0, limit - 1) <> "…"
+    else
+      title
+    end
+  end
+
+  def file_type_class("PDF"), do: "pdf"
+  def file_type_class("CSV"), do: "csv"
+  def file_type_class(type) when is_binary(type), do: "other"
+  def file_type_class(_), do: "other"
 end

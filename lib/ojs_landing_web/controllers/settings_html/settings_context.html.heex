@@ -1,0 +1,176 @@
+<.settings_layout
+  section={@section}
+  journal_path={@journal_path}
+  journal_title={@journal.title}
+>
+  <form id="ojs-settings-form" phx-no-curly-interpolation>
+    <.settings_panel
+      anchor="masthead"
+      title="Journal Masthead"
+      description="Information about the journal and its organization."
+    >
+      <.input_field
+        label="Journal Name"
+        name="journalName"
+        value={@journal.title}
+        hint="The name of the journal."
+        autosize
+      />
+      <.input_field
+        label="Journal Initials"
+        name="journalInitials"
+        value={journal_initials(@journal.title)}
+        hint="Short form of the journal name, used in footers and copyright notices."
+        size={8}
+      />
+      <.textarea_field
+        label="Journal Description"
+        name="journalDescription"
+        value={@journal.description}
+        hint="Provide a short description of the journal. This will appear on the journal's home page."
+        rows={4}
+      />
+      <.input_field
+        label="Journal Abbreviation"
+        name="journalAbbrev"
+        value={journal_initials(@journal.title)}
+        hint="Used to identify the journal in citations and databases."
+      />
+      <.input_field
+        label="Online ISSN"
+        name="onlineIssn"
+        value={@journal.issn}
+        hint="The ISSN of the journal's online edition."
+      />
+      <.input_field
+        label="Print ISSN"
+        name="printIssn"
+        value=""
+        hint="The ISSN of the journal's print edition, if available."
+      />
+      <.input_field
+        label="Publisher"
+        name="publisher"
+        value={@journal.publisher}
+        hint="The name of the organization that publishes this journal."
+      />
+      <.radio_field
+        label="Editor Profile"
+        name="editorProfile"
+        value="on"
+        options={[{"on", "Public"}, {"off", "Private"}]}
+        inline
+        hint="Whether the editor's profile is publicly visible."
+      />
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="contact"
+      title="Contact"
+      description="The primary contact for the journal. This information appears publicly."
+    >
+      <.input_field
+        label="Primary Contact Name"
+        name="contactName"
+        value={@journal.editor}
+        hint="The name of the main contact person for the journal."
+      />
+      <.input_field
+        label="Primary Contact Email"
+        name="contactEmail"
+        value="editor@example.org"
+        type="email"
+        hint="The email address for the main contact person."
+      />
+      <.input_field
+        label="Primary Contact Phone"
+        name="contactPhone"
+        value=""
+        type="tel"
+        hint="The phone number for the main contact person."
+      />
+      <.input_field
+        label="Support Contact Name"
+        name="supportName"
+        value="Journal Support"
+        hint="The name of the person to contact for technical or user support."
+      />
+      <.input_field
+        label="Support Contact Email"
+        name="supportEmail"
+        value="support@example.org"
+        type="email"
+        hint="The email address to which support requests should be sent."
+      />
+      <.input_field
+        label="Support Contact Phone"
+        name="supportPhone"
+        value=""
+        type="tel"
+        hint="The phone number for support requests."
+      />
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="sections"
+      title="Sections"
+      description="Sections define the categories of published content in this journal."
+    >
+      <.settings_table
+        title="Section"
+        columns={["Name", "Abbreviation", "Policy", "Options"]}
+        rows={sections(@journal)}
+        empty_text="No sections have been created."
+      >
+        <%= for row <- sections(@journal) do %>
+          <tr id={"section-row-#{row.id}"}>
+            <td>{row.name}</td>
+            <td>{row.abbreviation}</td>
+            <td>{row.policy}</td>
+            <td>
+              <span class="settings-row-actions">
+                <a href="#" class="settings-row-action">Edit</a>
+                <a href="#" class="settings-row-action">Delete</a>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </.settings_table>
+
+      <div class="settings-list-add">
+        <button type="button" class="btn-settings-link">+ Add Section</button>
+      </div>
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="categories"
+      title="Categories"
+      description="Categories group journals together in the public index and archive."
+    >
+      <.settings_table
+        title="Category"
+        columns={["Name", "Description", "Parent", "Options"]}
+        rows={categories(@journal)}
+        empty_text="No categories have been created."
+      >
+        <%= for row <- categories(@journal) do %>
+          <tr id={"category-row-#{row.id}"}>
+            <td>{row.name}</td>
+            <td>{row.description}</td>
+            <td>{row.parent}</td>
+            <td>
+              <span class="settings-row-actions">
+                <a href="#" class="settings-row-action">Edit</a>
+                <a href="#" class="settings-row-action">Delete</a>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </.settings_table>
+
+      <div class="settings-list-add">
+        <button type="button" class="btn-settings-link">+ Add Category</button>
+      </div>
+    </.settings_panel>
+  </form>
+</.settings_layout>

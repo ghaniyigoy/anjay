@@ -1,0 +1,284 @@
+<div class="review-page">
+  <div class="review-breadcrumb">
+    <a href="/dashboard/reviewAssignments">My Assignments</a>
+    <span class="review-breadcrumb-sep">/</span>
+    <span>Review #{@assignment.id}</span>
+  </div>
+
+  <div class="review-page-header">
+    <div>
+      <h1 class="review-page-title">Submission Review</h1>
+      <p class="review-page-subtitle">
+        Round {@assignment.round} · Due {Date.to_string(@assignment.due_date)}
+      </p>
+    </div>
+    <span class="review-status-pill">Action Required</span>
+  </div>
+
+  <div class="review-stage-bar">
+    <div class="review-stage done">
+      <span class="review-stage-num">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+        >
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </span>
+      <div class="review-stage-body">
+        <span class="review-stage-label">Submission</span>
+        <span class="review-stage-value">1. {truncate_title(@assignment.title)}</span>
+      </div>
+    </div>
+
+    <div class="review-stage active">
+      <span class="review-stage-num">2</span>
+      <div class="review-stage-body">
+        <span class="review-stage-label">Review</span>
+        <span class="review-stage-value">Round {@assignment.round}</span>
+      </div>
+    </div>
+
+    <div class="review-stage">
+      <span class="review-stage-num">3</span>
+      <div class="review-stage-body">
+        <span class="review-stage-label">Copyediting</span>
+        <span class="review-stage-value">—</span>
+      </div>
+    </div>
+
+    <div class="review-stage">
+      <span class="review-stage-num">4</span>
+      <div class="review-stage-body">
+        <span class="review-stage-label">Production</span>
+        <span class="review-stage-value">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="review-layout">
+    <div class="review-main-col">
+      <div class="review-panel">
+        <h2 class="review-panel-title">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+
+            <polyline points="7 10 12 15 17 10"></polyline>
+
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Review Submission
+        </h2>
+
+        <form method="POST" action={"/review/#{@assignment.id}"}>
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+
+          <div class="review-field">
+            <label class="review-label" for="recommendation">
+              Recommendation <span class="review-req">*</span>
+            </label>
+            <p class="review-help">Select the overall recommendation for this submission.</p>
+            <select id="recommendation" name="recommendation" class="review-select" required>
+              <option value="" disabled selected>Select a recommendation…</option>
+              <option value="Accept">Accept</option>
+              <option value="Minor Revisions">Minor Revisions</option>
+              <option value="Major Revisions">Major Revisions</option>
+              <option value="Resubmit Elsewhere">Resubmit Elsewhere</option>
+              <option value="Decline">Decline</option>
+            </select>
+          </div>
+
+          <div class="review-field">
+            <span class="review-label">Quality Criteria</span>
+            <p class="review-help">Assess each criterion below.</p>
+
+            <div class="review-criteria">
+              <%= for {criterion, index} <- Enum.with_index(@criteria) do %>
+                <div class="review-criterion">
+                  <div class="review-criterion-text">
+                    <span class="review-criterion-label">
+                      {index + 1}. {criterion.label}
+                    </span>
+                    <span class="review-criterion-question">{criterion.question}</span>
+                  </div>
+
+                  <div class="review-criterion-options">
+                    <label class="review-radio">
+                      <input
+                        type="radio"
+                        name={"criterion_#{index}"}
+                        value="Yes"
+                        checked={index == 0}
+                      />
+                      <span>Yes</span>
+                    </label>
+
+                    <label class="review-radio">
+                      <input type="radio" name={"criterion_#{index}"} value="No" />
+                      <span>No</span>
+                    </label>
+
+                    <label class="review-radio">
+                      <input type="radio" name={"criterion_#{index}"} value="Maybe" />
+                      <span>Maybe</span>
+                    </label>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="review-field">
+            <label class="review-label" for="comments_author">Comments to the Author</label>
+            <p class="review-help">
+              This review will be shared with the author. Be specific and constructive.
+            </p>
+            <textarea
+              id="comments_author"
+              name="comments_author"
+              rows="7"
+              class="review-textarea"
+              placeholder="Summarize the main strengths and weaknesses of the manuscript…"
+            ></textarea>
+          </div>
+
+          <div class="review-field">
+            <label class="review-label" for="comments_editor">Comments to the Editor</label>
+            <p class="review-help">
+              Private comments that will only be visible to the editor.
+            </p>
+            <textarea
+              id="comments_editor"
+              name="comments_editor"
+              rows="4"
+              class="review-textarea"
+              placeholder="Confidential feedback for the editor…"
+            ></textarea>
+          </div>
+
+          <div class="review-form-actions">
+            <button type="submit" class="btn-ojs-primary">Submit Review</button>
+            <a href="/dashboard/reviewAssignments" class="btn-ojs-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <aside class="review-side-col">
+      <div class="review-panel review-side-panel">
+        <h2 class="review-panel-title">Submission</h2>
+        <dl class="review-meta-list">
+          <div class="review-meta-item">
+            <dt>Title</dt>
+            <dd>{@assignment.title}</dd>
+          </div>
+
+          <div class="review-meta-item">
+            <dt>Author</dt>
+            <dd>{@assignment.author}</dd>
+          </div>
+
+          <div class="review-meta-item">
+            <dt>Journal</dt>
+            <dd>{@assignment.journal}</dd>
+          </div>
+
+          <div class="review-meta-item">
+            <dt>Section</dt>
+            <dd>{@assignment.section}</dd>
+          </div>
+
+          <div class="review-meta-item">
+            <dt>Language</dt>
+            <dd>{@assignment.language}</dd>
+          </div>
+
+          <div class="review-meta-item">
+            <dt>Keywords</dt>
+            <dd>{@assignment.keywords}</dd>
+          </div>
+
+          <div class="review-meta-item">
+            <dt>Assigned</dt>
+            <dd>{Date.to_string(@assignment.date_assigned)}</dd>
+          </div>
+
+          <div class="review-meta-item">
+            <dt>Due</dt>
+            <dd>{Date.to_string(@assignment.due_date)}</dd>
+          </div>
+        </dl>
+
+        <h3 class="review-block-subtitle">Abstract</h3>
+        <p class="review-abstract">{@assignment.abstract}</p>
+      </div>
+
+      <div class="review-panel review-side-panel">
+        <h2 class="review-panel-title">Review Files</h2>
+
+        <ul class="review-files">
+          <%= for file <- @assignment.files do %>
+            <li class="review-file">
+              <span class={["review-file-type", file_type_class(file.type)]}>
+                {file.type}
+              </span>
+              <span class="review-file-body">
+                <span class="review-file-name">{file.name}</span>
+                <span class="review-file-meta">
+                  {file.size} · {file.date}
+                </span>
+              </span>
+              <a href="#" class="review-file-download" title="Download {file.name}">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+
+                  <polyline points="7 10 12 15 17 10"></polyline>
+
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+
+      <div class="review-panel review-side-panel">
+        <h2 class="review-panel-title">Review History</h2>
+
+        <%= if length(@assignment.review_history) == 0 do %>
+          <p class="review-empty">No previous reviews for this submission.</p>
+        <% else %>
+          <ul class="review-history">
+            <%= for item <- @assignment.review_history do %>
+              <li class="review-history-item">
+                <span class="review-history-round">Round {item.round}</span>
+                <span class="review-history-decision">{item.decision}</span>
+                <span class="review-history-meta">
+                  {item.reviewer} · {item.date}
+                </span>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </div>
+    </aside>
+  </div>
+</div>

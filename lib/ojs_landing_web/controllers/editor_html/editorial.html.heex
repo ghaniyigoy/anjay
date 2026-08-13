@@ -13,14 +13,14 @@
           stroke-width="2"
         >
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          
+
           <line x1="9" y1="9" x2="15" y2="9"></line>
-          
+
           <line x1="9" y1="13" x2="15" y2="13"></line>
-          
+
           <line x1="9" y1="17" x2="13" y2="17"></line>
         </svg>
-         <span class="sidebar-title">Editor Dashboard</span>
+        <span class="sidebar-title">Editor Dashboard</span>
         <svg
           class="sidebar-arrow"
           width="14"
@@ -29,12 +29,13 @@
           fill="none"
           stroke="currentColor"
           stroke-width="2.5"
+          style="transform: rotate(-90deg)"
         >
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
-      
-      <ul class="sidebar-menu">
+
+      <ul class="sidebar-menu" style="display: none">
         <li class={if @current_view == "assigned-to-me", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=assigned-to-me">
             <span class={[
@@ -47,7 +48,7 @@
             Assigned to me
           </a>
         </li>
-        
+
         <li class={if @current_view == "active", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=active">
             <span class={[
@@ -60,7 +61,7 @@
             Active submissions
           </a>
         </li>
-        
+
         <li class={if @current_view == "needs-editor", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=needs-editor">
             <span class={[
@@ -73,7 +74,7 @@
             Needs editor
           </a>
         </li>
-        
+
         <li class={if @current_view == "initial-review", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=initial-review">
             <span class={[
@@ -86,7 +87,7 @@
             All in submission stage
           </a>
         </li>
-        
+
         <li class={if @current_view == "needs-reviews", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=needs-reviews">
             <span class={[
@@ -99,7 +100,7 @@
             Needs reviews
           </a>
         </li>
-        
+
         <li class={if @current_view == "awaiting-reviews", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=awaiting-reviews">
             <span class={[
@@ -112,7 +113,7 @@
             Awaiting reviews
           </a>
         </li>
-        
+
         <li class={if @current_view == "reviews-submitted", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=reviews-submitted">
             <span class={[
@@ -125,7 +126,7 @@
             Reviews submitted
           </a>
         </li>
-        
+
         <li class={if @current_view == "reviews-overdue", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=reviews-overdue">
             <span class={[
@@ -138,7 +139,7 @@
             Reviews overdue
           </a>
         </li>
-        
+
         <li class={if @current_view == "revisions-submitted", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=revisions-submitted">
             <span class={[
@@ -151,7 +152,7 @@
             Author revisions submitted
           </a>
         </li>
-        
+
         <li class={if @current_view == "external-review", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=external-review">
             <span class={[
@@ -164,7 +165,7 @@
             All in review stage
           </a>
         </li>
-        
+
         <li class={if @current_view == "copyediting", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=copyediting">
             <span class={[
@@ -177,7 +178,7 @@
             All in copyediting stage
           </a>
         </li>
-        
+
         <li class={if @current_view == "production", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=production">
             <span class={[
@@ -190,7 +191,7 @@
             All in production stage
           </a>
         </li>
-        
+
         <li class={if @current_view == "scheduled", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=scheduled">
             <span class={[
@@ -203,7 +204,7 @@
             Scheduled for publication
           </a>
         </li>
-        
+
         <li class={if @current_view == "published", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=published">
             <span class={[
@@ -216,7 +217,7 @@
             Published
           </a>
         </li>
-        
+
         <li class={if @current_view == "declined", do: "active"}>
           <a href="/dashboard/editorial?currentViewId=declined">
             <span class={[
@@ -231,18 +232,104 @@
         </li>
       </ul>
     </div>
+
+    <div class="sidebar-section">
+      <a href={journal_manage_issues_path()} class="sidebar-header sidebar-header-link">
+        <svg
+          class="sidebar-icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+          </path>
+
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        <span class="sidebar-title">Issues</span>
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <a href={journal_dois_path()} class="sidebar-header sidebar-header-link">
+        <svg
+          class="sidebar-icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+          </path>
+        </svg>
+        <span class="sidebar-title">DOIs</span>
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-header" onclick="toggleSidebarSection(this)">
+        <svg
+          class="sidebar-icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="3"></circle>
+
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
+        <span class="sidebar-title">Settings</span>
+        <svg
+          class="sidebar-arrow"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          style="transform: rotate(-90deg)"
+        >
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+
+      <ul class="sidebar-menu" style="display: none">
+        <%= for {label, path} <- journal_settings_links() do %>
+          <li>
+            <a href={path}>
+              <span class="badge badge-zero">{""}</span> {label}
+            </a>
+          </li>
+        <% end %>
+      </ul>
+    </div>
   </aside>
   <!-- Main Content -->
   <div class="editor-main-content">
     <h1 class="page-heading">
       {String.capitalize(String.replace(@current_view, "-", " "))} ({length(@submissions)})
     </h1>
-    
+
     <div class="content-toolbar">
       <div class="toolbar-left">
         <button class="btn-filter">Filters</button> <button class="btn-more">···</button>
       </div>
-      
+
       <div class="toolbar-right">
         <div class="search-box">
           <svg
@@ -255,10 +342,10 @@
             stroke-width="2"
           >
             <circle cx="11" cy="11" r="8"></circle>
-            
+
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          
+
           <input
             type="text"
             placeholder="Search submissions, ID, authors, ..."
@@ -267,7 +354,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="submissions-table-wrapper">
       <table class="submissions-table">
         <thead>
@@ -283,15 +370,15 @@
                 stroke-width="2"
               >
                 <path d="M7 15l5 5 5-5"></path>
-                
+
                 <path d="M7 9l5-5 5 5"></path>
               </svg>
             </th>
-            
+
             <th class="col-submissions">SUBMISSIONS</th>
-            
+
             <th class="col-stage">STAGE</th>
-            
+
             <th class="col-days">
               DAYS
               <svg
@@ -303,17 +390,17 @@
                 stroke-width="2"
               >
                 <path d="M7 15l5 5 5-5"></path>
-                
+
                 <path d="M7 9l5-5 5 5"></path>
               </svg>
             </th>
-            
+
             <th class="col-editorial">EDITORIAL ACTIVITY</th>
-            
+
             <th class="col-actions">ACTIONS</th>
           </tr>
         </thead>
-        
+
         <tbody>
           <%= if length(@submissions) == 0 do %>
             <tr>
@@ -323,14 +410,14 @@
             <%= for submission <- @submissions do %>
               <tr>
                 <td class="col-id">{submission.id}</td>
-                
+
                 <td class="col-submissions">
                   <div class="submission-info">
                     <span class="submission-author">{submission.author}</span>
                     <span class="submission-title">— {submission.title}</span>
                   </div>
                 </td>
-                
+
                 <td class="col-stage">
                   <span class="stage-indicator">
                     <span
@@ -339,11 +426,11 @@
                     ></span> {stage_label(submission.stage)}
                   </span>
                 </td>
-                
+
                 <td class="col-days">{submission.days}</td>
-                
+
                 <td class="col-editorial"></td>
-                
+
                 <td class="col-actions">
                   <a href={"/submission/#{submission.id}"} class="btn-view">View</a>
                 </td>
@@ -352,7 +439,7 @@
           <% end %>
         </tbody>
       </table>
-      
+
       <div class="table-footer">
         Showing <strong>0 to {max(0, length(@submissions))}</strong>
         of <strong>{length(@submissions)}</strong>

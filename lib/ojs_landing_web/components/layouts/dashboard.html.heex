@@ -14,14 +14,16 @@
     <!-- Dashboard Header -->
     <header class="dashboard-header">
       <div class="dashboard-header-left">
-        <h1 class="dashboard-journal-title">Jurnal Perang Dunia 1</h1>
+        <h1 class="dashboard-journal-title">
+          {assigns[:journal_title] || "Jurnal Perang Dunia 1"}
+        </h1>
       </div>
 
       <div class="dashboard-header-right">
         <a href="#" class="header-icon" title="Information">
           <svg
-            width="24"
-            height="24"
+            width="22"
+            height="22"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -35,10 +37,10 @@
           </svg>
         </a>
 
-        <a href="#" class="header-icon" title="Notifications">
+        <a href="#" class="header-icon header-notification" title="Notifications">
           <svg
-            width="24"
-            height="24"
+            width="22"
+            height="22"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -48,6 +50,7 @@
 
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
+          <span class="notification-badge">2</span>
         </a>
 
         <div class="user-dropdown">
@@ -56,7 +59,7 @@
             onclick="toggleUserDropdown(this)"
             title={@current_user.username}
           >
-            <span class="avatar-letter">{String.first(String.upcase(@current_user.username))}</span>
+            <span class="avatar-letter">{user_initials(@current_user)}</span>
           </button>
 
           <div class="user-dropdown-menu">

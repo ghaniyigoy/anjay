@@ -4,6 +4,22 @@ defmodule OjsLandingWeb.Plugs.Auth do
 
   def init(opts), do: opts
 
+  def call(conn, :require_editor_admin) do
+    user = conn.assigns[:current_user]
+
+    if user && user.role in [:admin, :editor] do
+      conn
+    else
+      conn
+      |> put_flash(
+        :error,
+        "Akses ditolak. Hanya admin atau editor yang dapat mengakses halaman ini."
+      )
+      |> redirect(to: "/login")
+      |> halt()
+    end
+  end
+
   def call(conn, :require_admin) do
     user = conn.assigns[:current_user]
 

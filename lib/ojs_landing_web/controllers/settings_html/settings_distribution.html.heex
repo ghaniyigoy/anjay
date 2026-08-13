@@ -1,0 +1,277 @@
+<.settings_layout
+  section={@section}
+  journal_path={@journal_path}
+  journal_title={@journal.title}
+>
+  <form id="ojs-settings-form" phx-no-curly-interpolation>
+    <.settings_panel
+      anchor="license"
+      title="License"
+      description="Copyright and licensing terms applied to published content."
+    >
+      <.input_field
+        label="Copyright Holder"
+        name="copyrightHolderName"
+        value={@journal.publisher}
+        hint="The copyright holder for content published in this journal."
+      />
+      <.input_field
+        label="Copyright Year"
+        name="copyrightYear"
+        value="2026"
+        hint="The year(s) covered by the copyright notice."
+      />
+      <.select_field
+        label="License"
+        name="licenseUrl"
+        value="CC BY"
+        options={Enum.map(license_options(), &{&1, &1})}
+        hint="The default license applied to published articles."
+      />
+      <.radio_field
+        label="Display License Information"
+        name="licenseDisplay"
+        value="article"
+        options={[
+          {"article", "Display on article pages and browsable tables of contents"},
+          {"footer", "Display only in the page footer"}
+        ]}
+      />
+      <.textarea_field
+        label="License Terms"
+        name="licenseTerms"
+        value="This journal provides immediate open access to its content on the principle that making research freely available to the public supports a greater global exchange of knowledge."
+        rows={3}
+        hint="Optional custom license terms shown with published articles."
+      />
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="dois"
+      title="DOI"
+      description="Digital Object Identifier (DOI) registration for published content."
+    >
+      <.radio_field
+        label="Enable DOIs"
+        name="doiEnabled"
+        value="yes"
+        options={[
+          {"yes", "Enable DOI registration for this journal"},
+          {"no", "Disable DOI registration"}
+        ]}
+        hint="When enabled, DOIs are assigned to issues, articles, and galleys."
+      />
+      <.input_field
+        label="DOI Prefix"
+        name="doiPrefix"
+        value="10.1234"
+        placeholder="10.xxxx"
+        hint="The DOI prefix assigned to your organization by the registration agency."
+      />
+      <.input_field
+        label="Crossref DOI Prefix"
+        name="crossrefPrefix"
+        value=""
+        placeholder="10.xxxx"
+        hint="Your Crossref prefix, if different from the general DOI prefix above."
+      />
+      <.select_field
+        label="DOI Suffix Pattern"
+        name="doiSuffix"
+        value="custom"
+        options={[
+          {"none", "None (manually assign DOIs)"},
+          {"custom", "Custom pattern based on issue and article identifiers"}
+        ]}
+        hint="How DOI suffixes are constructed."
+      />
+      <.checkbox_field
+        label="DOI Registration"
+        name="doiRegistration"
+        value={["immediateBook", "article"]}
+        options={[
+          {"book", "Register DOIs for issues and articles with Crossref"},
+          {"immediateBook", "Register DOIs immediately upon publication"},
+          {"galley", "Register a DOI for each galley file"}
+        ]}
+      />
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="indexing"
+      title="Indexing"
+      description="Configure how this journal is indexed and discovered by external services."
+    >
+      <.checkbox_field
+        label="Search Engine Indexing"
+        name="searchIndexing"
+        value={["googlescholar", "openaire"]}
+        options={[
+          {"googlescholar", "Include Google Scholar metadata tags in article pages"},
+          {"openaire", "Include OpenAIRE metadata"},
+          {"canonical", "Add canonical links to published articles"}
+        ]}
+      />
+      <.checkbox_field
+        label="Indexing Services"
+        name="indexDeposits"
+        value={["crossref", "doaj"]}
+        options={[
+          {"crossref", "Crossref article and issue deposit"},
+          {"doaj", "DOAJ journal index"},
+          {"pubmed", "PubMed / PMC deposit"},
+          {"openAIRE", "OpenAIRE admin deposit"}
+        ]}
+      />
+      <.input_field
+        label="DOAJ API Key"
+        name="doajApiKey"
+        value=""
+        hint="API key supplied by DOAJ for automated updates."
+      />
+      <.input_field
+        label="PubMed / PMC Account"
+        name="pubmedAccount"
+        value=""
+        hint="Account identifier used to deposit metadata with PMC."
+      />
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="payments"
+      title="Payments"
+      description="Configure fees and payment methods for submissions and publication."
+    >
+      <.radio_field
+        label="Fees"
+        name="paymentsEnabled"
+        value="enabled"
+        options={[
+          {"enabled", "Enable payment processing for this journal"},
+          {"disabled", "Disable payment processing"}
+        ]}
+        hint="Payment processing must be enabled before fees can be collected."
+      />
+      <.select_field
+        label="Currency"
+        name="paymentCurrency"
+        value="IDR"
+        options={[
+          {"IDR", "Indonesian Rupiah (IDR)"},
+          {"USD", "US Dollar (USD)"},
+          {"EUR", "Euro (EUR)"}
+        ]}
+        hint="The currency used to quote fees."
+      />
+      <.input_field
+        label="Submission Fee"
+        name="submissionFee"
+        value="500000"
+        type="number"
+        prefix="Rp"
+        hint="Fee charged when an author submits a manuscript."
+      />
+      <.input_field
+        label="Fast-track Fee"
+        name="fastTrackFee"
+        value="0"
+        type="number"
+        prefix="Rp"
+        hint="Additional fee for expedited review."
+      />
+      <.input_field
+        label="Publication Fee"
+        name="publicationFee"
+        value="250000"
+        type="number"
+        prefix="Rp"
+        hint="Fee charged when an article is accepted for publication."
+      />
+      <.input_field
+        label="Purchase Article Fee"
+        name="purchaseFee"
+        value="0"
+        type="number"
+        prefix="Rp"
+        hint="Fee charged to readers who wish to purchase access to an article."
+      />
+      <.checkbox_field
+        label="Payment Method"
+        name="paymentMethod"
+        value={["paypal", "bank"]}
+        options={[
+          {"paypal", "PayPal"},
+          {"bank", "Bank transfer"},
+          {"manual", "Manual / offline payment"}
+        ]}
+      />
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="access"
+      title="Access"
+      description="Control access to the journal's published content."
+    >
+      <.radio_field
+        label="Subscription"
+        name="accessMode"
+        value="open"
+        options={[
+          {"open", "Open access: readers can view all content without registering"},
+          {"subscription",
+           "Restrict access: require registration or a subscription to read content"}
+        ]}
+        hint="Sets whether the journal operates as open access or subscription based."
+      />
+      <div class="settings-subblock">
+        <h3 class="settings-subblock-title">Reader Access</h3>
+        <.checkbox_field
+          label="Reader Roles"
+          name="readerAccess"
+          value={["download", "register"]}
+          options={[
+            {"download", "Allow readers to download galleys without registering"},
+            {"register", "Require registration to read article full text (delayed open access)"}
+          ]}
+        />
+      </div>
+      <.radio_field
+        label="Password Strength"
+        name="passwordStrength"
+        value="medium"
+        options={[
+          {"low", "Low: any password with at least 5 characters"},
+          {"medium", "Medium: require a mix of letters and numbers (default)"},
+          {"high", "High: require uppercase, lowercase, numbers, and symbols"}
+        ]}
+      />
+    </.settings_panel>
+
+    <.settings_panel
+      anchor="archive"
+      title="Archive"
+      description="Options for LOCKSS/Portico-like archive services and content harvesting."
+    >
+      <.checkbox_field
+        label="LOCKSS"
+        name="lockss"
+        value={["lockss", "clockss"]}
+        options={[
+          {"lockss", "Register with LOCKSS for decentralized archiving"},
+          {"clockss", "Register with CLOCKSS for centralized archiving"},
+          {"portico", "Register with Portico"},
+          {"pkn", "Register with PKP Preservation Network"}
+        ]}
+      />
+      <.checkbox_field
+        label="Archiving Options"
+        name="archiveOptions"
+        value={["oai"]}
+        options={[
+          {"oai", "Expose journal metadata through OAI-PMH for harvesting"},
+          {"warning", "Do not expose galleys to harvesters before the archive delay"}
+        ]}
+      />
+    </.settings_panel>
+  </form>
+</.settings_layout>
