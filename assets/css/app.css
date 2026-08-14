@@ -10686,4 +10686,380 @@ tr.is-open .doi-row-actions {
   font-size: 12px !important;
 }
 
+/* ================================================================
+   Make a Submission: Details (OJS 3.5 PKP wizard)
+   ================================================================ */
+.ojs-details-body {
+  font-family: 'Noto Sans', sans-serif;
+  color: var(--ojs-text);
+  font-size: 14px;
+  line-height: 1.43;
+  background: #f3f4f6;
+  min-height: 100vh;
+}
+
+.ojs-details-page {
+  padding: 26px 0 60px;
+}
+
+.ojs-details-container {
+  width: 90%;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+/* --- Page header: title left, action right --- */
+.ojs-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+}
+
+.ojs-details-header h1 {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--ojs-text);
+  margin: 0;
+}
+
+/* --- Horizontal progress steps (white card) --- */
+.ojs-progress-card {
+  background: #fff;
+  border: 1px solid var(--ojs-border);
+  border-radius: 2px;
+  padding: 16px 22px;
+  margin-bottom: 22px;
+}
+
+.ojs-progress-steps {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ojs-progress-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ojs-progress-step + .ojs-progress-step {
+  margin-left: 16px;
+}
+
+.ojs-progress-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #c0c0c0;
+  border-radius: 50%;
+  background: #fff;
+  color: #8a8a8a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ojs-progress-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8a8a8a;
+  white-space: nowrap;
+}
+
+.ojs-progress-arrow {
+  margin-left: 16px;
+  color: #c2c2c2;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.ojs-progress-step.is-current .ojs-progress-number {
+  background: var(--ojs-bg-base);
+  border-color: var(--ojs-bg-base);
+  color: #fff;
+}
+
+.ojs-progress-step.is-current .ojs-progress-label {
+  color: var(--ojs-bg-base);
+}
+
+/* --- Main card --- */
+.ojs-details-card {
+  background: #fff;
+  border: 1px solid var(--ojs-border);
+  border-radius: 2px;
+}
+
+.ojs-details-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.6fr);
+  gap: 40px;
+  padding: 28px 32px;
+}
+
+/* --- Left column --- */
+.ojs-details-aside h2 {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ojs-text);
+  margin: 0 0 10px;
+}
+
+.ojs-details-aside p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0 0 12px;
+}
+
+.ojs-details-aside p:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Form fields --- */
+.ojs-details-form {
+  min-width: 0;
+}
+
+.ojs-field-block {
+  margin-bottom: 22px;
+}
+
+.ojs-field-block:last-child {
+  margin-bottom: 0;
+}
+
+.ojs-field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ojs-text);
+  margin-bottom: 4px;
+}
+
+.ojs-req {
+  color: #c0392b;
+  font-weight: 700;
+}
+
+.ojs-field-desc {
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgba(0, 0, 0, 0.55);
+  margin: 0 0 8px;
+}
+
+.ojs-field-error {
+  font-size: 12px;
+  color: #c0392b;
+  margin: 5px 0 0;
+}
+
+.ojs-input-error {
+  border-color: #c0392b !important;
+}
+
+.ojs-input-error:focus {
+  outline-color: #c0392b !important;
+}
+
+/* --- Rich text editor --- */
+.ojs-richtext-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  padding: 4px;
+  border: 1px solid #aaa;
+  border-bottom: none;
+  background: #fafafa;
+}
+
+.ojs-richtext-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: #444;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.ojs-richtext-toolbar button:hover {
+  background: #ececec;
+  border-color: #d6d6d6;
+}
+
+.ojs-richtext-toolbar button.is-active {
+  background: #e2eff7;
+  border-color: #b8d2e4;
+  color: var(--ojs-bg-base);
+}
+
+.ojs-richtext {
+  min-height: 160px;
+  padding: 10px 12px;
+  border: 1px solid #aaa;
+  border-radius: 0;
+  background: #fff;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ojs-text);
+  outline: none;
+  overflow-y: auto;
+}
+
+.ojs-richtext:focus {
+  outline: 2px solid var(--ojs-primary);
+  outline-offset: -1px;
+  border-color: var(--ojs-primary);
+}
+
+.ojs-richtext-error {
+  border-color: #c0392b !important;
+}
+
+.ojs-richtext-error:focus {
+  outline-color: #c0392b !important;
+}
+
+.ojs-richtext:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+/* --- Large textarea --- */
+.ojs-textarea-lg {
+  min-height: 150px;
+}
+
+/* --- Validation alert --- */
+.ojs-details-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #d9a29a;
+  border-left: 4px solid #c0392b;
+  background: #fdf3f2;
+  color: #7c2d21;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ojs-details-alert strong {
+  color: #7c2d21;
+}
+
+.ojs-details-alert p {
+  margin: 0;
+}
+
+/* --- Card footer --- */
+.ojs-details-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 16px 32px;
+  border-top: 1px solid #ececec;
+}
+
+.ojs-last-saved {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.ojs-details-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-ojs-link {
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 10px 12px;
+  color: rgba(0, 0, 0, 0.55);
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-ojs-link:hover {
+  color: var(--ojs-text);
+  text-decoration: underline;
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  .ojs-details-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ojs-details-page {
+    padding: 18px 0 40px;
+  }
+
+  .ojs-details-container {
+    width: 94%;
+  }
+
+  .ojs-details-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .ojs-details-grid {
+    padding: 20px;
+  }
+
+  .ojs-details-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 20px;
+  }
+
+  .ojs-details-actions {
+    width: 100%;
+  }
+
+  .ojs-details-actions .btn-ojs-primary,
+  .ojs-details-actions .btn-ojs-secondary {
+    flex: 1;
+    text-align: center;
+  }
+}
+
 

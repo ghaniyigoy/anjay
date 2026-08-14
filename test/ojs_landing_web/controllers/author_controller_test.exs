@@ -146,4 +146,102 @@ defmodule OjsLandingWeb.AuthorControllerTest do
       assert html =~ "Judul wajib diisi"
     end
   end
+
+  describe "make a submission: details (OJS 3.5 wizard)" do
+    setup %{conn: conn} do
+      {:ok, conn: init_test_session(conn, current_user: "author1")}
+    end
+
+    test "GET /submission/:id/details renders the page", %{conn: conn} do
+      conn = get(conn, "/submission/14/details")
+      html = html_response(conn, 200)
+
+      assert html =~ "Make a Submission: Details"
+      assert html =~ "Dashboard"
+      assert html =~ "My Submissions"
+      assert html =~ "Submission 14"
+      assert html =~ "submission-details-form"
+      assert html =~ "abstract-editor"
+      assert html =~ "abstract-toolbar"
+      assert html =~ "ojs-progress-steps"
+      assert html =~ "btn-continue"
+      assert html =~ "btn-save-later"
+      assert html =~ "Last saved 16 minutes ago"
+      assert html =~ "Upload Files"
+      assert html =~ "For the Editors"
+    end
+
+    test "GET /submission/:id/details redirects to login when not authenticated" do
+      conn = get(build_conn(), "/submission/14/details")
+
+      assert redirected_to(conn) == "/login"
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "login"
+    end
+
+    test "GET /submission/:id/details redirects to my submissions when not found", %{conn: conn} do
+      conn = get(conn, "/submission/9999/details")
+
+      assert redirected_to(conn) == "/dashboard/mySubmissions"
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "tidak ditemukan"
+    end
+
+    test "POST /submission/:id/details saves and continues to upload files", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      conn =
+        post(conn, "/submission/#{submission.id}/details", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+          "action" => "continue",
+          "submission" => %{
+            "title" => "Judul Detail Baru",
+            "abstract" => "Abstrak dari halaman details.",
+            "keywords" => "elixir, phoenix",
+            "references" => "1. Author. (2026). Title."
+          }
+        })
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=files"
+
+      updated = Submission.get(submission.id)
+      assert updated.title == "Judul Detail Baru"
+      assert updated.abstract == "Abstrak dari halaman details."
+      assert updated.keywords == "elixir, phoenix"
+      assert updated.references == "1. Author. (2026). Title."
+    end
+
+    test "POST /submission/:id/details saves for later and returns to my submissions", %{
+      conn: conn
+    } do
+      submission = Submission.create("author1")
+
+      conn =
+        post(conn, "/submission/#{submission.id}/details", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+          "action" => "save",
+          "submission" => %{"title" => "Judul Simpan Nanti", "abstract" => "Abstrak singkat."}
+        })
+
+      assert redirected_to(conn) ==
+               "/dashboard/mySubmissions?currentViewId=incomplete-submissions"
+
+      assert Submission.get(submission.id).title == "Judul Simpan Nanti"
+    end
+
+    test "POST /submission/:id/details re-renders with errors when required fields are blank",
+         %{conn: conn} do
+      submission = Submission.create("author1")
+
+      conn =
+        post(conn, "/submission/#{submission.id}/details", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+          "action" => "continue",
+          "submission" => %{"title" => "  ", "abstract" => ""}
+        })
+
+      html = html_response(conn, 200)
+      assert html =~ "A title is required."
+      assert html =~ "An abstract is required."
+      assert html =~ "Make a Submission: Details"
+    end
+  end
 end

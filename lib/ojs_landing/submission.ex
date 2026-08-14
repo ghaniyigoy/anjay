@@ -26,6 +26,7 @@ defmodule OjsLanding.Submission do
     :section,
     :keywords,
     :language,
+    :references,
     :type,
     :status,
     :files,
@@ -90,6 +91,7 @@ defmodule OjsLanding.Submission do
       section: "Artikel Penelitian",
       keywords: "",
       language: "id",
+      references: "",
       type: :article,
       status: :incomplete,
       files: [],
@@ -124,6 +126,7 @@ defmodule OjsLanding.Submission do
         |> maybe_put(:section, params["section"])
         |> maybe_put(:keywords, params["keywords"])
         |> maybe_put(:language, params["language"])
+        |> maybe_put(:references, params["references"])
         |> maybe_put_status(params)
 
       Agent.update(__MODULE__, fn subs ->
@@ -186,6 +189,8 @@ defmodule OjsLanding.Submission do
         section: "Artikel Penelitian",
         keywords: "berita palsu, transformer, BERT, NLP, deteksi informasi",
         language: "id",
+        references:
+          "1. Vaswani, A., et al. (2017). Attention is all you need. NeurIPS.\n2. Devlin, J., et al. (2019). BERT: Pre-training of deep bidirectional transformers. NAACL.\n3. Maas, A., et al. (2011). Learning word vectors for sentiment analysis. ACL.",
         type: :article,
         status: :active,
         files: [

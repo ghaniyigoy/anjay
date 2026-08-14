@@ -1,0 +1,227 @@
+<div class="ojs-details-container">
+  <%!-- Breadcrumb (OJS PKP) --%>
+  <nav class="ojs-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/dashboard">Dashboard</a></li>
+
+      <li><a href="/dashboard/mySubmissions">My Submissions</a></li>
+
+      <li aria-current="page">Submission {@submission.id}</li>
+    </ol>
+  </nav>
+
+  <%!-- Page header: title left, Save for Later right --%>
+  <div class="ojs-details-header">
+    <h1>Make a Submission: Details</h1>
+
+    <button
+      type="submit"
+      form="submission-details-form"
+      name="action"
+      value="save"
+      class="btn-ojs-secondary"
+      id="btn-save-later-top"
+    >
+      Save for Later
+    </button>
+  </div>
+
+  <%!-- Horizontal progress steps (white card) --%>
+  <div class="ojs-progress-card">
+    <ol class="ojs-progress-steps">
+      <%= for {step, index} <- Enum.with_index(details_steps()) do %>
+        <li class={["ojs-progress-step", step_is_current?(index) && "is-current"]}>
+          <span class="ojs-progress-number">{step.number}</span>
+          <span class="ojs-progress-label">{step.label}</span>
+          <%= if index < length(details_steps()) - 1 do %>
+            <span class="ojs-progress-arrow" aria-hidden="true">→</span>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  </div>
+
+  <%!-- Main card: 2-column (aside + form) --%>
+  <div class="ojs-details-card">
+    <.form
+      for={@form}
+      id="submission-details-form"
+      action={"/submission/#{@submission.id}/details"}
+      method="post"
+      novalidate
+    >
+      <div class="ojs-details-grid">
+        <%!-- Left column: heading + description --%>
+        <div class="ojs-details-aside">
+          <h2>Submission Details</h2>
+
+          <p>
+            Enter your submission's metadata below. Fields marked with an asterisk (*) are required.
+          </p>
+
+          <p>
+            You can save your work at any time and continue where you left off.
+          </p>
+        </div>
+
+        <%!-- Right column: the form fields --%>
+        <div class="ojs-details-form">
+          <div class="ojs-field-block" id="title-field">
+            <label for="title" class="ojs-field-label">
+              Title <span class="ojs-req">*</span>
+            </label>
+
+            <input
+              type="text"
+              id="title"
+              name="submission[title]"
+              class={["ojs-input", @errors["title"] && "ojs-input-error"]}
+              value={@form[:title].value}
+              placeholder="Judul lengkap makalah"
+              autocomplete="off"
+            />
+            <p class="ojs-field-error" data-error-for="title" role="alert">{@errors["title"]}</p>
+          </div>
+
+          <div class="ojs-field-block">
+            <label for="keywords" class="ojs-field-label">Keywords</label>
+
+            <p class="ojs-field-desc">
+              Enter the keywords for this submission, separated by commas.
+            </p>
+
+            <input
+              type="text"
+              id="keywords"
+              name="submission[keywords]"
+              class="ojs-input"
+              value={@form[:keywords].value}
+              placeholder="machine learning, NLP, analisis sentimen"
+            />
+          </div>
+
+          <div class="ojs-field-block" id="abstract-field">
+            <label class="ojs-field-label">
+              Abstract <span class="ojs-req">*</span>
+            </label>
+
+            <p class="ojs-field-desc">
+              Provide a concise summary of the purpose, methods, results and conclusions of your
+              research (maximum 300 words).
+            </p>
+
+            <input
+              type="hidden"
+              id="abstract"
+              name="submission[abstract]"
+              value={@form[:abstract].value}
+            />
+
+            <div
+              class="ojs-richtext-toolbar"
+              id="abstract-toolbar"
+              role="toolbar"
+              aria-label="Formatting options"
+            >
+              <button type="button" data-cmd="bold" title="Bold" aria-label="Bold"><strong>B</strong></button>
+              <button type="button" data-cmd="italic" title="Italic" aria-label="Italic"><em>I</em></button>
+              <button
+                type="button"
+                data-cmd="superscript"
+                title="Superscript"
+                aria-label="Superscript"
+              >
+                x<sup>2</sup>
+              </button>
+              <button type="button" data-cmd="subscript" title="Subscript" aria-label="Subscript">
+                x<sub>2</sub>
+              </button>
+              <button type="button" data-cmd="createLink" title="Link" aria-label="Link">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div
+              id="abstract-editor"
+              class={["ojs-richtext", @errors["abstract"] && "ojs-richtext-error"]}
+              contenteditable="true"
+              data-target="abstract"
+              data-placeholder="Write your abstract here..."
+              role="textbox"
+              aria-multiline="true"
+              aria-label="Abstract"
+            ></div>
+            <p class="ojs-field-error" data-error-for="abstract" role="alert">
+              {@errors["abstract"]}
+            </p>
+          </div>
+
+          <div class="ojs-field-block">
+            <label for="references" class="ojs-field-label">References</label>
+
+            <p class="ojs-field-desc">
+              List the references cited in your submission. Include URLs for each reference where
+              available.
+            </p>
+
+            <textarea
+              id="references"
+              name="submission[references]"
+              class="ojs-textarea ojs-textarea-lg"
+              rows="7"
+              placeholder="1. Author, A. (Year). Title of the article. Journal Name, Volume(Issue), Pages."
+            >{@form[:references].value}</textarea>
+          </div>
+
+          <div class="ojs-details-alert" id="details-alert" role="alert" hidden>
+            <strong>Your submission is incomplete.</strong>
+
+            <p>Please correct the highlighted fields below before continuing.</p>
+          </div>
+        </div>
+      </div>
+
+      <%!-- Card footer (full width) --%>
+      <div class="ojs-details-footer">
+        <span class="ojs-last-saved">Last saved 16 minutes ago</span>
+
+        <div class="ojs-details-actions">
+          <a href="/dashboard/mySubmissions" class="btn-ojs-link" id="btn-cancel">Cancel</a>
+
+          <button
+            type="submit"
+            name="action"
+            value="save"
+            class="btn-ojs-secondary"
+            id="btn-save-later"
+          >
+            Save for Later
+          </button>
+
+          <button
+            type="submit"
+            name="action"
+            value="continue"
+            class="btn-ojs-primary"
+            id="btn-continue"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </.form>
+  </div>
+</div>

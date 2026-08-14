@@ -83,8 +83,13 @@ defmodule OjsLandingWeb.AuthorHTML do
       "abstract" => submission.abstract || "",
       "section" => submission.section || "Artikel Penelitian",
       "keywords" => submission.keywords || "",
-      "language" => submission.language || "id"
+      "language" => submission.language || "id",
+      "references" => submission.references || ""
     })
+  end
+
+  def submission_params_to_form(params) do
+    to_form(params, as: :submission)
   end
 
   def submission_form_action(submission, tab),
@@ -123,6 +128,20 @@ defmodule OjsLandingWeb.AuthorHTML do
   def tab_label("contributors"), do: "Contributors"
   def tab_label("editors"), do: "Editors"
   def tab_label("review"), do: "Review"
+
+  # --- Make a Submission: Details (OJS 3.5 wizard) -------------------------
+
+  @details_steps [
+    %{number: "1", label: "Details"},
+    %{number: "2", label: "Upload Files"},
+    %{number: "3", label: "Contributors"},
+    %{number: "4", label: "For the Editors"},
+    %{number: "5", label: "Review"}
+  ]
+
+  def details_steps, do: @details_steps
+
+  def step_is_current?(index), do: index == 0
 
   def tab_count("files", submission), do: count_or_nil(file_count(submission))
   def tab_count("contributors", submission), do: count_or_nil(contributors_count(submission))

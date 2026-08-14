@@ -2,6 +2,7 @@ defmodule OjsLandingWeb.AuthorController do
   use OjsLandingWeb, :controller
 
   alias OjsLanding.Submission
+  alias OjsLandingWeb.AuthorHTML
 
   # Submission wizard tabs, driven by the ?tab= query parameter
   @tabs ["details", "files", "contributors", "editors", "review"]
@@ -152,6 +153,88 @@ defmodule OjsLandingWeb.AuthorController do
     |> put_flash(:info, "Submission #{id} disimpan untuk nanti.")
     |> redirect(to: "/dashboard/mySubmissions?currentViewId=incomplete-submissions")
   end
+
+  # ============================================
+  # MAKE A SUBMISSION: DETAILS (OJS 3.5 wizard)
+  # ============================================
+
+  def details(conn, %{"id" => id}) do
+    case {conn.assigns.current_user, Submission.get(id)} do
+      {nil, _} ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk melihat submission.")
+
+      {_, nil} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+
+      {_user, submission} ->
+        render_details(conn, submission, %{}, AuthorHTML.submission_to_form(submission))
+    end
+  end
+
+  def save_details(conn, %{"id" => id, "submission" => submission_params} = params) do
+    action = Map.get(params, "action", "save")
+    submission = Submission.get(id)
+    errors = validate_details(submission_params)
+
+    cond do
+      is_nil(conn.assigns.current_user) ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk memperbarui submission.")
+
+      is_nil(submission) ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+
+      map_size(errors) > 0 ->
+        render_details(
+          conn,
+          submission,
+          errors,
+          AuthorHTML.submission_params_to_form(submission_params)
+        )
+
+      true ->
+        Submission.update(id, submission_params)
+
+        if action == "continue" do
+          conn
+          |> put_flash(:info, "Submission #{id} berhasil disimpan.")
+          |> redirect(to: "/submission/wizard/#{id}?tab=files")
+        else
+          conn
+          |> put_flash(:info, "Submission #{id} disimpan untuk nanti.")
+          |> redirect(to: "/dashboard/mySubmissions?currentViewId=incomplete-submissions")
+        end
+    end
+  end
+
+  defp render_details(conn, submission, errors, form) do
+    conn
+    |> put_root_layout(false)
+    |> put_layout(html: {OjsLandingWeb.Layouts, :submission})
+    |> render(:details, submission: submission, errors: errors, form: form)
+  end
+
+  defp validate_details(submission_params) do
+    title = submission_params["title"] || ""
+    abstract = submission_params["abstract"] || ""
+
+    %{}
+    |> maybe_add_error("title", "A title is required.", title)
+    |> maybe_add_error("abstract", "An abstract is required.", abstract)
+  end
+
+  defp maybe_add_error(errors, key, message, value) when is_binary(value) do
+    if String.trim(value) == "" do
+      Map.put(errors, key, message)
+    else
+      errors
+    end
+  end
+
+  defp maybe_add_error(errors, _key, _message, _value), do: errors
 
   defp redirect_to_login(conn, message) do
     conn
