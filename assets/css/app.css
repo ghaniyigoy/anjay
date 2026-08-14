@@ -10409,4 +10409,281 @@ tr.is-open .doi-row-actions {
   }
 }
 
+/* ================================================================
+   Make a Submission (OJS author start-submission page)
+   Centered card on a light gray background, matching OJS PKP.
+   ================================================================ */
+.submission-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  min-height: calc(100vh - 60px);
+  background: #f1f2f3;
+  padding: 40px 16px;
+  box-sizing: border-box;
+}
+
+.submission-card {
+  width: 100%;
+  max-width: 640px;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  box-sizing: border-box;
+}
+
+.submission-title {
+  margin: 0 0 26px;
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: rgba(0, 0, 0, 0.87);
+  text-align: center;
+}
+
+.submission-section {
+  margin: 0 0 24px;
+}
+
+.submission-section-title {
+  margin: 0 0 12px;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.submission-paragraph {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.72);
+}
+
+.submission-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.submission-paragraph a,
+.submission-bullets a,
+.submission-consent a {
+  color: var(--ojs-primary, #006798);
+  text-decoration: none;
+}
+
+.submission-paragraph a:hover,
+.submission-bullets a:hover,
+.submission-consent a:hover {
+  color: var(--ojs-primary-lift, #1a7bb3);
+  text-decoration: underline;
+}
+
+/* --- Title field --- */
+.submission-field {
+  margin: 0 0 24px;
+}
+
+.submission-label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.submission-input {
+  display: block;
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #888;
+  border-radius: 3px;
+  background: #fff;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.87);
+  box-sizing: border-box;
+}
+
+.submission-input:focus {
+  outline: 2px solid var(--ojs-primary, #006798);
+  outline-offset: -1px;
+  border-color: var(--ojs-primary, #006798);
+}
+
+.submission-field.invalid .submission-input {
+  border-color: #c0392b;
+}
+
+.submission-field.invalid .submission-input:focus {
+  outline-color: #c0392b;
+  border-color: #c0392b;
+}
+
+/* --- Fieldsets (checklist + privacy) --- */
+.submission-fieldset {
+  margin: 0 0 24px;
+  padding: 16px 18px 18px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.submission-fieldset.invalid {
+  border-color: #c0392b;
+}
+
+.submission-legend {
+  padding: 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.submission-help {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.submission-bullets {
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
+.submission-bullets li {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.72);
+}
+
+.submission-bullets li:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Consent checkbox --- */
+.submission-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.87);
+  cursor: pointer;
+}
+
+.submission-consent input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  flex-shrink: 0;
+  accent-color: var(--ojs-bg-base, #1e6292);
+  cursor: pointer;
+}
+
+/* --- Validation messages --- */
+.submission-error {
+  min-height: 16px;
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #c0392b;
+}
+
+.submission-error:empty {
+  display: none;
+}
+
+.submission-alert {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid #e0a000;
+  border-left: 4px solid #e0a000;
+  background: #fff8e1;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.72);
+}
+
+.submission-alert strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #8a6d00;
+}
+
+.submission-alert p {
+  margin: 0;
+}
+
+/* --- Begin Submission button --- */
+.submission-btn {
+  display: block;
+  width: 100%;
+  height: 32px;
+  margin: 20px 0 0;
+  background: #087b9c;
+  border: 1px solid #087b9c;
+  border-radius: 4px;
+  color: #fff;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.submission-btn:hover {
+  background: #076a85;
+  border-color: #076a85;
+}
+
+.submission-btn:focus {
+  outline: 2px solid #087b9c;
+  outline-offset: 2px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  .submission-card {
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 560px) {
+  .submission-page {
+    padding: 20px 12px;
+  }
+
+  .submission-card {
+    max-width: 100%;
+    padding: 22px 18px;
+  }
+
+  .submission-title {
+    font-size: 26px;
+  }
+}
+
+/* ================================================================
+   My Submissions (author) table content — restore smaller OJS size
+   Scoped to the author dashboard so editor/reviewer tables stay 14px.
+   ================================================================ */
+.author-main-content .submissions-table td,
+.author-main-content .submissions-table .submission-info,
+.author-main-content .submissions-table .stage-indicator,
+.author-main-content .submissions-table .btn-view {
+  font-size: 13px !important;
+}
+
+.author-main-content .submissions-table .submission-title {
+  font-size: 12px !important;
+}
+
 

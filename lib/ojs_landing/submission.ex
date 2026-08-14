@@ -75,11 +75,16 @@ defmodule OjsLanding.Submission do
   @doc """
   Create a new (incomplete) submission for an author.
   """
-  def create(author_username) do
+  def create(author_username), do: create(author_username, "")
+
+  @doc """
+  Create a new (incomplete) submission for an author with an initial title.
+  """
+  def create(author_username, title) do
     submission = %__MODULE__{
       id: next_id(),
       author_username: author_username,
-      title: "",
+      title: title || "",
       subtitle: "",
       abstract: "",
       section: "Artikel Penelitian",

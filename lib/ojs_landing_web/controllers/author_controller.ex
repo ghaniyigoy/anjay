@@ -58,20 +58,37 @@ defmodule OjsLandingWeb.AuthorController do
     end
   end
 
-  def create_submission(conn, _params) do
+  def create_submission(conn, params) do
     case conn.assigns.current_user do
       nil ->
         redirect_to_login(conn, "Silakan login terlebih dahulu untuk membuat submission.")
 
       user ->
-        submission = Submission.create(user.username)
+        title = get_in(params, ["submission", "title"]) || ""
 
-        conn
-        |> put_flash(
-          :info,
-          "Submission #{submission.id} telah dibuat. Lengkapi detail submission untuk melanjutkan."
-        )
-        |> redirect(to: submission_path(submission.id, "details"))
+        if String.trim(title) == "" do
+          conn
+          |> put_root_layout(false)
+          |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+          |> render(:new_submission,
+            user: user,
+            all_submissions: Submission.get_by_author(user.username),
+            views: @views,
+            current_view: @default_view,
+            title: title,
+            form_error:
+              "Judul wajib diisi, Submission Checklist dan Privacy Consent harus dicentang."
+          )
+        else
+          submission = Submission.create(user.username, title)
+
+          conn
+          |> put_flash(
+            :info,
+            "Submission #{submission.id} telah dibuat. Lengkapi detail submission untuk melanjutkan."
+          )
+          |> redirect(to: submission_path(submission.id, "details"))
+        end
     end
   end
 

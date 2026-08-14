@@ -87,4 +87,63 @@ defmodule OjsLandingWeb.AuthorControllerTest do
       assert Submission.get(submission.id).status == :active
     end
   end
+
+  describe "start a new submission" do
+    setup %{conn: conn} do
+      {:ok, conn: init_test_session(conn, current_user: "author1")}
+    end
+
+    test "GET /submission/new renders the Make a Submission page", %{conn: conn} do
+      conn = get(conn, "/submission/new")
+      html = html_response(conn, 200)
+
+      assert html =~ "Make a Submission"
+      assert html =~ "Before you begin"
+      assert html =~ "Submission Checklist"
+      assert html =~ "Privacy Consent"
+      assert html =~ "submission-start-form"
+      assert html =~ "begin-submission-btn"
+      assert html =~ "submission-title"
+      assert html =~ "checklist-consent"
+      assert html =~ "privacy-consent"
+    end
+
+    test "GET /submission/new redirects to login when not authenticated" do
+      conn = get(build_conn(), "/submission/new")
+
+      assert redirected_to(conn) == "/login"
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "login"
+    end
+
+    test "POST /submission/create creates a submission with the title and redirects to the wizard",
+         %{conn: conn} do
+      conn =
+        post(conn, "/submission/create", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+          "submission" => %{
+            "title" => "Judul dari Halaman Make a Submission",
+            "checklist" => "1",
+            "privacy_consent" => "1"
+          }
+        })
+
+      assert redirected_to(conn) =~ "/submission/wizard/"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "telah dibuat"
+
+      [submission | _] = Submission.get_by_author("author1")
+      assert submission.title == "Judul dari Halaman Make a Submission"
+    end
+
+    test "POST /submission/create re-renders the form when the title is blank", %{conn: conn} do
+      conn =
+        post(conn, "/submission/create", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+          "submission" => %{"title" => "  "}
+        })
+
+      html = html_response(conn, 200)
+      assert html =~ "Make a Submission"
+      assert html =~ "Judul wajib diisi"
+    end
+  end
 end
