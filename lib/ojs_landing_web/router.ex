@@ -37,6 +37,11 @@ defmodule OjsLandingWeb.Router do
     # Reviewer Review Routes
     get "/review/:id", ReviewerController, :review
     post "/review/:id", ReviewerController, :submit_review
+    post "/review/:id/advance", ReviewerController, :advance_stage
+    post "/review/:id/copyedit/:task", ReviewerController, :complete_copyedit
+    post "/review/:id/galley", ReviewerController, :add_galley
+    post "/review/:id/proofread/:task", ReviewerController, :complete_proofread
+    post "/review/:id/publish", ReviewerController, :publish
 
     # Editor Dashboard Routes
     get "/dashboard/editorial", EditorController, :editorial

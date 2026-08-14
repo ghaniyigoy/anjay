@@ -24,6 +24,21 @@ defmodule OjsLandingWeb.ReviewerHTML do
   def status_color(:published), do: "#3498db"
   def status_color(:archived), do: "#95a5a6"
 
+  def all_tasks_done?(tasks), do: Enum.all?(tasks, & &1.done)
+  def done_task_count(tasks), do: Enum.count(tasks, & &1.done)
+
+  def stage_class(assignment, stage) do
+    case {assignment.stage, stage} do
+      {:review, :submission} -> "done"
+      {:review, :review} -> "active"
+      {:copyediting, s} when s in [:submission, :review] -> "done"
+      {:copyediting, :copyediting} -> "active"
+      {:production, s} when s in [:submission, :review, :copyediting] -> "done"
+      {:production, :production} -> "active"
+      _ -> ""
+    end
+  end
+
   def truncate_title(title, limit \\ 32) when is_binary(title) do
     if String.length(title) > limit do
       String.slice(title, 0, limit - 1) <> "…"

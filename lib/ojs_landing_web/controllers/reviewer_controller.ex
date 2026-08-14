@@ -5,7 +5,7 @@ defmodule OjsLandingWeb.ReviewerController do
     user = conn.assigns.current_user
 
     # Filter review assignments berdasarkan view_id
-    all_assignments = get_reviewer_assignments(user.username)
+    all_assignments = OjsLanding.ReviewerAssignment.all()
 
     filtered_assignments =
       case view_id do
@@ -80,33 +80,184 @@ defmodule OjsLandingWeb.ReviewerController do
   end
 
   def submit_review(conn, %{"id" => id} = params) do
-    assignment = get_review_assignment(id)
+    reviewer =
+      case conn.assigns.current_user do
+        %OjsLanding.User{given_name: given, family_name: family} ->
+          String.trim("#{given} #{family}")
 
-    if is_nil(assignment) do
+        name when is_binary(name) ->
+          name
+
+        _ ->
+          "You"
+      end
+
+    params = Map.put_new(params, "reviewer", reviewer)
+
+    case OjsLanding.ReviewerAssignment.submit_review(id, params) do
+      {:error, :not_found} ->
+        conn
+        |> put_flash(:error, "Review assignment not found")
+        |> redirect(to: "/dashboard/reviewAssignments")
+
+      {:ok, assignment} ->
+        recommendation = assignment.recommendation || "None"
+
+        conn
+        |> put_flash(
+          :info,
+          "Review submitted for \"#{assignment.title}\" (recommendation: #{recommendation})."
+        )
+        |> redirect(to: "/review/#{id}")
+    end
+  end
+
+  def advance_stage(conn, %{"id" => id}) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
       conn
-      |> put_flash(:error, "Review assignment not found")
-      |> redirect(to: "/dashboard/reviewAssignments")
     else
-      recommendation = params["recommendation"] || "None"
+      case OjsLanding.ReviewerAssignment.get(id) do
+        nil ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
 
+        %{stage: :copyediting} = assignment ->
+          if Enum.all?(assignment.copyedit_tasks, & &1.done) do
+            {:ok, _assignment} = OjsLanding.ReviewerAssignment.set_stage(id, :production)
+
+            conn
+            |> put_flash(:info, "Submission has been moved to the Production stage.")
+            |> redirect(to: "/review/#{id}")
+          else
+            conn
+            |> put_flash(
+              :error,
+              "Complete all copyediting tasks before advancing to Production."
+            )
+            |> redirect(to: "/review/#{id}")
+          end
+
+        _assignment ->
+          conn
+          |> put_flash(:error, "This submission is not ready to advance to Production.")
+          |> redirect(to: "/review/#{id}")
+      end
+    end
+  end
+
+  def complete_copyedit(conn, %{"id" => id, "task" => task}) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
       conn
-      |> put_flash(
-        :info,
-        "Review submitted for \"#{assignment.title}\" (recommendation: #{recommendation})."
-      )
-      |> redirect(to: "/review/#{id}")
+    else
+      case OjsLanding.ReviewerAssignment.complete_copyedit_task(id, task) do
+        {:error, :not_found} ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        {:ok, _assignment} ->
+          conn
+          |> put_flash(:info, "Copyediting task marked as complete.")
+          |> redirect(to: "/review/#{id}")
+      end
     end
   end
 
-  defp get_review_assignment(id) when is_binary(id) do
-    case Integer.parse(id) do
-      {int, ""} -> get_review_assignment(int)
-      _ -> nil
+  def add_galley(conn, %{"id" => id} = params) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
+      conn
+    else
+      case OjsLanding.ReviewerAssignment.add_galley_file(id, params) do
+        {:error, :not_found} ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        {:ok, _assignment} ->
+          conn
+          |> put_flash(:info, "Galley file added.")
+          |> redirect(to: "/review/#{id}")
+      end
     end
   end
 
-  defp get_review_assignment(id) when is_integer(id) do
-    Enum.find(get_reviewer_assignments(nil), &(&1.id == id))
+  def complete_proofread(conn, %{"id" => id, "task" => task}) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
+      conn
+    else
+      case OjsLanding.ReviewerAssignment.complete_proofread_task(id, task) do
+        {:error, :not_found} ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        {:ok, _assignment} ->
+          conn
+          |> put_flash(:info, "Proofreading task marked as complete.")
+          |> redirect(to: "/review/#{id}")
+      end
+    end
+  end
+
+  def publish(conn, %{"id" => id} = params) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
+      conn
+    else
+      case OjsLanding.ReviewerAssignment.get(id) do
+        nil ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        %{status: :published} ->
+          conn
+          |> put_flash(:error, "This submission has already been published.")
+          |> redirect(to: "/review/#{id}")
+
+        %{stage: :production, proofread_tasks: tasks} ->
+          if Enum.all?(tasks, & &1.done) do
+            {:ok, _assignment} = OjsLanding.ReviewerAssignment.publish(id, params)
+
+            conn
+            |> put_flash(:info, "Submission published successfully.")
+            |> redirect(to: "/review/#{id}")
+          else
+            conn
+            |> put_flash(:error, "Complete all proofreading tasks before publishing.")
+            |> redirect(to: "/review/#{id}")
+          end
+
+        _assignment ->
+          conn
+          |> put_flash(:error, "This submission is not in the Production stage.")
+          |> redirect(to: "/review/#{id}")
+      end
+    end
+  end
+
+  defp login_guard(conn) do
+    if is_nil(conn.assigns.current_user) do
+      conn
+      |> put_flash(:error, "Silakan login terlebih dahulu untuk mengakses halaman review.")
+      |> redirect(to: "/login")
+    else
+      conn
+    end
+  end
+
+  defp get_review_assignment(id) do
+    OjsLanding.ReviewerAssignment.get(id)
   end
 
   defp review_criteria do
@@ -130,90 +281,6 @@ defmodule OjsLandingWeb.ReviewerController do
       %{
         label: "Clarity & Structure",
         question: "Is the manuscript well-written, well-organized, and easy to follow?"
-      }
-    ]
-  end
-
-  # Dummy data untuk testing
-  # Penambahan underscore (_) di depan reviewer_username untuk menghilangkan warning
-  defp get_reviewer_assignments(_reviewer_username) do
-    [
-      %{
-        id: 1,
-        title: "Implementasi Machine Learning untuk Analisis Sentimen",
-        subtitle: "Studi Komparasi Naive Bayes, SVM, dan Random Forest pada Data Twitter",
-        abstract:
-          "Penelitian ini membandingkan performa algoritma machine learning untuk klasifikasi sentimen pada data media sosial berbahasa Indonesia. Dataset sebesar 50.000 tweet dievaluasi menggunakan akurasi, presisi, recall, dan F1-score.",
-        author: "Ahmad Fauzi",
-        journal: "Jurnal Perang Dunia 1",
-        section: "Artikel Penelitian",
-        language: "Bahasa Indonesia",
-        keywords: "machine learning, analisis sentimen, naive bayes, SVM, random forest",
-        status: :action_required,
-        date_assigned: ~D[2024-01-15],
-        due_date: ~D[2024-02-15],
-        round: 1,
-        files: [
-          %{name: "manuscript.pdf", type: "PDF", size: "1.4 MB", date: "2024-01-12"},
-          %{name: "appendix.pdf", type: "PDF", size: "820 KB", date: "2024-01-12"}
-        ],
-        review_history: []
-      },
-      %{
-        id: 2,
-        title: "Sistem Rekomendasi Menggunakan Collaborative Filtering",
-        subtitle: "Pendekatan Matrix Factorization dengan Implicit Feedback",
-        abstract:
-          "Sistem rekomendasi dikembangkan menggunakan collaborative filtering dengan matrix factorization untuk menangani data implicit feedback dari pengguna platform e-commerce.",
-        author: "Siti Nurhaliza",
-        journal: "Jurnal Perang Dunia 1",
-        section: "Artikel Penelitian",
-        language: "Bahasa Indonesia",
-        keywords: "rekomendasi, collaborative filtering, matrix factorization",
-        status: :completed,
-        date_assigned: ~D[2024-01-10],
-        due_date: ~D[2024-02-10],
-        round: 1,
-        files: [
-          %{name: "manuscript.pdf", type: "PDF", size: "1.1 MB", date: "2024-01-05"},
-          %{name: "dataset.csv", type: "CSV", size: "2.3 MB", date: "2024-01-05"}
-        ],
-        review_history: [
-          %{
-            round: 1,
-            reviewer: "Dr. Siti Nurhaliza",
-            decision: "Minor Revisions",
-            date: "2024-02-08"
-          }
-        ]
-      },
-      %{
-        id: 3,
-        title: "Blockchain untuk Keamanan Data",
-        subtitle: "Evaluasi Performa Konsensus Proof-of-Stake",
-        abstract:
-          "Studi ini mengevaluasi keamanan dan performa protokol konsensus Proof-of-Stake pada jaringan blockchain untuk aplikasi penyimpanan data sensitif.",
-        author: "Budi Santoso",
-        journal: "Jurnal Perang Dunia 1",
-        section: "Tinjauan Literatur",
-        language: "Bahasa Indonesia",
-        keywords: "blockchain, keamanan data, proof-of-stake",
-        status: :published,
-        date_assigned: ~D[2023-12-01],
-        due_date: ~D[2024-01-01],
-        round: 2,
-        files: [
-          %{name: "manuscript-final.pdf", type: "PDF", size: "980 KB", date: "2023-12-20"}
-        ],
-        review_history: [
-          %{
-            round: 1,
-            reviewer: "Dr. Bambang Wijaya",
-            decision: "Major Revisions",
-            date: "2023-12-15"
-          },
-          %{round: 2, reviewer: "Budi Santoso", decision: "Accept", date: "2024-01-15"}
-        ]
       }
     ]
   end

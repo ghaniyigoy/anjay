@@ -12,173 +12,571 @@
         Round {@assignment.round} · Due {Date.to_string(@assignment.due_date)}
       </p>
     </div>
-    <span class="review-status-pill">Action Required</span>
+    <span class={[
+      "review-status-pill",
+      if(@assignment.status == :published,
+        do: "published",
+        else: if(@assignment.status == :completed, do: "done")
+      )
+    ]}>{status_label(@assignment.status)}</span>
   </div>
 
   <div class="review-stage-bar">
-    <div class="review-stage done">
-      <span class="review-stage-num">
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-        >
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-      </span>
+    <%= for {key, num, label, value} <- [
+      {:submission, 1, "Submission", "1. #{truncate_title(@assignment.title)}"},
+      {:review, 2, "Review", "Round #{@assignment.round}"},
+      {:copyediting, 3, "Copyediting", "—"},
+      {:production, 4, "Production", "—"}
+    ] do %>
+      <div class={["review-stage", stage_class(@assignment, key)]}>
+        <span class="review-stage-num">
+          <%= if stage_class(@assignment, key) == "done" do %>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          <% else %>
+            {num}
+          <% end %>
+        </span>
 
-      <div class="review-stage-body">
-        <span class="review-stage-label">Submission</span>
-        <span class="review-stage-value">1. {truncate_title(@assignment.title)}</span>
+        <div class="review-stage-body">
+          <span class="review-stage-label">{label}</span>
+          <span class="review-stage-value">{value}</span>
+        </div>
       </div>
-    </div>
-
-    <div class="review-stage active">
-      <span class="review-stage-num">2</span>
-      <div class="review-stage-body">
-        <span class="review-stage-label">Review</span>
-        <span class="review-stage-value">Round {@assignment.round}</span>
-      </div>
-    </div>
-
-    <div class="review-stage">
-      <span class="review-stage-num">3</span>
-      <div class="review-stage-body">
-        <span class="review-stage-label">Copyediting</span>
-        <span class="review-stage-value">—</span>
-      </div>
-    </div>
-
-    <div class="review-stage">
-      <span class="review-stage-num">4</span>
-      <div class="review-stage-body">
-        <span class="review-stage-label">Production</span>
-        <span class="review-stage-value">—</span>
-      </div>
-    </div>
+    <% end %>
   </div>
 
   <div class="review-layout">
     <div class="review-main-col">
-      <div class="review-panel">
-        <h2 class="review-panel-title">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <%= cond do %>
+        <% @assignment.status == :published -> %>
+          <div class="review-panel">
+            <h2 class="review-panel-title">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Published
+            </h2>
 
-            <polyline points="7 10 12 15 17 10"></polyline>
+            <div class="review-submitted-summary">
+              <p class="review-help">This submission has been published to the journal.</p>
 
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Review Submission
-        </h2>
+              <dl class="review-meta-list">
+                <div class="review-meta-item">
+                  <dt>Issue</dt>
 
-        <form method="POST" action={"/review/#{@assignment.id}"}>
-          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
-          <div class="review-field">
-            <label class="review-label" for="recommendation">
-              Recommendation <span class="review-req">*</span>
-            </label>
-
-            <p class="review-help">Select the overall recommendation for this submission.</p>
-
-            <select id="recommendation" name="recommendation" class="review-select" required>
-              <option value="" disabled selected>Select a recommendation…</option>
-
-              <option value="Accept">Accept</option>
-
-              <option value="Minor Revisions">Minor Revisions</option>
-
-              <option value="Major Revisions">Major Revisions</option>
-
-              <option value="Resubmit Elsewhere">Resubmit Elsewhere</option>
-
-              <option value="Decline">Decline</option>
-            </select>
-          </div>
-
-          <div class="review-field">
-            <span class="review-label">Quality Criteria</span>
-            <p class="review-help">Assess each criterion below.</p>
-
-            <div class="review-criteria">
-              <%= for {criterion, index} <- Enum.with_index(@criteria) do %>
-                <div class="review-criterion">
-                  <div class="review-criterion-text">
-                    <span class="review-criterion-label">
-                      {index + 1}. {criterion.label}
-                    </span>
-                    <span class="review-criterion-question">{criterion.question}</span>
-                  </div>
-
-                  <div class="review-criterion-options">
-                    <label class="review-radio">
-                      <input
-                        type="radio"
-                        name={"criterion_#{index}"}
-                        value="Yes"
-                        checked={index == 0}
-                      /> <span>Yes</span>
-                    </label>
-
-                    <label class="review-radio">
-                      <input type="radio" name={"criterion_#{index}"} value="No" />
-                      <span>No</span>
-                    </label>
-
-                    <label class="review-radio">
-                      <input type="radio" name={"criterion_#{index}"} value="Maybe" />
-                      <span>Maybe</span>
-                    </label>
-                  </div>
+                  <dd>{@assignment.issue || "Current Issue"}</dd>
                 </div>
-              <% end %>
+
+                <div class="review-meta-item">
+                  <dt>Published</dt>
+
+                  <dd>
+                    <%= if @assignment.published_at do %>
+                      {@assignment.published_at |> DateTime.to_date() |> Date.to_string()}
+                    <% else %>
+                      —
+                    <% end %>
+                  </dd>
+                </div>
+
+                <div class="review-meta-item">
+                  <dt>Galley Files</dt>
+
+                  <dd>{length(@assignment.galley_files)}</dd>
+                </div>
+              </dl>
+
+              <div class="review-form-actions">
+                <a href="/dashboard/reviewAssignments" class="btn-ojs-primary">
+                  Back to My Assignments
+                </a>
+              </div>
+            </div>
+          </div>
+        <% @assignment.status == :completed -> %>
+          <div class="review-panel">
+            <h2 class="review-panel-title">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Review Submitted
+            </h2>
+
+            <div class="review-submitted-summary">
+              <p class="review-help">
+                Your review for this submission has been recorded and the workflow has moved to the
+                next stage. Thank you for your contribution.
+              </p>
+
+              <dl class="review-meta-list">
+                <div class="review-meta-item">
+                  <dt>Recommendation</dt>
+
+                  <dd>{@assignment.recommendation || "None"}</dd>
+                </div>
+
+                <%= if @assignment.comments_author do %>
+                  <div class="review-meta-item">
+                    <dt>Comments to the Author</dt>
+
+                    <dd>{@assignment.comments_author}</dd>
+                  </div>
+                <% end %>
+
+                <%= if @assignment.comments_editor do %>
+                  <div class="review-meta-item">
+                    <dt>Comments to the Editor</dt>
+
+                    <dd>{@assignment.comments_editor}</dd>
+                  </div>
+                <% end %>
+              </dl>
+
+              <div class="review-form-actions">
+                <a href="/dashboard/reviewAssignments" class="btn-ojs-secondary">
+                  Back to My Assignments
+                </a>
+              </div>
             </div>
           </div>
 
-          <div class="review-field">
-            <label class="review-label" for="comments_author">Comments to the Author</label>
-            <p class="review-help">
-              This review will be shared with the author. Be specific and constructive.
-            </p>
-            <textarea
-              id="comments_author"
-              name="comments_author"
-              rows="7"
-              class="review-textarea"
-              placeholder="Summarize the main strengths and weaknesses of the manuscript…"
-            ></textarea>
-          </div>
+          <%= if @assignment.stage == :copyediting do %>
+            <div class="review-panel">
+              <h2 class="review-panel-title">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                </svg>
+                Copyediting
+                <span class="task-progress">
+                  {done_task_count(@assignment.copyedit_tasks)}/{length(
+                    @assignment.copyedit_tasks
+                  )}
+                </span>
+              </h2>
 
-          <div class="review-field">
-            <label class="review-label" for="comments_editor">Comments to the Editor</label>
-            <p class="review-help">
-              Private comments that will only be visible to the editor.
-            </p>
-            <textarea
-              id="comments_editor"
-              name="comments_editor"
-              rows="4"
-              class="review-textarea"
-              placeholder="Confidential feedback for the editor…"
-            ></textarea>
-          </div>
+              <div class="review-submitted-summary">
+                <p class="review-help">
+                  Complete the copyediting tasks below to prepare the manuscript for production.
+                </p>
 
-          <div class="review-form-actions">
-            <button type="submit" class="btn-ojs-primary">Submit Review</button>
-            <a href="/dashboard/reviewAssignments" class="btn-ojs-secondary">Cancel</a>
+                <ul class="task-list">
+                  <%= for task <- @assignment.copyedit_tasks do %>
+                    <li class={["task-item", if(task.done, do: "done")]}>
+                      <form
+                        method="POST"
+                        action={"/review/#{@assignment.id}/copyedit/#{task.key}"}
+                      >
+                        <input
+                          type="hidden"
+                          name="_csrf_token"
+                          value={Plug.CSRFProtection.get_csrf_token()}
+                        />
+                        <button
+                          type="submit"
+                          class="task-check"
+                          aria-label="Complete {task.label}"
+                        >
+                          <%= if task.done do %>
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="3"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          <% else %>
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <circle cx="12" cy="12" r="9"></circle>
+                            </svg>
+                          <% end %>
+                        </button>
+                      </form>
+                      <span class="task-label">{task.label}</span>
+                      <span class={["task-status", if(task.done, do: "done")]}>
+                        {if task.done, do: "Complete", else: "Pending"}
+                      </span>
+                    </li>
+                  <% end %>
+                </ul>
+
+                <%= if all_tasks_done?(@assignment.copyedit_tasks) do %>
+                  <div class="panel-success-note">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    All copyediting tasks are complete. This submission is ready for production.
+                  </div>
+
+                  <div class="review-form-actions">
+                    <form
+                      method="POST"
+                      action={"/review/#{@assignment.id}/advance"}
+                      id="advance-to-production"
+                    >
+                      <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value={Plug.CSRFProtection.get_csrf_token()}
+                      />
+                      <button type="submit" class="btn-ojs-primary">Proceed to Production</button>
+                    </form>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <%= if @assignment.stage == :production do %>
+            <div class="review-panel">
+              <h2 class="review-panel-title">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                  </path>
+                </svg>
+                Production
+              </h2>
+
+              <div class="review-submitted-summary">
+                <p class="review-help">
+                  Prepare the galley files and complete the proofreading tasks before publishing.
+                </p>
+
+                <h3 class="review-block-subtitle">Galley Files</h3>
+
+                <ul class="review-files">
+                  <%= for galley <- @assignment.galley_files do %>
+                    <li class="review-file">
+                      <span class={["review-file-type", file_type_class(galley.type)]}>
+                        {galley.type}
+                      </span>
+
+                      <span class="review-file-body">
+                        <span class="review-file-name">{galley.name}</span>
+                        <span class="review-file-meta">{galley.size} · {galley.date}</span>
+                      </span>
+
+                      <a href="#" class="review-file-download" title="Download {galley.name}">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+
+                          <polyline points="7 10 12 15 17 10"></polyline>
+
+                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                      </a>
+                    </li>
+                  <% end %>
+                </ul>
+
+                <%= if length(@assignment.galley_files) == 0 do %>
+                  <p class="review-empty">No galley files yet. Add one below.</p>
+                <% end %>
+
+                <form
+                  method="POST"
+                  action={"/review/#{@assignment.id}/galley"}
+                  class="galley-form"
+                  id="add-galley-form"
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <input
+                    type="text"
+                    name="name"
+                    class="review-input"
+                    placeholder="e.g. galley.pdf"
+                    required
+                  />
+                  <select name="type" class="review-select">
+                    <option>PDF</option>
+                    <option>HTML</option>
+                    <option>XML</option>
+                  </select>
+                  <button type="submit" class="btn-ojs-primary">Add Galley</button>
+                </form>
+
+                <h3 class="review-block-subtitle">Proofreading</h3>
+
+                <ul class="task-list">
+                  <%= for task <- @assignment.proofread_tasks do %>
+                    <li class={["task-item", if(task.done, do: "done")]}>
+                      <form
+                        method="POST"
+                        action={"/review/#{@assignment.id}/proofread/#{task.key}"}
+                      >
+                        <input
+                          type="hidden"
+                          name="_csrf_token"
+                          value={Plug.CSRFProtection.get_csrf_token()}
+                        />
+                        <button
+                          type="submit"
+                          class="task-check"
+                          aria-label="Complete {task.label}"
+                        >
+                          <%= if task.done do %>
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="3"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          <% else %>
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <circle cx="12" cy="12" r="9"></circle>
+                            </svg>
+                          <% end %>
+                        </button>
+                      </form>
+                      <span class="task-label">{task.label}</span>
+                      <span class={["task-status", if(task.done, do: "done")]}>
+                        {if task.done, do: "Complete", else: "Pending"}
+                      </span>
+                    </li>
+                  <% end %>
+                </ul>
+
+                <%= if all_tasks_done?(@assignment.proofread_tasks) do %>
+                  <div class="panel-success-note">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    All proofreading tasks are complete. Ready to publish.
+                  </div>
+
+                  <div class="review-form-actions">
+                    <form
+                      method="POST"
+                      action={"/review/#{@assignment.id}/publish"}
+                      class="publish-form"
+                      id="publish-form"
+                    >
+                      <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value={Plug.CSRFProtection.get_csrf_token()}
+                      />
+                      <input
+                        type="text"
+                        name="issue"
+                        class="review-input"
+                        placeholder="Issue (e.g. Vol. 1 No. 1)"
+                      />
+                      <button type="submit" class="btn-ojs-primary">Publish Submission</button>
+                    </form>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        <% true -> %>
+          <div class="review-panel">
+            <h2 class="review-panel-title">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+
+                <polyline points="7 10 12 15 17 10"></polyline>
+
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Review Submission
+            </h2>
+
+            <form method="POST" action={"/review/#{@assignment.id}"}>
+              <input
+                type="hidden"
+                name="_csrf_token"
+                value={Plug.CSRFProtection.get_csrf_token()}
+              />
+              <div class="review-field">
+                <label class="review-label" for="recommendation">
+                  Recommendation <span class="review-req">*</span>
+                </label>
+
+                <p class="review-help">Select the overall recommendation for this submission.</p>
+
+                <select id="recommendation" name="recommendation" class="review-select" required>
+                  <option value="" disabled selected>Select a recommendation…</option>
+
+                  <option value="Accept">Accept</option>
+
+                  <option value="Minor Revisions">Minor Revisions</option>
+
+                  <option value="Major Revisions">Major Revisions</option>
+
+                  <option value="Resubmit Elsewhere">Resubmit Elsewhere</option>
+
+                  <option value="Decline">Decline</option>
+                </select>
+              </div>
+
+              <div class="review-field">
+                <span class="review-label">Quality Criteria</span>
+                <p class="review-help">Assess each criterion below.</p>
+
+                <div class="review-criteria">
+                  <%= for {criterion, index} <- Enum.with_index(@criteria) do %>
+                    <div class="review-criterion">
+                      <div class="review-criterion-text">
+                        <span class="review-criterion-label">
+                          {index + 1}. {criterion.label}
+                        </span>
+                        <span class="review-criterion-question">{criterion.question}</span>
+                      </div>
+
+                      <div class="review-criterion-options">
+                        <label class="review-radio">
+                          <input
+                            type="radio"
+                            name={"criterion_#{index}"}
+                            value="Yes"
+                            checked={index == 0}
+                          /> <span>Yes</span>
+                        </label>
+
+                        <label class="review-radio">
+                          <input type="radio" name={"criterion_#{index}"} value="No" />
+                          <span>No</span>
+                        </label>
+
+                        <label class="review-radio">
+                          <input type="radio" name={"criterion_#{index}"} value="Maybe" />
+                          <span>Maybe</span>
+                        </label>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+
+              <div class="review-field">
+                <label class="review-label" for="comments_author">Comments to the Author</label>
+                <p class="review-help">
+                  This review will be shared with the author. Be specific and constructive.
+                </p>
+                <textarea
+                  id="comments_author"
+                  name="comments_author"
+                  rows="7"
+                  class="review-textarea"
+                  placeholder="Summarize the main strengths and weaknesses of the manuscript…"
+                ></textarea>
+              </div>
+
+              <div class="review-field">
+                <label class="review-label" for="comments_editor">Comments to the Editor</label>
+                <p class="review-help">
+                  Private comments that will only be visible to the editor.
+                </p>
+                <textarea
+                  id="comments_editor"
+                  name="comments_editor"
+                  rows="4"
+                  class="review-textarea"
+                  placeholder="Confidential feedback for the editor…"
+                ></textarea>
+              </div>
+
+              <div class="review-form-actions">
+                <button type="submit" class="btn-ojs-primary">Submit Review</button>
+                <a href="/dashboard/reviewAssignments" class="btn-ojs-secondary">Cancel</a>
+              </div>
+            </form>
           </div>
-        </form>
-      </div>
+      <% end %>
     </div>
 
     <aside class="review-side-col">

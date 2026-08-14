@@ -2,7 +2,7 @@
   <%!-- Sidebar: My Submissions picker (OJS 3.x rail) --%>
   <aside class="ojs-submission-picker">
     <h3>My Submissions</h3>
-    
+
     <ul>
       <li
         :for={sub <- @all_submissions}
@@ -16,36 +16,36 @@
                 do: sub.title,
                 else: "(Untitled submission)"}
             </span>
-             <span class="ojs-sub-pick-status">{status_text(sub.status)}</span>
+            <span class="ojs-sub-pick-status">{status_text(sub.status)}</span>
           </span>
         </a>
       </li>
     </ul>
   </aside>
-  
+
   <div class="ojs-submission-main">
     <%!-- Breadcrumb (OJS PKP) --%>
     <nav class="ojs-breadcrumb" aria-label="Breadcrumb">
       <ol>
         <li><a href="/dashboard">Dashboard</a></li>
-        
+
         <li><a href="/dashboard/mySubmissions">My Submissions</a></li>
-        
+
         <li aria-current="page">Submission {@submission.id}</li>
       </ol>
     </nav>
-     <%!-- Submission header --%>
+    <%!-- Submission header --%>
     <div class="ojs-submission-header">
       <div class="ojs-submission-heading">
         <h1>
           Submission <span class="ojs-submission-id">{@submission.id}</span>
         </h1>
-        
+
         <span class="ojs-status-badge ojs-status-{status_class(@submission.status)}">
           {status_label(@submission.status)}
         </span>
       </div>
-      
+
       <p class="ojs-submission-paper-title">
         <%= if @submission.title == "" do %>
           (Untitled submission)
@@ -53,21 +53,21 @@
           {@submission.title}
         <% end %>
       </p>
-      
+
       <div class="ojs-submission-meta">
         <span>
           Created {format_date(@submission.created_at)}
         </span>
-        
+
         <%= if @submission.date_submitted do %>
           <span>
             Submitted {format_date(@submission.date_submitted)}
           </span>
         <% end %>
-         <span>Section: {@submission.section}</span>
+        <span>Section: {@submission.section}</span>
       </div>
     </div>
-     <%!-- Workflow tabs --%>
+    <%!-- Workflow tabs --%>
     <nav class="ojs-submission-tabs" aria-label="Submission workflow">
       <a
         :for={tab <- @tabs}
@@ -81,17 +81,17 @@
         <% end %>
       </a>
     </nav>
-     <%!-- Active tab panel --%>
+    <%!-- Active tab panel --%>
     <div class="ojs-submission-tab-panel active">
       <%= cond do %>
         <% @current_tab == "details" -> %>
           <div class="ojs-workflow-panel">
             <div class="ojs-workflow-panel-heading">
               <h2>Details</h2>
-              
+
               <p>Masukkan metadata utama makalah Anda pada formulir berikut.</p>
             </div>
-            
+
             <.form
               for={submission_to_form(@submission)}
               id="submission-details-form"
@@ -117,7 +117,7 @@
                     placeholder="Judul lengkap makalah"
                   /> <span class="ojs-field-hint">Judul maksimal 250 karakter.</span>
                 </div>
-                
+
                 <div class="ojs-field ojs-field-full">
                   <label for="submission_subtitle">Subtitle</label>
                   <input
@@ -129,7 +129,7 @@
                     placeholder="Subjudul (opsional)"
                   />
                 </div>
-                
+
                 <div class="ojs-field ojs-field-full">
                   <label for="submission_abstract">Abstract *</label> <textarea
                     id="submission_abstract"
@@ -142,7 +142,7 @@
                     Abstrak maksimal 300 kata. Harus menyajikan struktur yang jelas (tujuan, metode, hasil, simpulan).
                   </span>
                 </div>
-                
+
                 <div class="ojs-field">
                   <label for="submission_section">Section *</label>
                   <select id="submission_section" name="submission[section]" class="ojs-select">
@@ -153,16 +153,16 @@
                     <% end %>
                   </select>
                 </div>
-                
+
                 <div class="ojs-field">
                   <label for="submission_language">Language</label>
                   <select id="submission_language" name="submission[language]" class="ojs-select">
                     <option value="id" selected={@submission.language == "id"}>Indonesian</option>
-                    
+
                     <option value="en" selected={@submission.language == "en"}>English</option>
                   </select>
                 </div>
-                
+
                 <div class="ojs-field ojs-field-full">
                   <label for="submission_keywords">Keywords</label>
                   <input
@@ -175,7 +175,7 @@
                   />
                 </div>
               </div>
-              
+
               <div class="ojs-wizard-actions">
                 <button
                   type="submit"
@@ -197,10 +197,10 @@
           <div class="ojs-workflow-panel">
             <div class="ojs-workflow-panel-heading">
               <h2>Files</h2>
-              
+
               <p>Unggah naskah dan berkas pendukung makalah Anda.</p>
             </div>
-            
+
             <div class="ojs-dropzone" id="submission-dropzone">
               <svg
                 width="44"
@@ -212,55 +212,55 @@
                 class="ojs-dropzone-icon"
               >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                
+
                 <polyline points="17 8 12 3 7 8"></polyline>
-                
+
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              
+
               <p class="ojs-dropzone-text">
                 <strong>Pilih berkas</strong> atau seret dan lepaskan di sini
               </p>
-              
+
               <p class="ojs-dropzone-hint">PDF, DOCX, DOC, ODT, TXT maksimal 10 MB</p>
-              
+
               <div class="ojs-dropzone-actions">
                 <button type="button" class="btn-ojs-secondary" id="btn-pick-file">Upload File</button>
                 <button type="button" class="btn-ojs-secondary" id="btn-load-demo">Load Sample File</button>
               </div>
             </div>
-            
+
             <%= if length(@submission.files) > 0 do %>
               <div class="uploaded-files-section">
                 <h3 class="ojs-section-title">Uploaded files ({length(@submission.files)})</h3>
-                
+
                 <div class="submissions-table-wrapper">
                   <table class="submissions-table uploaded-files-table ojs-workflow-table">
                     <thead>
                       <tr>
                         <th>FILE NAME</th>
-                        
+
                         <th>GENRE</th>
-                        
+
                         <th>SIZE</th>
-                        
+
                         <th>DATE UPLOADED</th>
-                        
+
                         <th class="col-actions"></th>
                       </tr>
                     </thead>
-                    
+
                     <tbody>
                       <%= for file <- @submission.files do %>
                         <tr>
                           <td class="ojs-file-name-cell">{file.filename}</td>
-                          
+
                           <td>{file.genre}</td>
-                          
+
                           <td>{file.size}</td>
-                          
+
                           <td>{file.date}</td>
-                          
+
                           <td class="col-actions">
                             <a href="#" class="btn-view">Download</a>
                           </td>
@@ -275,7 +275,7 @@
                 Belum ada file yang diunggah. Silakan unggah naskah Anda.
               </div>
             <% end %>
-            
+
             <.form
               for={submission_to_form(@submission)}
               id="submission-files-form"
@@ -310,10 +310,10 @@
           <div class="ojs-workflow-panel">
             <div class="ojs-workflow-panel-heading">
               <h2>Contributors</h2>
-              
+
               <p>Daftarkan semua penulis yang berkontribusi pada makalah ini.</p>
             </div>
-            
+
             <%= if length(@submission.contributors) > 0 do %>
               <div class="ojs-contributors-list">
                 <%= for contributor <- @submission.contributors do %>
@@ -321,7 +321,7 @@
                     <div class="ojs-contributor-avatar">
                       {String.first(short_name(contributor))}
                     </div>
-                    
+
                     <div class="ojs-contributor-info">
                       <div class="ojs-contributor-name">
                         {contributor.given_name} {contributor.family_name}
@@ -329,15 +329,15 @@
                           <span class="ojs-chip">Primary Contact</span>
                         <% end %>
                       </div>
-                      
+
                       <div class="ojs-contributor-detail">{contributor.email}</div>
-                      
+
                       <div class="ojs-contributor-detail">
                         {contributor.affiliation}{if contributor.country,
                           do: ", " <> contributor.country}
                       </div>
                     </div>
-                     <a href="#" class="btn-view">Edit</a>
+                    <a href="#" class="btn-view">Edit</a>
                   </div>
                 <% end %>
               </div>
@@ -346,7 +346,7 @@
                 Belum ada kontributor terdaftar. Tambahkan penulis/peneliti yang terlibat.
               </div>
             <% end %>
-            
+
             <.form
               for={submission_to_form(@submission)}
               id="submission-contributors-form"
@@ -375,7 +375,7 @@
                 <button type="button" class="btn-ojs-secondary" id="btn-add-contributor">
                   Add Contributor
                 </button>
-                
+
                 <a
                   href={submission_form_action(@submission, "editors")}
                   class="btn-ojs-primary"
@@ -390,24 +390,24 @@
           <div class="ojs-workflow-panel">
             <div class="ojs-workflow-panel-heading">
               <h2>Editors</h2>
-              
+
               <p>Pilih editor yang akan menangani submission Anda.</p>
             </div>
-            
+
             <%= if length(@submission.editors) > 0 do %>
               <div class="ojs-editors-list">
                 <%= for editor <- @submission.editors do %>
                   <div class="ojs-editor-row">
                     <div class="ojs-editor-avatar">{String.first(editor.name)}</div>
-                    
+
                     <div class="ojs-editor-info">
                       <div class="ojs-editor-name">{editor.name}</div>
-                      
+
                       <div class="ojs-editor-role">{editor.role}</div>
                     </div>
-                    
+
                     <div class="ojs-editor-email">{editor.email}</div>
-                     <a href="#" class="btn-view">Remove</a>
+                    <a href="#" class="btn-view">Remove</a>
                   </div>
                 <% end %>
               </div>
@@ -416,13 +416,13 @@
                 Belum ada editor yang ditugaskan. Editor utama jurnal akan ditugaskan otomatis setelah submission dikirim.
               </div>
             <% end %>
-            
+
             <%= if length(@submission.editors) < 2 do %>
               <div class="ojs-form-card ojs-add-editor-box">
                 <h4 class="ojs-block-title">Request Editor</h4>
-                
+
                 <p class="ojs-block-help">Cari editor berdasarkan nama atau email.</p>
-                
+
                 <div class="ojs-editor-search-row">
                   <input
                     type="text"
@@ -433,7 +433,7 @@
                 </div>
               </div>
             <% end %>
-            
+
             <.form
               for={submission_to_form(@submission)}
               id="submission-editors-form"
@@ -473,10 +473,10 @@
           <div class="ojs-workflow-panel">
             <div class="ojs-workflow-panel-heading">
               <h2>Review</h2>
-              
+
               <p>Periksa kembali seluruh informasi sebelum menyerahkan makalah ke jurnal.</p>
             </div>
-            
+
             <div class="ojs-review-overview">
               <div class="ojs-review-metric">
                 <span class="ojs-review-metric-label">Title</span>
@@ -484,59 +484,59 @@
                   {if @submission.title == "", do: "(Belum diisi)", else: @submission.title}
                 </span>
               </div>
-              
+
               <div class="ojs-review-metric">
                 <span class="ojs-review-metric-label">Section</span>
                 <span class="ojs-review-metric-value">{@submission.section || "Artikel Penelitian"}</span>
               </div>
-              
+
               <div class="ojs-review-metric">
                 <span class="ojs-review-metric-label">Language</span>
                 <span class="ojs-review-metric-value">
                   {if @submission.language == "id", do: "Indonesian", else: "English"}
                 </span>
               </div>
-              
+
               <div class="ojs-review-metric">
                 <span class="ojs-review-metric-label">Files</span>
                 <span class="ojs-review-metric-value">{length(@submission.files)} file</span>
               </div>
-              
+
               <div class="ojs-review-metric">
                 <span class="ojs-review-metric-label">Contributors</span>
                 <span class="ojs-review-metric-value">{length(@submission.contributors)} author</span>
               </div>
             </div>
-            
+
             <%= if @submission.review do %>
               <div class="ojs-review-summary">
                 <h3>Review Status</h3>
-                
+
                 <p>{@submission.review.summary}</p>
               </div>
-              
+
               <%= if length(@submission.review.assignments) > 0 do %>
                 <div class="ojs-review-assignments">
                   <h3>Review History</h3>
-                  
+
                   <table class="submissions-table ojs-review-table">
                     <thead>
                       <tr>
                         <th>REVIEWER</th>
-                        
+
                         <th>RECOMMENDATION</th>
-                        
+
                         <th>DATE</th>
                       </tr>
                     </thead>
-                    
+
                     <tbody>
                       <%= for assignment <- @submission.review.assignments do %>
                         <tr>
                           <td>{assignment.name}</td>
-                          
+
                           <td>{assignment.recommendation}</td>
-                          
+
                           <td>{assignment.date}</td>
                         </tr>
                       <% end %>
@@ -545,41 +545,41 @@
                 </div>
               <% end %>
             <% end %>
-            
+
             <div class="ojs-review-assignments">
               <h3>Submission Checklist</h3>
-              
+
               <ul class="ojs-check-list">
                 <li class={if @submission.title != "", do: "checked", else: ""}>
                   <span class="ojs-check-icon">{if @submission.title != "", do: "✓", else: ""}</span>
                   Judul telah diisi
                 </li>
-                
+
                 <li class={if @submission.abstract != "", do: "checked", else: ""}>
                   <span class="ojs-check-icon">{if @submission.abstract != "", do: "✓", else: ""}</span>
                   Abstrak telah diisi
                 </li>
-                
+
                 <li class={if length(@submission.files) > 0, do: "checked", else: ""}>
                   <span class="ojs-check-icon">{if length(@submission.files) > 0,
                     do: "✓",
                     else: ""}</span>
                   Naskah telah diunggah
                 </li>
-                
+
                 <li class={if length(@submission.contributors) > 0, do: "checked", else: ""}>
                   <span class="ojs-check-icon">
                     {if length(@submission.contributors) > 0, do: "✓", else: ""}
                   </span>
                   Kontributor telah didaftarkan
                 </li>
-                
+
                 <li class="checked">
                   <span class="ojs-check-icon">✓</span> Makalah bebas dari plagiarisme
                 </li>
               </ul>
             </div>
-            
+
             <%= if @submission.status == :incomplete do %>
               <div class="ojs-notice-box ojs-notice-warning">
                 <strong>Submission belum lengkap.</strong>
@@ -589,7 +589,7 @@
                 </p>
               </div>
             <% end %>
-            
+
             <.form
               for={submission_to_form(@submission)}
               id="submission-review-form"

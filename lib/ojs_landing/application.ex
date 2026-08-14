@@ -11,6 +11,7 @@ defmodule OjsLanding.Application do
       {Phoenix.PubSub, name: OjsLanding.PubSub},
       OjsLanding.User,
       OjsLanding.Submission,
+      OjsLanding.ReviewerAssignment,
 
       # Start to serve requests, typically the last entry
       OjsLandingWeb.Endpoint
