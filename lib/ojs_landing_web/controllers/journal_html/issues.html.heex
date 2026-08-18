@@ -2,27 +2,27 @@
   <div class="journal-detail-inner">
     <div class="detail-header">
       <h1 class="detail-title">Current Issue - {@journal.title}</h1>
-      
+
       <p class="detail-issn">Vol. 1, No. 1 (2024)</p>
     </div>
-    
+
     <div class="detail-section">
       <p style="color: #666; font-size: 14px;">Published: January 15, 2024</p>
-      
+
       <div class="articles-list">
         <%= for article <- @journal.articles do %>
           <div class="article-item">
             <h3 class="article-title">{article.title}</h3>
-            
+
             <p class="article-authors">{Enum.join(article.authors, ", ")}</p>
-            
+
             <p class="article-abstract"><strong>Abstract:</strong> {article.abstract}</p>
-            
+
             <div class="article-meta-info">
               <span class="article-pages">Pages: {article.pages}</span>
               <span class="article-date">Published: {article.published_date}</span>
             </div>
-            
+
             <div class="article-actions">
               <button class="btn btn-primary btn-small">View Article</button>
               <button class="btn btn-secondary btn-small">Download PDF</button>
@@ -31,6 +31,6 @@
         <% end %>
       </div>
     </div>
-     <a href={~p"/journals/#{@journal.id}"} class="back-link">← Back to Journal</a>
+    <a href={~p"/journals/#{@journal.id}"} class="back-link">← Back to Journal</a>
   </div>
 </div>

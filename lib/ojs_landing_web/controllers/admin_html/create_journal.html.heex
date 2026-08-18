@@ -13,7 +13,7 @@
         <path d="M15 18l-6-6 6-6"></path>
       </svg>
     </a>
-    
+
     <h1 class="wizard-title">Create Journal</h1>
   </div>
   <!-- Language Switcher -->
@@ -29,7 +29,7 @@
         <label class="field-label">
           Journal title <span class="required">*</span>
         </label>
-        
+
         <div class="input-with-icon">
           <span class="input-icon">
             <svg
@@ -41,16 +41,16 @@
               stroke-width="2"
             >
               <circle cx="12" cy="12" r="10"></circle>
-              
+
               <path d="M2 12h20"></path>
-              
+
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
               </path>
             </svg>
           </span>
-           <input type="text" name="journal_title" required class="form-control" />
+          <input type="text" name="journal_title" required class="form-control" />
         </div>
-        
+
         <p class="field-description">This is the official title of the journal.</p>
       </div>
       <!-- Journal Initials -->
@@ -58,7 +58,7 @@
         <label class="field-label">
           Journal initials <span class="required">*</span>
         </label>
-        
+
         <div class="input-with-icon">
           <span class="input-icon">
             <svg
@@ -70,14 +70,14 @@
               stroke-width="2"
             >
               <circle cx="12" cy="12" r="10"></circle>
-              
+
               <path d="M2 12h20"></path>
-              
+
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
               </path>
             </svg>
           </span>
-           <input type="text" name="journal_initials" required class="form-control" />
+          <input type="text" name="journal_initials" required class="form-control" />
         </div>
       </div>
       <!-- Journal Abbreviation -->
@@ -85,7 +85,7 @@
         <label class="field-label">
           Journal Abbreviation
         </label>
-        
+
         <div class="input-with-icon">
           <span class="input-icon">
             <svg
@@ -97,14 +97,14 @@
               stroke-width="2"
             >
               <circle cx="12" cy="12" r="10"></circle>
-              
+
               <path d="M2 12h20"></path>
-              
+
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
               </path>
             </svg>
           </span>
-           <input type="text" name="journal_abbreviation" class="form-control" />
+          <input type="text" name="journal_abbreviation" class="form-control" />
         </div>
       </div>
       <!-- Principal Contact Name -->
@@ -112,40 +112,40 @@
         <label class="field-label">
           Principal Contact Name <span class="required">*</span>
         </label>
-         <input type="text" name="contact_name" required class="form-control" />
+        <input type="text" name="contact_name" required class="form-control" />
       </div>
       <!-- Principal Contact Email -->
       <div class="form-field">
         <label class="field-label">
           Principal Contact Email <span class="required">*</span>
         </label>
-         <input type="email" name="contact_email" required class="form-control" />
+        <input type="email" name="contact_email" required class="form-control" />
       </div>
       <!-- Country -->
       <div class="form-field">
         <label class="field-label">
           Country
         </label>
-        
+
         <p class="field-description">
           Select the country where this journal is located, or the country of the mailing address for the journal or publisher.
         </p>
-        
+
         <select name="country" class="form-control">
           <option value="">Select Country</option>
-          
+
           <option value="ID">Indonesia</option>
-          
+
           <option value="US">United States</option>
-          
+
           <option value="GB">United Kingdom</option>
-          
+
           <option value="AU">Australia</option>
-          
+
           <option value="CA">Canada</option>
-          
+
           <option value="SG">Singapore</option>
-          
+
           <option value="MY">Malaysia</option>
         </select>
       </div>
@@ -154,7 +154,7 @@
         <label class="field-label">
           Journal description
         </label>
-        
+
         <div class="tinymce-wrapper">
           <div class="tinymce-toolbar">
             <button type="button" class="toolbar-btn" title="Bold"><strong>B</strong></button>
@@ -171,12 +171,12 @@
                 stroke-width="2"
               >
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                
+
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
               </svg>
             </button>
           </div>
-           <textarea name="journal_description" rows="8" class="form-control tinymce-editor"></textarea>
+          <textarea name="journal_description" rows="8" class="form-control tinymce-editor"></textarea>
         </div>
       </div>
       <!-- Path -->
@@ -184,12 +184,12 @@
         <label class="field-label">
           Path <span class="required">*</span>
         </label>
-        
+
         <div class="input-group">
           <span class="input-group-addon">http://localhost/ojs/</span>
           <input type="text" name="path" required class="form-control" placeholder="journal-name" />
         </div>
-        
+
         <p class="field-description">Provide the path for this journal (e.g., "myjournal").</p>
       </div>
       <!-- Languages -->
@@ -197,12 +197,12 @@
         <label class="field-label">
           Languages <span class="required">*</span>
         </label>
-        
+
         <div class="checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" name="languages[]" value="en" /> <span>English</span>
           </label>
-          
+
           <label class="checkbox-label">
             <input type="checkbox" name="languages[]" value="id" /> <span>Indonesian</span>
           </label>
@@ -213,12 +213,12 @@
         <label class="field-label">
           Primary locale <span class="required">*</span>
         </label>
-        
+
         <div class="radio-group">
           <label class="radio-label">
             <input type="radio" name="primary_locale" value="en" /> <span>English</span>
           </label>
-          
+
           <label class="radio-label">
             <input type="radio" name="primary_locale" value="id" /> <span>Indonesian</span>
           </label>
@@ -229,7 +229,7 @@
         <label class="field-label">
           Enable
         </label>
-        
+
         <div class="checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" name="enable_journal" value="1" />

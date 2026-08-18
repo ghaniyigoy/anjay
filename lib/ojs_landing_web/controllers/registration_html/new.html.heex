@@ -3,104 +3,104 @@
     <div class="breadcrumb">
       <a href="/">Home</a> / <span>Register</span>
     </div>
-    
+
     <div class="register-form">
       <h1 class="form-title">Register</h1>
-      
+
       <p class="form-note">Required fields are marked with an asterisk: *</p>
-      
+
       <%= if @error do %>
         <div class="form-error">{@error}</div>
       <% end %>
-      
+
       <form
         method="POST"
         action={if @journal_path, do: "/#{@journal_path}/register", else: "/register"}
       >
         <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
         <h2 class="section-title">Profile</h2>
-        
+
         <div class="form-group">
           <label for="given_name">Given Name *</label>
           <input type="text" id="given_name" name="given_name" required />
         </div>
-        
+
         <div class="form-group">
           <label for="family_name">Family Name</label>
           <input type="text" id="family_name" name="family_name" />
         </div>
-        
+
         <div class="form-group">
           <label for="affiliation">Affiliation *</label>
           <input type="text" id="affiliation" name="affiliation" required />
         </div>
-        
+
         <h2 class="section-title">Login</h2>
-        
+
         <div class="form-group">
           <label for="email">Email *</label>
           <input type="email" id="email" name="email" required />
         </div>
-        
+
         <div class="form-group">
           <label for="username">Username *</label>
           <input type="text" id="username" name="username" required />
         </div>
-        
+
         <div class="form-group">
           <label for="password">Password *</label>
           <input type="password" id="password" name="password" required />
         </div>
-        
+
         <div class="form-group">
           <label for="password_confirm">Repeat password *</label>
           <input type="password" id="password_confirm" name="password_confirm" required />
         </div>
-        
+
         <h2 class="section-title">
           Which journals on this site would you like to register with?
         </h2>
-        
+
         <div class="journal-options">
           <div class="journal-option">
             <h3>Informatika</h3>
-            
+
             <label>
               <input type="checkbox" name="journals[]" value="informatika_reader" /> Reader
             </label>
-            
+
             <label>
               <input type="checkbox" name="journals[]" value="informatika_reviewer" /> Reviewer
             </label>
           </div>
-          
+
           <div class="journal-option">
             <h3>Jurnal Perang Dunia 1</h3>
-            
+
             <label>
               <input type="checkbox" name="journals[]" value="perang_dunia_reader" /> Reader
             </label>
-            
+
             <label>
               <input type="checkbox" name="journals[]" value="perang_dunia_reviewer" /> Reviewer
             </label>
           </div>
         </div>
-        
+
         <div class="form-group">
           <label for="reviewer_interests">
             If you requested to be a reviewer on any journal, please enter your subject interests.
           </label>
-           <input type="text" id="reviewer_interests" name="reviewer_interests" />
+          <input type="text" id="reviewer_interests" name="reviewer_interests" />
         </div>
-        
+
         <div class="form-group">
           <label>
             <input type="checkbox" name="notifications" />
             Yes, I would like to be notified of new publications and announcements.
           </label>
         </div>
-        
+
         <div class="form-footer">
           <button type="submit" class="btn btn-primary">Register</button>
           <a

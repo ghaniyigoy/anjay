@@ -63,8 +63,6 @@ config :phoenix_live_view,
   # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
 
-
-
 config :ojs_landing, OjsLanding.Repo,
   username: "postgres",
   password: System.get_env("DB_PASSWORD"),

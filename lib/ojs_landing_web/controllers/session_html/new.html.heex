@@ -3,38 +3,38 @@
     <div class="breadcrumb">
       <a href="/">Home</a> / <span>Login</span>
     </div>
-    
+
     <div class="login-form">
       <h1 class="form-title">Login</h1>
-      
+
       <p class="form-note">Required fields are marked with an asterisk: *</p>
-      
+
       <%= if @error do %>
         <div class="form-error">{@error}</div>
       <% end %>
-      
+
       <form method="POST" action={if @journal_path, do: "/#{@journal_path}/login", else: "/login"}>
         <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
         <div class="form-group">
           <label for="email">Username or Email *</label>
           <input type="text" id="email" name="email" required />
         </div>
-        
+
         <div class="form-group">
           <label for="password">Password *</label>
           <input type="password" id="password" name="password" required />
         </div>
-        
+
         <div class="form-actions">
           <a href="#" class="link">Forgot your password?</a>
         </div>
-        
+
         <div class="form-group">
           <label>
             <input type="checkbox" name="remember_me" checked /> Keep me logged in
           </label>
         </div>
-        
+
         <div class="form-footer">
           <button type="submit" class="btn btn-primary">Login</button>
           <a

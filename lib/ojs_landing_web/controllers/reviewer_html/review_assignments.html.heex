@@ -13,16 +13,16 @@
           stroke-width="2"
         >
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          
+
           <polyline points="14 2 14 8 20 8"></polyline>
-          
+
           <line x1="16" y1="13" x2="8" y2="13"></line>
-          
+
           <line x1="16" y1="17" x2="8" y2="17"></line>
-          
+
           <polyline points="10 9 9 9 8 9"></polyline>
         </svg>
-         <span class="sidebar-title">My Assignments as Reviewer</span>
+        <span class="sidebar-title">My Assignments as Reviewer</span>
         <svg
           class="sidebar-arrow"
           width="14"
@@ -35,7 +35,7 @@
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
-      
+
       <ul class="sidebar-menu">
         <li class={if @current_view == "reviewer-action-required", do: "active"}>
           <a href="/dashboard/reviewAssignments?currentViewId=reviewer-action-required">
@@ -49,7 +49,7 @@
             Action Required by me
           </a>
         </li>
-        
+
         <li class={if @current_view == "reviewer-assignments-all", do: "active"}>
           <a href="/dashboard/reviewAssignments?currentViewId=reviewer-assignments-all">
             <span class={[
@@ -59,7 +59,7 @@
             All assignments
           </a>
         </li>
-        
+
         <li class={if @current_view == "reviewer-assignments-completed", do: "active"}>
           <a href="/dashboard/reviewAssignments?currentViewId=reviewer-assignments-completed">
             <span class={[
@@ -72,7 +72,7 @@
             Completed
           </a>
         </li>
-        
+
         <li class={if @current_view == "reviewer-assignments-declined", do: "active"}>
           <a href="/dashboard/reviewAssignments?currentViewId=reviewer-assignments-declined">
             <span class={[
@@ -85,7 +85,7 @@
             Declined
           </a>
         </li>
-        
+
         <li class={if @current_view == "reviewer-assignments-published", do: "active"}>
           <a href="/dashboard/reviewAssignments?currentViewId=reviewer-assignments-published">
             <span class={[
@@ -98,7 +98,7 @@
             Published
           </a>
         </li>
-        
+
         <li class={if @current_view == "reviewer-assignments-archived", do: "active"}>
           <a href="/dashboard/reviewAssignments?currentViewId=reviewer-assignments-archived">
             <span class={[
@@ -127,12 +127,12 @@
         _ -> "My Assignments"
       end} ({length(@assignments)})
     </h1>
-    
+
     <div class="content-toolbar">
       <div class="toolbar-left">
         <button class="btn-filter">Filters</button>
       </div>
-      
+
       <div class="toolbar-right">
         <div class="search-box">
           <svg
@@ -145,10 +145,10 @@
             stroke-width="2"
           >
             <circle cx="11" cy="11" r="8"></circle>
-            
+
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          
+
           <input
             type="text"
             placeholder="Search submissions, ID, authors, ..."
@@ -157,7 +157,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="submissions-table-wrapper">
       <table class="submissions-table">
         <thead>
@@ -173,19 +173,19 @@
                 stroke-width="2"
               >
                 <path d="M7 15l5 5 5-5"></path>
-                
+
                 <path d="M7 9l5-5 5 5"></path>
               </svg>
             </th>
-            
+
             <th class="col-submissions">SUBMISSIONS</th>
-            
+
             <th class="col-editorial">EDITORIAL ACTIVITY</th>
-            
+
             <th class="col-actions">ACTIONS</th>
           </tr>
         </thead>
-        
+
         <tbody>
           <%= if length(@assignments) == 0 do %>
             <tr>
@@ -195,16 +195,16 @@
             <%= for assignment <- @assignments do %>
               <tr>
                 <td class="col-id">{assignment.id}</td>
-                
+
                 <td class="col-submissions">
                   <div class="submission-info">
                     <span class="submission-author">{assignment.author}</span>
                     <span class="submission-title">— {assignment.title}</span>
                   </div>
                 </td>
-                
+
                 <td class="col-editorial"></td>
-                
+
                 <td class="col-actions">
                   <a href={"/review/#{assignment.id}"} class="btn-view">Review</a>
                 </td>
@@ -213,7 +213,7 @@
           <% end %>
         </tbody>
       </table>
-      
+
       <div class="table-footer">
         Showing <strong>0 to {max(0, length(@assignments))}</strong>
         of <strong>{length(@assignments)}</strong>
