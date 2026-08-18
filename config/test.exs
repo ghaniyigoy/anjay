@@ -20,3 +20,11 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+# Connect to the same OJS database used by dev (read-only tests roll back via sandbox)
+config :ojs_landing, OjsLanding.Repo,
+  username: "postgres",
+  password: System.get_env("DB_PASSWORD"),
+  hostname: "localhost",
+  database: "ojs_db_pg_2",
+  pool: Ecto.Adapters.SQL.Sandbox

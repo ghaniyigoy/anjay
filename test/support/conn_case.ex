@@ -32,6 +32,8 @@ defmodule OjsLandingWeb.ConnCase do
   end
 
   setup _tags do
+    Ecto.Adapters.SQL.Sandbox.mode(OjsLanding.Repo, {:shared, self()})
+
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end
