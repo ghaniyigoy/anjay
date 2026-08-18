@@ -6,11 +6,10 @@ defmodule OjsLanding.Application do
   @impl true
   def start(_type, _args) do
     children = [
-	OjsLanding.Repo,
+      OjsLanding.Repo,
       OjsLandingWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:ojs_landing, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: OjsLanding.PubSub},
-      OjsLanding.User,
       OjsLanding.Submission,
 
       # Start to serve requests, typically the last entry
