@@ -43,7 +43,7 @@
             </button>
 
             <div class="user-dropdown-menu">
-              <%= if @current_user.role == :admin do %>
+              <%= if OjsLanding.User.has_role?(@current_user, :admin) do %>
                 <a href="/admin" class="dropdown-item">Administration</a>
               <% else %>
                 <a href="/dashboard" class="dropdown-item">Dashboard</a>

@@ -2,6 +2,10 @@ defmodule OjsLandingWeb.DashboardHTML do
   use OjsLandingWeb, :html
   embed_templates "dashboard_html/*"
 
+  def primary_role(user), do: OjsLanding.User.primary_role(user)
+
+  def has_role?(user, role), do: OjsLanding.User.has_role?(user, role)
+
   def role_class(:author), do: "author"
   def role_class(:reviewer), do: "reviewer"
   def role_class(:editor), do: "editor"

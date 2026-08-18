@@ -6,17 +6,17 @@ defmodule OjsLandingWeb.DashboardController do
 
     # Redirect berdasarkan role user
     cond do
-      user.role == :author ->
-        redirect(conn, to: "/dashboard/mySubmissions")
+      OjsLanding.User.has_role?(user, :admin) ->
+        redirect(conn, to: "/admin")
 
-      user.role == :editor ->
+      OjsLanding.User.has_role?(user, :editor) ->
         redirect(conn, to: "/dashboard/editorial")
 
-      user.role == :reviewer ->
+      OjsLanding.User.has_role?(user, :reviewer) ->
         redirect(conn, to: "/dashboard/reviewAssignments")
 
-      user.role == :admin ->
-        redirect(conn, to: "/admin")
+      OjsLanding.User.has_role?(user, :author) ->
+        redirect(conn, to: "/dashboard/mySubmissions")
 
       true ->
         conn

@@ -7,7 +7,7 @@ defmodule OjsLandingWeb.Plugs.Auth do
   def call(conn, :require_admin) do
     user = conn.assigns[:current_user]
 
-    if user && user.role == :admin do
+    if user && OjsLanding.User.has_role?(user, :admin) do
       conn
     else
       conn
