@@ -73,29 +73,79 @@ defmodule OjsLandingWeb.EditorController do
     editorial(conn, %{"currentViewId" => "assigned-to-me"})
   end
 
-  # Dummy data untuk testing
+  # Data submission asli dari store Submission (hasil submit author)
   defp get_editorial_submissions do
-    [
-      %{
-        id: 1,
-        title: "Implementasi Machine Learning untuk Analisis Sentimen",
-        author: "Ahmad Fauzi",
-        assigned_to: "editor",
-        status: :active,
-        stage: :initial_review,
-        days: 5,
-        reviews_overdue: false
-      },
-      %{
-        id: 2,
-        title: "Sistem Rekomendasi Menggunakan Collaborative Filtering",
-        author: "Siti Nurhaliza",
-        assigned_to: "editor",
-        status: :under_review,
-        stage: :awaiting_reviews,
-        days: 12,
-        reviews_overdue: true
-      }
-    ]
+    OjsLanding.Submission.all()
+    |> Enum.reject(&(&1.status == :incomplete))
+    |> Enum.map(&to_editorial_row/1)
   end
+
+  defp to_editorial_row(submission) do
+    %{
+      id: submission.id,
+      title: title_or_placeholder(submission.title),
+      author: author_name(submission),
+      assigned_to: "editor",
+      status: submission.status,
+      stage: stage_for_status(submission.status),
+      days: days_since(Map.get(submission, :created_at)),
+      reviews_overdue: false
+    }
+  end
+
+  defp title_or_placeholder(title) when title in [nil, ""], do: "(Tanpa judul)"
+  defp title_or_placeholder(title), do: title
+
+  # Nama author diambil dari contributors submission (primary contact lebih dulu),
+  # lalu fallback ke nama akun.
+  defp author_name(submission) do
+    case contributor_names(submission.contributors) do
+      [] -> author_account_name(submission.author_username)
+      names -> List.first(names)
+    end
+  end
+
+  defp contributor_names(contributors) when is_list(contributors) do
+    contributors
+    |> Enum.sort_by(&(Map.get(&1, :primary) == true), :desc)
+    |> Enum.map(&contributor_display_name/1)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp contributor_names(_), do: []
+
+  defp contributor_display_name(contributor) when is_map(contributor) do
+    name =
+      String.trim("#{Map.get(contributor, :given_name)} #{Map.get(contributor, :family_name)}")
+
+    if name == "", do: nil, else: name
+  end
+
+  defp contributor_display_name(_), do: nil
+
+  defp author_account_name(username) do
+    case OjsLanding.User.find_by_username(username) do
+      nil ->
+        username || "Unknown"
+
+      user ->
+        String.trim("#{user.given_name} #{user.family_name}")
+    end
+  end
+
+  defp stage_for_status(:active), do: :initial_review
+  defp stage_for_status(:revisions_requested), do: :external_review
+  defp stage_for_status(:revisions_submitted), do: :revisions_submitted
+  defp stage_for_status(:scheduled), do: :production
+  defp stage_for_status(:published), do: :production
+  defp stage_for_status(:declined), do: :external_review
+  defp stage_for_status(_), do: :initial_review
+
+  defp days_since(nil), do: 0
+
+  defp days_since(%DateTime{} = datetime) do
+    max(0, Date.diff(Date.utc_today(), DateTime.to_date(datetime)))
+  end
+
+  defp days_since(_), do: 0
 end

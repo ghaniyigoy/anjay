@@ -5908,10 +5908,10 @@ ul.nav-list li.dropdown .dropdown-menu li a:hover {
 }
 
 .editor-main-content .page-heading {
-  font-size: 32px !important;
-  font-weight: bold !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
   color: #333 !important;
-  margin: 0 0 25px 0 !important;
+  margin: 0 0 16px 0 !important;
 }
 
 .editor-main-content .content-toolbar {
@@ -7816,6 +7816,127 @@ tr.is-open .doi-row-actions {
   margin-top: 6px;
 }
 
+/* --- Review page sections --- */
+.ojs-review-section {
+  border: 1px solid #e3e7ea;
+  background: #fff;
+  margin-bottom: 18px;
+}
+
+.ojs-review-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9edf0;
+  background: #fafbfc;
+}
+
+.ojs-review-section-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.ojs-review-section-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ojs-review-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 14px;
+}
+
+.ojs-review-row-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.ojs-review-row-value {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.82);
+  overflow-wrap: anywhere;
+}
+
+.ojs-review-rich p {
+  margin: 0 0 6px;
+}
+
+.ojs-review-rich p:last-child {
+  margin-bottom: 0;
+}
+
+.ojs-review-prewrap {
+  white-space: pre-wrap;
+}
+
+.ojs-review-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ojs-review-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e9edf0;
+  background: #fafbfc;
+}
+
+.ojs-review-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ojs-review-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ojs-review-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1px solid #d5dde3;
+  border-radius: 999px;
+  background: #f4f8fb;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.ojs-review-muted {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 640px) {
+  .ojs-review-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .ojs-review-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 /* --- Empty state --- */
 .ojs-empty-state {
   padding: 18px;
@@ -8010,6 +8131,56 @@ tr.is-open .doi-row-actions {
   margin-top: 8px;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+/* --- File upload section (OJS style) --- */
+.ojs-file-upload-section {
+  background: #fff;
+  border: 1px solid var(--ojs-border);
+}
+.ojs-file-upload-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e6eaed;
+  background: #f7f9fa;
+}
+.ojs-file-upload-header .ojs-section-title {
+  margin: 0;
+}
+.ojs-add-file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ojs-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ojs-add-file-btn:hover {
+  color: var(--ojs-primary-lift);
+}
+.ojs-file-upload-body {
+  padding: 16px;
+}
+.ojs-file-upload-body .ojs-dropzone {
+  padding: 30px 20px;
+}
+.ojs-upload-file-link {
+  color: var(--ojs-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ojs-upload-file-link:hover {
+  color: var(--ojs-primary-lift);
 }
 
 /* --- Uploaded files section --- */
@@ -10687,6 +10858,25 @@ tr.is-open .doi-row-actions {
 }
 
 /* ================================================================
+   Editorial dashboard table content — keep titles small in the
+   submissions table (overrides the article-page .submission-title)
+   ================================================================ */
+.editor-main-content .submissions-table td,
+.editor-main-content .submissions-table .submission-info,
+.editor-main-content .submissions-table .stage-indicator,
+.editor-main-content .submissions-table .btn-view {
+  font-size: 13px !important;
+}
+
+.editor-main-content .submissions-table .submission-title {
+  margin: 0 !important;
+  font-family: 'Noto Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+}
+
+/* ================================================================
    Make a Submission: Details (OJS 3.5 PKP wizard)
    ================================================================ */
 .ojs-details-body {
@@ -10708,7 +10898,7 @@ tr.is-open .doi-row-actions {
   margin: 0 auto;
 }
 
-/* --- Page header: title left, action right --- */
+/* --- Page header --- */
 .ojs-details-header {
   display: flex;
   align-items: center;
@@ -10782,6 +10972,13 @@ tr.is-open .doi-row-actions {
   line-height: 1;
 }
 
+.ojs-progress-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
 .ojs-progress-step.is-current .ojs-progress-number {
   background: var(--ojs-bg-base);
   border-color: var(--ojs-bg-base);
@@ -10790,6 +10987,16 @@ tr.is-open .doi-row-actions {
 
 .ojs-progress-step.is-current .ojs-progress-label {
   color: var(--ojs-bg-base);
+}
+
+.ojs-progress-step.is-done .ojs-progress-number {
+  background: #2e7d32;
+  border-color: #2e7d32;
+  color: #fff;
+}
+
+.ojs-progress-step.is-done .ojs-progress-label {
+  color: #2e7d32;
 }
 
 /* --- Main card --- */
@@ -10997,6 +11204,7 @@ tr.is-open .doi-row-actions {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .btn-ojs-link {
@@ -11053,12 +11261,570 @@ tr.is-open .doi-row-actions {
 
   .ojs-details-actions {
     width: 100%;
+    margin-left: 0;
   }
 
   .ojs-details-actions .btn-ojs-primary,
   .ojs-details-actions .btn-ojs-secondary {
     flex: 1;
     text-align: center;
+  }
+}
+
+/* ================================================================
+   Make a Submission: LiveView wizard (5 steps)
+   ================================================================ */
+
+/* --- File upload dropzone input --- */
+.ojs-dropzone-input {
+  display: none;
+}
+
+.ojs-dropzone-errors {
+  margin: 8px 0 0;
+}
+
+/* --- In-flight upload entries --- */
+.ojs-upload-entry {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e3e7ea;
+  background: #fafbfc;
+}
+
+.ojs-upload-entry-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ojs-upload-progress {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ojs-primary);
+}
+
+.ojs-upload-track {
+  margin-top: 8px;
+  height: 6px;
+  background: #e6e9ec;
+  overflow: hidden;
+}
+
+.ojs-upload-bar {
+  height: 100%;
+  background: var(--ojs-bg-base);
+  transition: width 0.2s ease;
+}
+
+/* --- Uploaded files list --- */
+.ojs-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ojs-file-item {
+  border: 1px solid #e3e7ea;
+  background: #fff;
+  padding: 12px 14px;
+}
+
+.ojs-file-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ojs-file-item-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ojs-text);
+}
+
+.ojs-file-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ojs-file-item-actions .btn-ojs-link {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.ojs-file-item-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ojs-file-genre-prompt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.ojs-genre-question {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.ojs-genre-options {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.ojs-genre-option {
+  padding: 6px 14px;
+  border: 1px solid #c7cdd2;
+  background: #fafbfc;
+  color: rgba(0, 0, 0, 0.75);
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.ojs-genre-option:hover {
+  border-color: var(--ojs-primary);
+  color: var(--ojs-primary);
+  background: #fff;
+}
+
+.ojs-genre-option:focus-visible {
+  outline: 2px solid var(--ojs-primary);
+  outline-offset: 1px;
+}
+
+.ojs-file-genre-picker {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.ojs-genre-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.ojs-file-genre-picker .ojs-genre-options {
+  flex-wrap: wrap;
+  margin-left: 0;
+  margin-top: 10px;
+}
+
+.ojs-genre-option-selected,
+.ojs-genre-option-selected:hover {
+  border-color: var(--ojs-primary);
+  background: var(--ojs-primary);
+  color: #fff;
+}
+
+.ojs-genre-cancel {
+  margin-top: 10px;
+}
+
+.ojs-file-genre-set {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.ojs-genre-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #e7f1f8;
+  color: var(--ojs-primary);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* --- Contributor management --- */
+.ojs-contributor-panel {
+  border: 1px solid var(--ojs-border);
+  background: #fff;
+}
+
+.ojs-contributor-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e3e7ea;
+  background: #fafbfc;
+}
+
+.ojs-contributor-panel-title {
+  margin: 0;
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ojs-text);
+}
+
+.ojs-contributor-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.ojs-contributor-panel-actions .btn-ojs-link {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.ojs-contributor-panel-actions .btn-ojs-link.is-active {
+  color: var(--ojs-primary);
+  text-decoration: underline;
+}
+
+.ojs-contributor-panel-actions .btn-ojs-secondary {
+  margin-left: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+.ojs-contributors-list {
+  gap: 0;
+  padding: 0;
+}
+
+.ojs-contributor-card {
+  position: relative;
+  display: block;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid #eef1f3;
+  border-radius: 0;
+  background: #fff;
+}
+
+.ojs-contributor-card:last-child {
+  border-bottom: none;
+}
+
+.ojs-contributor-card:hover {
+  background: #fbfcfd;
+}
+
+.ojs-contributor-row,
+.ojs-contributor-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 18px;
+}
+
+.ojs-contributor-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ojs-contributor-identity .ojs-contributor-name {
+  margin-bottom: 0;
+}
+
+.ojs-contributor-role {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border: 1px solid #dde3e7;
+  background: #f4f6f7;
+  color: rgba(0, 0, 0, 0.62);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ojs-contributor-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.ojs-contributor-actions-row .btn-ojs-link {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.ojs-contributor-actions-row .ojs-chip {
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+.ojs-primary-contact-btn {
+  border: none;
+  background: none;
+  padding: 6px 10px;
+  margin-right: 6px;
+  color: rgba(0, 0, 0, 0.45);
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ojs-primary-contact-btn:hover {
+  color: var(--ojs-primary);
+  text-decoration: underline;
+}
+
+.ojs-remove-link {
+  color: #a8443b;
+}
+
+.ojs-remove-link:hover {
+  color: #7c2d21;
+}
+
+.ojs-order-index,
+.ojs-preview-index {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--ojs-bg-base);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ojs-preview-identity {
+  min-width: 0;
+}
+
+.ojs-contributor-edit {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 18px;
+}
+
+.ojs-contributor-edit-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
+}
+
+.ojs-contributor-edit-form .ojs-field {
+  gap: 4px;
+}
+
+.ojs-contributor-edit-form .ojs-contributor-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.ojs-contributor-edit-form .ojs-contributor-actions .btn-ojs-primary,
+.ojs-contributor-edit-form .ojs-contributor-actions .btn-ojs-secondary {
+  padding: 8px 18px;
+}
+
+.ojs-contributor-edit-options {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+}
+
+.ojs-contributor-edit-options .ojs-checkbox-label {
+  margin-top: 4px;
+}
+
+.ojs-contributor-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.ojs-contributor-order {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ojs-order-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #cfd8de;
+  border-radius: 0;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.ojs-order-btn:hover:not(:disabled) {
+  background: var(--ojs-bg-base);
+  border-color: var(--ojs-bg-base);
+  color: #fff;
+}
+
+.ojs-order-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ojs-add-contributor-box {
+  margin-top: 16px;
+}
+
+.ojs-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+}
+
+.ojs-checkbox-label input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ojs-primary);
+}
+
+/* --- Submission received page --- */
+.ojs-received-page {
+  width: 90%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 60px 0 80px;
+}
+
+.ojs-received-card {
+  background: #fff;
+  border: 1px solid var(--ojs-border);
+  border-radius: 2px;
+  padding: 48px 44px;
+  text-align: center;
+}
+
+.ojs-received-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: var(--ojs-bg-base);
+  color: #fff;
+  font-size: 30px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ojs-received-card h1 {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--ojs-text);
+  margin: 0 0 10px;
+}
+
+.ojs-received-lead {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.65);
+  margin: 0 auto 26px;
+  max-width: 440px;
+}
+
+.ojs-received-meta {
+  border: 1px solid #e3e7ea;
+  border-left: 4px solid var(--ojs-bg-base);
+  text-align: left;
+  margin-bottom: 30px;
+}
+
+.ojs-received-meta-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ojs-received-meta-row:last-child {
+  border-bottom: none;
+}
+
+.ojs-received-meta-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.ojs-received-meta-value {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.ojs-received-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.ojs-received-actions .btn-ojs-primary {
+  padding: 12px 34px;
+}
+
+/* --- Wizard card footer (steps without a wrapping form) --- */
+.ojs-details-footer .btn-ojs-primary,
+.ojs-details-footer .btn-ojs-secondary {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .ojs-contributor-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .ojs-received-card {
+    padding: 36px 22px;
+  }
+
+  .ojs-received-meta-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }
 

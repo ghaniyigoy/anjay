@@ -10,20 +10,9 @@
     </ol>
   </nav>
 
-  <%!-- Page header: title left, Save for Later right --%>
+  <%!-- Page header --%>
   <div class="ojs-details-header">
     <h1>Make a Submission: Details</h1>
-
-    <button
-      type="submit"
-      form="submission-details-form"
-      name="action"
-      value="save"
-      class="btn-ojs-secondary"
-      id="btn-save-later-top"
-    >
-      Save for Later
-    </button>
   </div>
 
   <%!-- Horizontal progress steps (white card) --%>
@@ -56,11 +45,7 @@
           <h2>Submission Details</h2>
 
           <p>
-            Enter your submission's metadata below. Fields marked with an asterisk (*) are required.
-          </p>
-
-          <p>
-            You can save your work at any time and continue where you left off.
+            Please provide the following details to help us manage your submission in our system.
           </p>
         </div>
 
@@ -196,9 +181,9 @@
 
       <%!-- Card footer (full width) --%>
       <div class="ojs-details-footer">
-        <span class="ojs-last-saved">Last saved 16 minutes ago</span>
-
         <div class="ojs-details-actions">
+          <span class="ojs-last-saved">Last saved 16 minutes ago</span>
+
           <a href="/dashboard/mySubmissions" class="btn-ojs-link" id="btn-cancel">Cancel</a>
 
           <button

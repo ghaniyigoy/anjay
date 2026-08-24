@@ -1,277 +1,338 @@
-<div class="ojs-submission-layout">
-  <%!-- Sidebar: My Submissions picker (OJS 3.x rail) --%>
-  <aside class="ojs-submission-picker">
-    <h3>My Submissions</h3>
+<div class="ojs-details-container">
+  <%!-- Breadcrumb (OJS PKP) --%>
+  <nav class="ojs-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/dashboard">Dashboard</a></li>
 
-    <ul>
-      <li
-        :for={sub <- @all_submissions}
-        class={if sub.id == @submission.id, do: "active", else: ""}
-      >
-        <a href={submission_form_action(sub, "details")}>
-          <span class="ojs-sub-pick-id">{sub.id}</span>
-          <span class="ojs-sub-pick-body">
-            <span class="ojs-sub-pick-title">
-              {if is_binary(sub.title) and sub.title != "",
-                do: sub.title,
-                else: "(Untitled submission)"}
+      <li><a href="/dashboard/mySubmissions">My Submissions</a></li>
+
+      <li aria-current="page">Submission {@submission.id}</li>
+    </ol>
+  </nav>
+
+  <%!-- Page header: step title above the stepper --%>
+  <div class="ojs-details-header">
+    <h1 id="page-title">{wizard_step_title(@current_tab)}</h1>
+  </div>
+
+  <%!-- Horizontal progress steps (white card) --%>
+  <div class="ojs-progress-card">
+    <ol class="ojs-progress-steps" id="wizard-steps">
+      <%= for {tab, label} <- Enum.with_index(wizard_step_labels(), 1) do %>
+        <li
+          class={[
+            "ojs-progress-step",
+            elem(tab, 0) == @current_tab && "is-current",
+            wizard_step_done?(elem(tab, 0), @submission) && "is-done"
+          ]}
+          id={"step-" <> elem(tab, 0)}
+        >
+          <a
+            href={submission_form_action(@submission, elem(tab, 0))}
+            class="ojs-progress-link"
+          >
+            <span class="ojs-progress-number">
+              {if wizard_step_done?(elem(tab, 0), @submission), do: "✓", else: label}
             </span>
-            <span class="ojs-sub-pick-status">{status_text(sub.status)}</span>
-          </span>
-        </a>
-      </li>
-    </ul>
-  </aside>
+            <span class="ojs-progress-label">{elem(tab, 1)}</span>
+          </a>
 
-  <div class="ojs-submission-main">
-    <%!-- Breadcrumb (OJS PKP) --%>
-    <nav class="ojs-breadcrumb" aria-label="Breadcrumb">
-      <ol>
-        <li><a href="/dashboard">Dashboard</a></li>
+          <%= if label < length(wizard_step_labels()) do %>
+            <span class="ojs-progress-arrow" aria-hidden="true">→</span>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  </div>
 
-        <li><a href="/dashboard/mySubmissions">My Submissions</a></li>
+  <%!-- Main card --%>
+  <div class="ojs-details-card">
+    <%= cond do %>
+      <% @current_tab == "details" -> %>
+        <.form
+          for={submission_to_form(@submission)}
+          id="submission-details-form"
+          action={submission_form_action(@submission, @current_tab)}
+          method="post"
+          novalidate
+        >
+          <input type="hidden" name="_method" value="put" />
+          <input
+            type="hidden"
+            name="_csrf_token"
+            value={Plug.CSRFProtection.get_csrf_token()}
+          />
 
-        <li aria-current="page">Submission {@submission.id}</li>
-      </ol>
-    </nav>
-    <%!-- Submission header --%>
-    <div class="ojs-submission-header">
-      <div class="ojs-submission-heading">
-        <h1>
-          Submission <span class="ojs-submission-id">{@submission.id}</span>
-        </h1>
+          <div class="ojs-details-grid">
+            <%!-- Left column --%>
+            <div class="ojs-details-aside">
+              <h2>Submission Details</h2>
 
-        <span class="ojs-status-badge ojs-status-{status_class(@submission.status)}">
-          {status_label(@submission.status)}
-        </span>
-      </div>
-
-      <p class="ojs-submission-paper-title">
-        <%= if @submission.title == "" do %>
-          (Untitled submission)
-        <% else %>
-          {@submission.title}
-        <% end %>
-      </p>
-
-      <div class="ojs-submission-meta">
-        <span>
-          Created {format_date(@submission.created_at)}
-        </span>
-
-        <%= if @submission.date_submitted do %>
-          <span>
-            Submitted {format_date(@submission.date_submitted)}
-          </span>
-        <% end %>
-        <span>Section: {@submission.section}</span>
-      </div>
-    </div>
-    <%!-- Workflow tabs --%>
-    <nav class="ojs-submission-tabs" aria-label="Submission workflow">
-      <a
-        :for={tab <- @tabs}
-        id={"wizard-tab-" <> tab}
-        class={tab_class(@current_tab, tab, @submission)}
-        href={submission_form_action(@submission, tab)}
-      >
-        {tab_label(tab)}
-        <%= if tab_count(tab, @submission) != nil do %>
-          <span class="ojs-tab-count">{tab_count(tab, @submission)}</span>
-        <% end %>
-      </a>
-    </nav>
-    <%!-- Active tab panel --%>
-    <div class="ojs-submission-tab-panel active">
-      <%= cond do %>
-        <% @current_tab == "details" -> %>
-          <div class="ojs-workflow-panel">
-            <div class="ojs-workflow-panel-heading">
-              <h2>Details</h2>
-
-              <p>Masukkan metadata utama makalah Anda pada formulir berikut.</p>
-            </div>
-
-            <.form
-              for={submission_to_form(@submission)}
-              id="submission-details-form"
-              action={submission_form_action(@submission, @current_tab)}
-              method="post"
-              class="ojs-form-card"
-            >
-              <input type="hidden" name="_method" value="put" />
-              <input
-                type="hidden"
-                name="_csrf_token"
-                value={Plug.CSRFProtection.get_csrf_token()}
-              />
-              <div class="ojs-form-grid">
-                <div class="ojs-field ojs-field-full">
-                  <label for="submission_title">Title *</label>
-                  <input
-                    type="text"
-                    id="submission_title"
-                    name="submission[title]"
-                    value={@submission.title}
-                    class="ojs-input"
-                    placeholder="Judul lengkap makalah"
-                  /> <span class="ojs-field-hint">Judul maksimal 250 karakter.</span>
-                </div>
-
-                <div class="ojs-field ojs-field-full">
-                  <label for="submission_subtitle">Subtitle</label>
-                  <input
-                    type="text"
-                    id="submission_subtitle"
-                    name="submission[subtitle]"
-                    value={@submission.subtitle}
-                    class="ojs-input"
-                    placeholder="Subjudul (opsional)"
-                  />
-                </div>
-
-                <div class="ojs-field ojs-field-full">
-                  <label for="submission_abstract">Abstract *</label> <textarea
-                    id="submission_abstract"
-                    name="submission[abstract]"
-                    rows="8"
-                    class="ojs-textarea"
-                    placeholder="Ringkasan singkat tentang tujuan, metode, hasil, dan kesimpulan penelitian"
-                  >{@submission.abstract}</textarea>
-                  <span class="ojs-field-hint">
-                    Abstrak maksimal 300 kata. Harus menyajikan struktur yang jelas (tujuan, metode, hasil, simpulan).
-                  </span>
-                </div>
-
-                <div class="ojs-field">
-                  <label for="submission_section">Section *</label>
-                  <select id="submission_section" name="submission[section]" class="ojs-select">
-                    <%= for section <- ["Artikel Penelitian", "Tinjauan Literatur", "Studi Kasus", "Laporan Riset"] do %>
-                      <option value={section} selected={@submission.section == section}>
-                        {section}
-                      </option>
-                    <% end %>
-                  </select>
-                </div>
-
-                <div class="ojs-field">
-                  <label for="submission_language">Language</label>
-                  <select id="submission_language" name="submission[language]" class="ojs-select">
-                    <option value="id" selected={@submission.language == "id"}>Indonesian</option>
-
-                    <option value="en" selected={@submission.language == "en"}>English</option>
-                  </select>
-                </div>
-
-                <div class="ojs-field ojs-field-full">
-                  <label for="submission_keywords">Keywords</label>
-                  <input
-                    type="text"
-                    id="submission_keywords"
-                    name="submission[keywords]"
-                    value={@submission.keywords}
-                    class="ojs-input"
-                    placeholder="Pisahkan dengan koma, contoh: machine learning, NLP, analisis sentimen"
-                  />
-                </div>
-              </div>
-
-              <div class="ojs-wizard-actions">
-                <button
-                  type="submit"
-                  name="submission[save_status]"
-                  value="draft"
-                  class="btn-ojs-secondary"
-                >Save</button>
-                <a
-                  href={submission_form_action(@submission, "files")}
-                  class="btn-ojs-primary"
-                  id="btn-details-continue"
-                >
-                  Continue
-                </a>
-              </div>
-            </.form>
-          </div>
-        <% @current_tab == "files" -> %>
-          <div class="ojs-workflow-panel">
-            <div class="ojs-workflow-panel-heading">
-              <h2>Files</h2>
-
-              <p>Unggah naskah dan berkas pendukung makalah Anda.</p>
-            </div>
-
-            <div class="ojs-dropzone" id="submission-dropzone">
-              <svg
-                width="44"
-                height="44"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                class="ojs-dropzone-icon"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-
-                <polyline points="17 8 12 3 7 8"></polyline>
-
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-
-              <p class="ojs-dropzone-text">
-                <strong>Pilih berkas</strong> atau seret dan lepaskan di sini
+              <p>
+                Please provide the following details to help us manage your submission in our
+                system.
               </p>
+            </div>
 
-              <p class="ojs-dropzone-hint">PDF, DOCX, DOC, ODT, TXT maksimal 10 MB</p>
+            <%!-- Right column: the form fields --%>
+            <div class="ojs-details-form">
+              <div class="ojs-field-block" id="title-field">
+                <label for="title" class="ojs-field-label">
+                  Title <span class="ojs-req">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="submission[title]"
+                  class="ojs-input"
+                  value={@submission.title}
+                  placeholder="Judul lengkap makalah"
+                  autocomplete="off"
+                />
+                <span class="ojs-field-hint">Judul maksimal 250 karakter.</span>
+              </div>
 
-              <div class="ojs-dropzone-actions">
-                <button type="button" class="btn-ojs-secondary" id="btn-pick-file">Upload File</button>
-                <button type="button" class="btn-ojs-secondary" id="btn-load-demo">Load Sample File</button>
+              <div class="ojs-field-block">
+                <label for="keywords" class="ojs-field-label">Keywords</label>
+                <p class="ojs-field-desc">
+                  Enter the keywords for this submission, separated by commas.
+                </p>
+                <input
+                  type="text"
+                  id="keywords"
+                  name="submission[keywords]"
+                  class="ojs-input"
+                  value={@submission.keywords}
+                  placeholder="machine learning, NLP, analisis sentimen"
+                />
+              </div>
+
+              <div class="ojs-field-block" id="abstract-field">
+                <label class="ojs-field-label">
+                  Abstract <span class="ojs-req">*</span>
+                </label>
+                <p class="ojs-field-desc">
+                  Provide a concise summary of the purpose, methods, results and conclusions of your
+                  research (maximum 300 words).
+                </p>
+                <input
+                  type="hidden"
+                  id="abstract"
+                  name="submission[abstract]"
+                  value={@submission.abstract}
+                />
+                <div
+                  class="ojs-richtext-toolbar"
+                  id="abstract-toolbar"
+                  role="toolbar"
+                  aria-label="Formatting options"
+                >
+                  <button type="button" data-cmd="bold" title="Bold" aria-label="Bold">
+                    <strong>B</strong>
+                  </button>
+                  <button type="button" data-cmd="italic" title="Italic" aria-label="Italic">
+                    <em>I</em>
+                  </button>
+                  <button
+                    type="button"
+                    data-cmd="superscript"
+                    title="Superscript"
+                    aria-label="Superscript"
+                  >
+                    x<sup>2</sup>
+                  </button>
+                  <button
+                    type="button"
+                    data-cmd="subscript"
+                    title="Subscript"
+                    aria-label="Subscript"
+                  >
+                    x<sub>2</sub>
+                  </button>
+                  <button type="button" data-cmd="createLink" title="Link" aria-label="Link">
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71">
+                      </path>
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71">
+                      </path>
+                    </svg>
+                  </button>
+                </div>
+                <div
+                  id="abstract-editor"
+                  class="ojs-richtext"
+                  contenteditable="true"
+                  data-target="abstract"
+                  data-placeholder="Write your abstract here..."
+                  role="textbox"
+                  aria-multiline="true"
+                  aria-label="Abstract"
+                >{raw(@submission.abstract)}</div>
+              </div>
+
+              <div class="ojs-field-block">
+                <label for="references" class="ojs-field-label">References</label>
+                <p class="ojs-field-desc">
+                  List the references cited in your submission. Include URLs for each reference
+                  where available.
+                </p>
+                <textarea
+                  id="references"
+                  name="submission[references]"
+                  class="ojs-textarea ojs-textarea-lg"
+                  rows="7"
+                  placeholder="1. Author, A. (Year). Title of the article. Journal Name, Volume(Issue), Pages."
+                >{@submission.references}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <%!-- Card footer --%>
+          <div class="ojs-details-footer">
+            <div class="ojs-details-actions">
+              <span class="ojs-last-saved">Last saved 16 minutes ago</span>
+
+              <a href="/dashboard/mySubmissions" class="btn-ojs-link" id="btn-cancel">Cancel</a>
+
+              <button
+                type="submit"
+                name="submission[save_status]"
+                value="draft"
+                class="btn-ojs-secondary"
+                id="btn-save-later"
+              >
+                Save for Later
+              </button>
+
+              <button
+                type="submit"
+                name="action"
+                value="continue"
+                class="btn-ojs-primary"
+                id="btn-continue"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </.form>
+      <% @current_tab == "files" -> %>
+        <div class="ojs-details-grid">
+          <div class="ojs-details-aside">
+            <h2>Upload Files</h2>
+            <p>
+              Provide any files our editorial team may need to evaluate your submission. In
+              addition to the main work, you may wish to submit data sets, conflict of interest
+              statements, or other supplementary files if these will be helpful for our editor.
+            </p>
+          </div>
+
+          <div class="ojs-details-form">
+            <div class="ojs-field-block">
+              <div class="ojs-file-upload-section" id="file-upload-section">
+                <div class="ojs-file-upload-header">
+                  <h3 class="ojs-section-title">Files</h3>
+                  <button type="button" class="ojs-add-file-btn" id="btn-add-file">Add File</button>
+                </div>
+
+                <div class="ojs-file-upload-body">
+                  <div class="ojs-dropzone" id="submission-dropzone">
+                    <svg
+                      width="44"
+                      height="44"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      class="ojs-dropzone-icon"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p class="ojs-dropzone-text">
+                      <strong>Upload any files the editorial team will need to evaluate your submission.</strong>
+                      <span class="ojs-upload-file-link" id="upload-file-link">Upload File</span>
+                    </p>
+                    <p class="ojs-dropzone-hint">PDF, DOCX, DOC, ODT, TXT maksimal 10 MB</p>
+                    <input
+                      type="file"
+                      id="file-input"
+                      accept=".pdf,.doc,.docx,.odt,.txt"
+                      multiple
+                      hidden
+                    />
+                    <div class="ojs-dropzone-actions">
+                      <button type="button" class="btn-ojs-secondary" id="btn-pick-file">
+                        Upload File
+                      </button>
+                      <button type="button" class="btn-ojs-secondary" id="btn-load-demo">
+                        Load Sample File
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             <%= if length(@submission.files) > 0 do %>
               <div class="uploaded-files-section">
-                <h3 class="ojs-section-title">Uploaded files ({length(@submission.files)})</h3>
+                <h3 class="ojs-section-title">
+                  Uploaded files (<span id="file-count">{length(@submission.files)}</span>)
+                </h3>
+                <div class="ojs-file-list" id="saved-files">
+                  <%= for file <- @submission.files do %>
+                    <div class="ojs-file-item" data-file-row data-file-id={file.id}>
+                      <div class="ojs-file-item-top">
+                        <span class="ojs-file-item-name">{file.filename}</span>
+                        <div class="ojs-file-item-actions">
+                          <button type="button" class="btn-ojs-link" data-file-edit>Edit</button>
+                          <button type="button" class="btn-ojs-link" data-file-remove>Remove</button>
+                        </div>
+                      </div>
+                      <div class="ojs-file-item-meta">
+                        {file.size}
+                        <%= if Map.get(file, :date) not in [nil, ""] do %>
+                          <span aria-hidden="true">·</span> {file.date}
+                        <% end %>
+                      </div>
 
-                <div class="submissions-table-wrapper">
-                  <table class="submissions-table uploaded-files-table ojs-workflow-table">
-                    <thead>
-                      <tr>
-                        <th>FILE NAME</th>
-
-                        <th>GENRE</th>
-
-                        <th>SIZE</th>
-
-                        <th>DATE UPLOADED</th>
-
-                        <th class="col-actions"></th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      <%= for file <- @submission.files do %>
-                        <tr>
-                          <td class="ojs-file-name-cell">{file.filename}</td>
-
-                          <td>{file.genre}</td>
-
-                          <td>{file.size}</td>
-
-                          <td>{file.date}</td>
-
-                          <td class="col-actions">
-                            <a href="#" class="btn-view">Download</a>
-                          </td>
-                        </tr>
+                      <%= if Map.get(file, :genre) in [nil, ""] do %>
+                        <div class="ojs-file-genre-prompt" data-genre-prompt>
+                          <span class="ojs-genre-question">What kind of file is this?</span>
+                          <div class="ojs-genre-options">
+                            <button
+                              type="button"
+                              class="ojs-genre-option"
+                              data-genre="Article Text"
+                            >
+                              Article Text
+                            </button>
+                            <button type="button" class="ojs-genre-option" data-genre="other">
+                              Other
+                            </button>
+                          </div>
+                        </div>
+                      <% else %>
+                        <div class="ojs-file-genre-set" data-genre-set>
+                          <span class="ojs-genre-chip">{file.genre}</span>
+                        </div>
                       <% end %>
-                    </tbody>
-                  </table>
+                    </div>
+                  <% end %>
                 </div>
               </div>
             <% else %>
-              <div class="ojs-empty-state">
+              <div class="ojs-empty-state" id="no-files">
                 Belum ada file yang diunggah. Silakan unggah naskah Anda.
               </div>
             <% end %>
@@ -281,78 +342,401 @@
               id="submission-files-form"
               action={submission_form_action(@submission, @current_tab)}
               method="post"
-              class="ojs-form-card ojs-inline-form"
             >
               <input type="hidden" name="_method" value="put" />
               <input
                 type="hidden"
                 name="_csrf_token"
                 value={Plug.CSRFProtection.get_csrf_token()}
-              /> <input type="hidden" name="submission[files]" value={file_count(@submission)} />
-              <div class="ojs-wizard-actions">
-                <button
-                  type="submit"
-                  name="submission[save_status]"
-                  value="draft"
-                  class="btn-ojs-secondary"
-                >Save</button>
-                <a
-                  href={submission_form_action(@submission, "contributors")}
-                  class="btn-ojs-primary"
-                  id="btn-files-continue"
-                >
-                  Continue
-                </a>
-              </div>
+              />
+              <input
+                type="hidden"
+                name="submission[files_json]"
+                id="files-json-input"
+                value=""
+              />
             </.form>
           </div>
-        <% @current_tab == "contributors" -> %>
-          <div class="ojs-workflow-panel">
-            <div class="ojs-workflow-panel-heading">
-              <h2>Contributors</h2>
+        </div>
 
-              <p>Daftarkan semua penulis yang berkontribusi pada makalah ini.</p>
-            </div>
+        <div class="ojs-details-footer">
+          <a
+            href={submission_form_action(@submission, "details")}
+            class="btn-ojs-link"
+            id="btn-back"
+          >
+            Back
+          </a>
 
-            <%= if length(@submission.contributors) > 0 do %>
-              <div class="ojs-contributors-list">
-                <%= for contributor <- @submission.contributors do %>
-                  <div class="ojs-contributor-card">
-                    <div class="ojs-contributor-avatar">
-                      {String.first(short_name(contributor))}
+          <div class="ojs-details-actions">
+            <span class="ojs-last-saved">Last saved 16 minutes ago</span>
+            <button
+              type="submit"
+              form="submission-files-form"
+              name="submission[save_status]"
+              value="draft"
+              class="btn-ojs-secondary"
+              id="btn-save-later"
+            >
+              Save for Later
+            </button>
+            <button
+              type="submit"
+              form="submission-files-form"
+              name="action"
+              value="continue"
+              class="btn-ojs-primary"
+              id="btn-continue"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      <% @current_tab == "contributors" -> %>
+        <% contributors = display_contributors(@submission, @user) %>
+        <div class="ojs-details-grid">
+          <div class="ojs-details-aside">
+            <h2>Contributors</h2>
+            <p>
+              Add the contributors (authors) of this submission. One contributor must be the
+              primary contact.
+            </p>
+            <p>You can edit contributor details and reorder them from this step.</p>
+          </div>
+
+          <div class="ojs-details-form">
+            <div class="ojs-contributor-panel">
+              <div class="ojs-contributor-panel-header">
+                <h3 class="ojs-contributor-panel-title">Contributors</h3>
+                <div class="ojs-contributor-panel-actions">
+                  <%= if @contributor_view == :order do %>
+                    <a
+                      href={submission_form_action(@submission, "contributors")}
+                      class="btn-ojs-primary"
+                      id="btn-save-order"
+                    >
+                      Save Order
+                    </a>
+                    <a
+                      href={submission_form_action(@submission, "contributors")}
+                      class="btn-ojs-secondary"
+                      id="btn-cancel-order"
+                    >
+                      Cancel
+                    </a>
+                  <% else %>
+                    <a
+                      href={submission_form_action(@submission, "contributors", view: "order")}
+                      class="btn-ojs-link"
+                    >
+                      Order
+                    </a>
+                    <a
+                      href={submission_form_action(@submission, "contributors", view: "preview")}
+                      class={["btn-ojs-link", @contributor_view == :preview && "is-active"]}
+                    >
+                      Preview
+                    </a>
+                    <a
+                      href={
+                        submission_form_action(@submission, "contributors",
+                          view: "edit",
+                          contributor_id: next_contributor_id(@submission, @user)
+                        )
+                      }
+                      class="btn-ojs-secondary"
+                      id="btn-add-contributor"
+                    >
+                      Add Contributor
+                    </a>
+                  <% end %>
+                </div>
+              </div>
+
+              <div class="ojs-contributors-list" id="contributors-list">
+                <%= if @editing_contributor do %>
+                  <div class="ojs-contributor-card" id="contributor-edit-card">
+                    <div class="ojs-contributor-edit">
+                      <.form
+                        for={contributor_form(@editing_contributor)}
+                        id="contributor-edit-form"
+                        class="ojs-contributor-edit-form"
+                        action={
+                          submission_form_action(@submission, "contributors",
+                            view: "edit",
+                            contributor_id: @editing_contributor.id
+                          )
+                        }
+                        method="post"
+                      >
+                        <input type="hidden" name="_method" value="put" />
+                        <input
+                          type="hidden"
+                          name="_csrf_token"
+                          value={Plug.CSRFProtection.get_csrf_token()}
+                        />
+                        <input
+                          type="hidden"
+                          name="submission[contributor_edit_id]"
+                          value={@editing_contributor.id}
+                        />
+                        <h4 class="ojs-block-title ojs-field-full">Edit Contributor</h4>
+                        <div class="ojs-field">
+                          <label for="edit-given-name">Given name</label>
+                          <input
+                            class="ojs-input"
+                            id="edit-given-name"
+                            name="submission[contributor_edit][given_name]"
+                            value={@editing_contributor.given_name}
+                          />
+                        </div>
+                        <div class="ojs-field">
+                          <label for="edit-family-name">Family name</label>
+                          <input
+                            class="ojs-input"
+                            id="edit-family-name"
+                            name="submission[contributor_edit][family_name]"
+                            value={@editing_contributor.family_name}
+                          />
+                        </div>
+                        <div class="ojs-field ojs-field-full">
+                          <label for="edit-preferred-name">Preferred Public Name</label>
+                          <p class="ojs-field-hint">
+                            If you do not wish to use your given and family name in public lists,
+                            you may provide a preferred public name here.
+                          </p>
+                          <input
+                            class="ojs-input"
+                            id="edit-preferred-name"
+                            name="submission[contributor_edit][preferred_public_name]"
+                            value={Map.get(@editing_contributor, :preferred_public_name, "")}
+                          />
+                        </div>
+                        <div class="ojs-field ojs-field-full">
+                          <label for="edit-email">Email</label>
+                          <input
+                            type="email"
+                            class="ojs-input"
+                            id="edit-email"
+                            name="submission[contributor_edit][email]"
+                            value={@editing_contributor.email}
+                          />
+                        </div>
+                        <div class="ojs-field">
+                          <label for="edit-country">Country</label>
+                          <input
+                            class="ojs-input"
+                            id="edit-country"
+                            name="submission[contributor_edit][country]"
+                            value={@editing_contributor.country}
+                          />
+                        </div>
+                        <div class="ojs-field ojs-field-full">
+                          <label for="edit-affiliation">Affiliation</label>
+                          <input
+                            class="ojs-input"
+                            id="edit-affiliation"
+                            name="submission[contributor_edit][affiliation]"
+                            value={@editing_contributor.affiliation}
+                          />
+                        </div>
+                        <div class="ojs-field ojs-field-full">
+                          <label for="edit-bio">Bio Statement</label>
+                          <textarea
+                            class="ojs-textarea"
+                            id="edit-bio"
+                            name="submission[contributor_edit][bio_statement]"
+                            rows="3"
+                          >{Map.get(@editing_contributor, :bio_statement, "")}</textarea>
+                        </div>
+                        <div class="ojs-field">
+                          <label for="edit-role">Role</label>
+                          <select
+                            class="ojs-select"
+                            id="edit-role"
+                            name="submission[contributor_edit][role]"
+                          >
+                            <%= for {value, label} <- contributor_roles() do %>
+                              <option
+                                value={value}
+                                selected={
+                                  contributor_role_value(@editing_contributor.role) ==
+                                    value
+                                }
+                              >
+                                {label}
+                              </option>
+                            <% end %>
+                          </select>
+                        </div>
+                        <div class="ojs-field ojs-contributor-edit-options">
+                          <label class="ojs-checkbox-label" for="edit-primary">
+                            <input
+                              type="hidden"
+                              name="submission[contributor_edit][primary]"
+                              value="false"
+                            />
+                            <input
+                              type="checkbox"
+                              id="edit-primary"
+                              name="submission[contributor_edit][primary]"
+                              value="true"
+                              checked={@editing_contributor.primary == true}
+                            /> Primary contact
+                          </label>
+                          <label class="ojs-checkbox-label" for="edit-public-list">
+                            <input
+                              type="hidden"
+                              name="submission[contributor_edit][public_list]"
+                              value="false"
+                            />
+                            <input
+                              type="checkbox"
+                              id="edit-public-list"
+                              name="submission[contributor_edit][public_list]"
+                              value="true"
+                              checked={Map.get(@editing_contributor, :public_list, true) == true}
+                            /> Include in public list
+                          </label>
+                        </div>
+                        <div class="ojs-contributor-actions">
+                          <button type="submit" class="btn-ojs-primary" id="btn-save-edit">
+                            Save
+                          </button>
+                          <a
+                            href={submission_form_action(@submission, "contributors")}
+                            class="btn-ojs-secondary"
+                            id="btn-cancel-edit"
+                          >
+                            Cancel
+                          </a>
+                        </div>
+                      </.form>
                     </div>
+                  </div>
+                <% end %>
 
-                    <div class="ojs-contributor-info">
-                      <div class="ojs-contributor-name">
-                        {contributor.given_name} {contributor.family_name}
-                        <%= if primary_contact?(contributor) do %>
-                          <span class="ojs-chip">Primary Contact</span>
-                        <% end %>
-                      </div>
-
-                      <div class="ojs-contributor-detail">{contributor.email}</div>
-
-                      <div class="ojs-contributor-detail">
-                        {contributor.affiliation}{if contributor.country,
-                          do: ", " <> contributor.country}
-                      </div>
-                    </div>
-                    <a href="#" class="btn-view">Edit</a>
+                <%= for {contributor, index} <- Enum.with_index(contributors, 1) do %>
+                  <div
+                    class="ojs-contributor-card"
+                    id={"contributor-" <> to_string(contributor.id)}
+                  >
+                    <%= cond do %>
+                      <% @contributor_view == :order -> %>
+                        <div class="ojs-contributor-row">
+                          <div class="ojs-contributor-identity">
+                            <span class="ojs-order-index">{index}</span>
+                            <div class="ojs-contributor-name">
+                              {contributor.given_name} {contributor.family_name}
+                            </div>
+                          </div>
+                          <div class="ojs-contributor-order">
+                            <button
+                              type="button"
+                              class="ojs-order-btn"
+                              disabled
+                              aria-label="Move up"
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              class="ojs-order-btn"
+                              disabled
+                              aria-label="Move down"
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        </div>
+                      <% @contributor_view == :preview -> %>
+                        <div class="ojs-contributor-preview-row">
+                          <div class="ojs-contributor-identity">
+                            <span class="ojs-preview-index">{index}</span>
+                            <div class="ojs-preview-identity">
+                              <div class="ojs-contributor-name">
+                                {contributor.given_name} {contributor.family_name}
+                              </div>
+                              <div class="ojs-contributor-detail">
+                                {contributor.email || "no email"} · {contributor_role_label(
+                                  contributor.role
+                                )}
+                                <%= if primary_contact?(contributor) do %>
+                                  · Primary Contact
+                                <% end %>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      <% true -> %>
+                        <div class="ojs-contributor-row">
+                          <div class="ojs-contributor-identity">
+                            <div class="ojs-contributor-name">
+                              {contributor.given_name} {contributor.family_name}
+                            </div>
+                            <span class="ojs-contributor-role">
+                              {contributor_role_label(contributor.role)}
+                            </span>
+                          </div>
+                          <div class="ojs-contributor-actions-row">
+                            <%= if primary_contact?(contributor) do %>
+                              <span class="ojs-chip">Primary Contact</span>
+                            <% else %>
+                              <a href="#" class="ojs-primary-contact-btn">Primary Contact</a>
+                            <% end %>
+                            <a
+                              href={
+                                submission_form_action(@submission, "contributors",
+                                  view: "edit",
+                                  contributor_id: contributor.id
+                                )
+                              }
+                              class="btn-ojs-link"
+                              id={"edit-contributor-" <> to_string(contributor.id)}
+                            >
+                              Edit
+                            </a>
+                            <.form
+                              for={contributor_form(contributor)}
+                              id={"delete-contributor-form-" <> to_string(contributor.id)}
+                              action={submission_form_action(@submission, @current_tab)}
+                              method="post"
+                            >
+                              <input type="hidden" name="_method" value="put" />
+                              <input
+                                type="hidden"
+                                name="_csrf_token"
+                                value={Plug.CSRFProtection.get_csrf_token()}
+                              />
+                              <input
+                                type="hidden"
+                                name="submission[delete_contributor_id]"
+                                value={contributor.id}
+                              />
+                              <button
+                                type="submit"
+                                class="btn-ojs-link ojs-remove-link"
+                                id={"delete-contributor-" <> to_string(contributor.id)}
+                                data-confirm={
+                                  "Delete contributor #{contributor.given_name}?"
+                                }
+                              >
+                                Delete
+                              </button>
+                            </.form>
+                          </div>
+                        </div>
+                    <% end %>
                   </div>
                 <% end %>
               </div>
-            <% else %>
-              <div class="ojs-empty-state">
-                Belum ada kontributor terdaftar. Tambahkan penulis/peneliti yang terlibat.
-              </div>
-            <% end %>
+            </div>
 
             <.form
               for={submission_to_form(@submission)}
               id="submission-contributors-form"
               action={submission_form_action(@submission, @current_tab)}
               method="post"
-              class="ojs-form-card ojs-inline-form"
             >
               <input type="hidden" name="_method" value="put" />
               <input
@@ -365,81 +749,56 @@
                 name="submission[contributors_count]"
                 value={contributors_count(@submission)}
               />
-              <div class="ojs-wizard-actions">
-                <button
-                  type="submit"
-                  name="submission[save_status]"
-                  value="draft"
-                  class="btn-ojs-secondary"
-                >Save</button>
-                <button type="button" class="btn-ojs-secondary" id="btn-add-contributor">
-                  Add Contributor
-                </button>
-
-                <a
-                  href={submission_form_action(@submission, "editors")}
-                  class="btn-ojs-primary"
-                  id="btn-contributors-continue"
-                >
-                  Continue
-                </a>
-              </div>
             </.form>
           </div>
-        <% @current_tab == "editors" -> %>
-          <div class="ojs-workflow-panel">
-            <div class="ojs-workflow-panel-heading">
-              <h2>Editors</h2>
+        </div>
 
-              <p>Pilih editor yang akan menangani submission Anda.</p>
-            </div>
+        <div class="ojs-details-footer">
+          <a
+            href={submission_form_action(@submission, "files")}
+            class="btn-ojs-link"
+            id="btn-back"
+          >
+            Back
+          </a>
 
-            <%= if length(@submission.editors) > 0 do %>
-              <div class="ojs-editors-list">
-                <%= for editor <- @submission.editors do %>
-                  <div class="ojs-editor-row">
-                    <div class="ojs-editor-avatar">{String.first(editor.name)}</div>
+          <div class="ojs-details-actions">
+            <span class="ojs-last-saved">Last saved 16 minutes ago</span>
+            <button
+              type="submit"
+              form="submission-contributors-form"
+              name="submission[save_status]"
+              value="draft"
+              class="btn-ojs-secondary"
+              id="btn-save-later"
+            >
+              Save for Later
+            </button>
+            <a
+              href={submission_form_action(@submission, "editors")}
+              class="btn-ojs-primary"
+              id="btn-continue"
+            >
+              Continue
+            </a>
+          </div>
+        </div>
+      <% @current_tab == "editors" -> %>
+        <div class="ojs-details-grid">
+          <div class="ojs-details-aside">
+            <h2>For the Editor</h2>
+            <p>
+              Add any comments for the editor, such as related submissions or previous
+              publications.
+            </p>
+          </div>
 
-                    <div class="ojs-editor-info">
-                      <div class="ojs-editor-name">{editor.name}</div>
-
-                      <div class="ojs-editor-role">{editor.role}</div>
-                    </div>
-
-                    <div class="ojs-editor-email">{editor.email}</div>
-                    <a href="#" class="btn-view">Remove</a>
-                  </div>
-                <% end %>
-              </div>
-            <% else %>
-              <div class="ojs-empty-state">
-                Belum ada editor yang ditugaskan. Editor utama jurnal akan ditugaskan otomatis setelah submission dikirim.
-              </div>
-            <% end %>
-
-            <%= if length(@submission.editors) < 2 do %>
-              <div class="ojs-form-card ojs-add-editor-box">
-                <h4 class="ojs-block-title">Request Editor</h4>
-
-                <p class="ojs-block-help">Cari editor berdasarkan nama atau email.</p>
-
-                <div class="ojs-editor-search-row">
-                  <input
-                    type="text"
-                    id="editor-search-input"
-                    class="search-input ojs-input"
-                    placeholder="Search editors..."
-                  /> <a href="#" class="btn-ojs-primary" id="btn-add-editor">Add Editor</a>
-                </div>
-              </div>
-            <% end %>
-
+          <div class="ojs-details-form">
             <.form
               for={submission_to_form(@submission)}
               id="submission-editors-form"
               action={submission_form_action(@submission, @current_tab)}
               method="post"
-              class="ojs-form-card ojs-inline-form"
             >
               <input type="hidden" name="_method" value="put" />
               <input
@@ -452,133 +811,281 @@
                 name="submission[editors_count]"
                 value={editors_count(@submission)}
               />
-              <div class="ojs-wizard-actions">
-                <button
-                  type="submit"
-                  name="submission[save_status]"
-                  value="draft"
-                  class="btn-ojs-secondary"
-                >Save</button>
-                <a
-                  href={submission_form_action(@submission, "review")}
-                  class="btn-ojs-primary"
-                  id="btn-editors-continue"
+
+              <div class="ojs-field-block">
+                <label class="ojs-field-label">Comments For The Editor</label>
+
+                <p class="ojs-field-desc">
+                  Add any comments for the editor, such as related submissions or previous
+                  publications.
+                </p>
+
+                <input
+                  type="hidden"
+                  id="editor-comments"
+                  name="submission[editor_comments]"
+                  value={@submission.editor_comments || ""}
+                />
+
+                <div
+                  class="ojs-richtext-toolbar"
+                  id="editor-comments-toolbar"
+                  role="toolbar"
+                  aria-label="Formatting options"
                 >
-                  Continue
-                </a>
+                  <button type="button" data-cmd="bold" title="Bold" aria-label="Bold"><strong>B</strong></button>
+                  <button type="button" data-cmd="italic" title="Italic" aria-label="Italic"><em>I</em></button>
+                  <button
+                    type="button"
+                    data-cmd="superscript"
+                    title="Superscript"
+                    aria-label="Superscript"
+                  >
+                    x<sup>2</sup>
+                  </button>
+                  <button
+                    type="button"
+                    data-cmd="subscript"
+                    title="Subscript"
+                    aria-label="Subscript"
+                  >
+                    x<sub>2</sub>
+                  </button>
+                  <button type="button" data-cmd="createLink" title="Link" aria-label="Link">
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71">
+                      </path>
+
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71">
+                      </path>
+                    </svg>
+                  </button>
+                </div>
+
+                <div
+                  id="editor-comments-editor"
+                  class="ojs-richtext"
+                  contenteditable="true"
+                  data-target="editor-comments"
+                  data-placeholder="Write your comments for the editor here..."
+                  role="textbox"
+                  aria-multiline="true"
+                  aria-label="Comments For The Editor"
+                ></div>
               </div>
             </.form>
           </div>
-        <% true -> %>
-          <div class="ojs-workflow-panel">
-            <div class="ojs-workflow-panel-heading">
-              <h2>Review</h2>
+        </div>
 
-              <p>Periksa kembali seluruh informasi sebelum menyerahkan makalah ke jurnal.</p>
-            </div>
+        <div class="ojs-details-footer">
+          <a
+            href={submission_form_action(@submission, "contributors")}
+            class="btn-ojs-link"
+            id="btn-back"
+          >
+            Back
+          </a>
 
-            <div class="ojs-review-overview">
-              <div class="ojs-review-metric">
-                <span class="ojs-review-metric-label">Title</span>
-                <span class="ojs-review-metric-value">
-                  {if @submission.title == "", do: "(Belum diisi)", else: @submission.title}
-                </span>
-              </div>
+          <div class="ojs-details-actions">
+            <span class="ojs-last-saved">Last saved 16 minutes ago</span>
+            <button
+              type="submit"
+              form="submission-editors-form"
+              name="submission[save_status]"
+              value="draft"
+              class="btn-ojs-secondary"
+              id="btn-save-later"
+            >
+              Save for Later
+            </button>
+            <button
+              type="submit"
+              form="submission-editors-form"
+              name="action"
+              value="continue"
+              class="btn-ojs-primary"
+              id="btn-continue"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      <% true -> %>
+        <div class="ojs-details-grid">
+          <div class="ojs-details-aside">
+            <h2>Review</h2>
+            <p>Review the details of your submission before submitting it to the journal.</p>
+          </div>
 
-              <div class="ojs-review-metric">
-                <span class="ojs-review-metric-label">Section</span>
-                <span class="ojs-review-metric-value">{@submission.section || "Artikel Penelitian"}</span>
-              </div>
+          <div class="ojs-details-form ojs-review-page">
+            <%!-- Section: Details --%>
+            <section class="ojs-review-section" id="review-section-details">
+              <header class="ojs-review-section-header">
+                <h3 class="ojs-review-section-title">Details</h3>
+                <a
+                  href={submission_form_action(@submission, "details")}
+                  class="btn-ojs-link"
+                  id="edit-details"
+                >
+                  Edit
+                </a>
+              </header>
 
-              <div class="ojs-review-metric">
-                <span class="ojs-review-metric-label">Language</span>
-                <span class="ojs-review-metric-value">
-                  {if @submission.language == "id", do: "Indonesian", else: "English"}
-                </span>
-              </div>
-
-              <div class="ojs-review-metric">
-                <span class="ojs-review-metric-label">Files</span>
-                <span class="ojs-review-metric-value">{length(@submission.files)} file</span>
-              </div>
-
-              <div class="ojs-review-metric">
-                <span class="ojs-review-metric-label">Contributors</span>
-                <span class="ojs-review-metric-value">{length(@submission.contributors)} author</span>
-              </div>
-            </div>
-
-            <%= if @submission.review do %>
-              <div class="ojs-review-summary">
-                <h3>Review Status</h3>
-
-                <p>{@submission.review.summary}</p>
-              </div>
-
-              <%= if length(@submission.review.assignments) > 0 do %>
-                <div class="ojs-review-assignments">
-                  <h3>Review History</h3>
-
-                  <table class="submissions-table ojs-review-table">
-                    <thead>
-                      <tr>
-                        <th>REVIEWER</th>
-
-                        <th>RECOMMENDATION</th>
-
-                        <th>DATE</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      <%= for assignment <- @submission.review.assignments do %>
-                        <tr>
-                          <td>{assignment.name}</td>
-
-                          <td>{assignment.recommendation}</td>
-
-                          <td>{assignment.date}</td>
-                        </tr>
-                      <% end %>
-                    </tbody>
-                  </table>
+              <div class="ojs-review-section-body">
+                <div class="ojs-review-row">
+                  <span class="ojs-review-row-label">Title</span>
+                  <div class="ojs-review-row-value">
+                    {if String.trim(@submission.title || "") == "",
+                      do: "(Belum diisi)",
+                      else: @submission.title}
+                  </div>
                 </div>
-              <% end %>
-            <% end %>
 
-            <div class="ojs-review-assignments">
-              <h3>Submission Checklist</h3>
+                <div class="ojs-review-row">
+                  <span class="ojs-review-row-label">Keywords</span>
+                  <div class="ojs-review-row-value">
+                    <%= if String.trim(@submission.keywords || "") == "" do %>
+                      <span class="ojs-review-muted">(Belum diisi)</span>
+                    <% else %>
+                      <div class="ojs-review-chips">
+                        <%= for keyword <-
+                              String.split(@submission.keywords || "", ",")
+                              |> Enum.map(&String.trim(&1))
+                              |> Enum.reject(&(&1 == "")) do %>
+                          <span class="ojs-review-chip">{keyword}</span>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
 
-              <ul class="ojs-check-list">
-                <li class={if @submission.title != "", do: "checked", else: ""}>
-                  <span class="ojs-check-icon">{if @submission.title != "", do: "✓", else: ""}</span>
-                  Judul telah diisi
-                </li>
+                <div class="ojs-review-row">
+                  <span class="ojs-review-row-label">Abstract</span>
+                  <div class="ojs-review-row-value ojs-review-rich">
+                    <%= if String.trim(strip_html(@submission.abstract)) == "" do %>
+                      <span class="ojs-review-muted">(Belum diisi)</span>
+                    <% else %>
+                      {raw(@submission.abstract)}
+                    <% end %>
+                  </div>
+                </div>
 
-                <li class={if @submission.abstract != "", do: "checked", else: ""}>
-                  <span class="ojs-check-icon">{if @submission.abstract != "", do: "✓", else: ""}</span>
-                  Abstrak telah diisi
-                </li>
+                <div class="ojs-review-row">
+                  <span class="ojs-review-row-label">References</span>
+                  <div class="ojs-review-row-value ojs-review-prewrap">
+                    {if String.trim(@submission.references || "") == "",
+                      do: "(Belum diisi)",
+                      else: @submission.references}
+                  </div>
+                </div>
+              </div>
+            </section>
 
-                <li class={if length(@submission.files) > 0, do: "checked", else: ""}>
-                  <span class="ojs-check-icon">{if length(@submission.files) > 0,
-                    do: "✓",
-                    else: ""}</span>
-                  Naskah telah diunggah
-                </li>
+            <%!-- Section: Files --%>
+            <section class="ojs-review-section" id="review-section-files">
+              <header class="ojs-review-section-header">
+                <h3 class="ojs-review-section-title">Files</h3>
+                <a
+                  href={submission_form_action(@submission, "files")}
+                  class="btn-ojs-link"
+                  id="edit-files"
+                >
+                  Edit
+                </a>
+              </header>
 
-                <li class={if length(@submission.contributors) > 0, do: "checked", else: ""}>
-                  <span class="ojs-check-icon">
-                    {if length(@submission.contributors) > 0, do: "✓", else: ""}
-                  </span>
-                  Kontributor telah didaftarkan
-                </li>
+              <div class="ojs-review-section-body">
+                <%= if length(@submission.files) > 0 do %>
+                  <ul class="ojs-review-list" id="review-file-list">
+                    <%= for file <- @submission.files do %>
+                      <li class="ojs-review-list-item" data-file-id={file.id}>
+                        <div class="ojs-review-item-main">
+                          <span class="ojs-file-item-name">{file.filename}</span>
+                          <span class="ojs-file-item-meta">
+                            {file.size}
+                            <%= if Map.get(file, :date) not in [nil, ""] do %>
+                              · {file.date}
+                            <% end %>
+                          </span>
+                        </div>
+                        <%= if Map.get(file, :genre) not in [nil, ""] do %>
+                          <span class="ojs-genre-chip">{file.genre}</span>
+                        <% end %>
+                      </li>
+                    <% end %>
+                  </ul>
+                <% else %>
+                  <span class="ojs-review-muted">Belum ada file yang diunggah.</span>
+                <% end %>
+              </div>
+            </section>
 
-                <li class="checked">
-                  <span class="ojs-check-icon">✓</span> Makalah bebas dari plagiarisme
-                </li>
-              </ul>
-            </div>
+            <%!-- Section: Contributors --%>
+            <section class="ojs-review-section" id="review-section-contributors">
+              <header class="ojs-review-section-header">
+                <h3 class="ojs-review-section-title">Contributors</h3>
+                <a
+                  href={submission_form_action(@submission, "contributors")}
+                  class="btn-ojs-link"
+                  id="edit-contributors"
+                >
+                  Edit
+                </a>
+              </header>
+
+              <div class="ojs-review-section-body">
+                <ul class="ojs-review-list" id="review-contributor-list">
+                  <%= for contributor <- display_contributors(@submission, @user) do %>
+                    <li class="ojs-review-list-item">
+                      <div class="ojs-review-item-main">
+                        <span class="ojs-contributor-name">
+                          {contributor.given_name} {contributor.family_name}
+                        </span>
+                        <span class="ojs-file-item-meta">
+                          {contributor_role_label(contributor.role)}
+                        </span>
+                      </div>
+                      <%= if primary_contact?(contributor) do %>
+                        <span class="ojs-chip">Primary Contact</span>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            </section>
+
+            <%!-- Section: For the Editor --%>
+            <section class="ojs-review-section" id="review-section-editor">
+              <header class="ojs-review-section-header">
+                <h3 class="ojs-review-section-title">For the Editor</h3>
+                <a
+                  href={submission_form_action(@submission, "editors")}
+                  class="btn-ojs-link"
+                  id="edit-editor-comments"
+                >
+                  Edit
+                </a>
+              </header>
+
+              <div class="ojs-review-section-body">
+                <div class="ojs-review-row-value ojs-review-rich">
+                  <%= if String.trim(strip_html(@submission.editor_comments)) == "" do %>
+                    <span class="ojs-review-muted">(Tidak ada komentar untuk editor)</span>
+                  <% else %>
+                    {raw(@submission.editor_comments)}
+                  <% end %>
+                </div>
+              </div>
+            </section>
 
             <%= if @submission.status == :incomplete do %>
               <div class="ojs-notice-box ojs-notice-warning">
@@ -595,33 +1102,50 @@
               id="submission-review-form"
               action={submission_form_action(@submission, @current_tab)}
               method="post"
-              class="ojs-form-card ojs-inline-form"
             >
               <input type="hidden" name="_method" value="put" />
               <input
                 type="hidden"
                 name="_csrf_token"
                 value={Plug.CSRFProtection.get_csrf_token()}
-              /> <input type="hidden" name="submission[submit_to_journal]" value="1" />
-              <div class="ojs-wizard-actions ojs-wizard-actions-end">
-                <button
-                  type="submit"
-                  class="btn-ojs-secondary"
-                  name="submission[save_status]"
-                  value="draft"
-                >Save for later</button>
-                <button
-                  type="submit"
-                  class="btn-ojs-primary btn-submit-journal"
-                  id="btn-submit-journal"
-                >
-                  Submit to Journal
-                </button>
-              </div>
+              />
+              <input type="hidden" name="submission[submit_to_journal]" value="1" />
             </.form>
           </div>
-      <% end %>
-    </div>
+        </div>
+
+        <div class="ojs-details-footer">
+          <a
+            href={submission_form_action(@submission, "editors")}
+            class="btn-ojs-link"
+            id="btn-back"
+          >
+            Back
+          </a>
+
+          <div class="ojs-details-actions">
+            <span class="ojs-last-saved">Last saved 16 minutes ago</span>
+            <button
+              type="submit"
+              form="submission-review-form"
+              name="submission[save_status]"
+              value="draft"
+              class="btn-ojs-secondary"
+              id="btn-save-later"
+            >
+              Save for later
+            </button>
+            <button
+              type="submit"
+              form="submission-review-form"
+              class="btn-ojs-primary btn-submit-journal"
+              id="btn-submit-journal"
+            >
+              Submit to Journal
+            </button>
+          </div>
+        </div>
+    <% end %>
   </div>
 </div>
 
@@ -631,9 +1155,10 @@
       return document.getElementById((selector + '').replace('#', '')) !== null;
     };
 
-    // Sample/demo file handlers
+    // File upload handlers
     var btnDemo = document.getElementById('btn-load-demo');
     var btnPick = document.getElementById('btn-pick-file');
+    var fileInput = document.getElementById('file-input');
     var dz = document.getElementById('submission-dropzone');
 
     var demoFiles = [
@@ -641,57 +1166,219 @@
       { name: 'figures.zip', genre: 'Figure', size: '4.8 MB' }
     ];
 
+    var GENRES = [
+      'Article Text', 'Research Instrument', 'Research Materials',
+      'Research Results', 'Transcripts', 'Data Analysis',
+      'Data Set', 'Source Texts', 'Other'
+    ];
+
+    function buildGenrePicker(currentGenre) {
+      var opts = GENRES.map(function (g) {
+        var selected = g === currentGenre ? ' ojs-genre-option-selected' : '';
+        return '<button type="button" class="ojs-genre-option' + selected +
+          '" data-genre="' + g + '">' + g + '</button>';
+      }).join('');
+      return '<div class="ojs-file-genre-picker" data-genre-picker data-current-genre="' +
+        (currentGenre || '') + '">' +
+        '<span class="ojs-genre-question">What kind of file is this?</span>' +
+        '<p class="ojs-genre-desc">Choose the option that best describes this file</p>' +
+        '<div class="ojs-genre-options">' + opts + '</div>' +
+        '<button type="button" class="btn-ojs-link ojs-genre-cancel" data-genre-cancel>Cancel</button>' +
+        '</div>';
+    }
+
+    function currentGenreOf(genreSet) {
+      var chip = genreSet.querySelector('.ojs-genre-chip');
+      return chip ? chip.textContent : '';
+    }
+
+    var GENRE_PROMPT_HTML =
+      '<div class="ojs-file-genre-prompt" data-genre-prompt>' +
+      '<span class="ojs-genre-question">What kind of file is this?</span>' +
+      '<div class="ojs-genre-options">' +
+      '<button type="button" class="ojs-genre-option" data-genre="Article Text">Article Text</button>' +
+      '<button type="button" class="ojs-genre-option" data-genre="other">Other</button>' +
+      '</div></div>';
+
+    function buildFileItem(fileName, size, genre) {
+      var item = document.createElement('div');
+      item.className = 'ojs-file-item';
+      item.setAttribute('data-file-row', '');
+      item.innerHTML =
+        '<div class="ojs-file-item-top">' +
+        '<span class="ojs-file-item-name"></span>' +
+        '<div class="ojs-file-item-actions">' +
+        '<button type="button" class="btn-ojs-link" data-file-edit>Edit</button>' +
+        '<button type="button" class="btn-ojs-link" data-file-remove>Remove</button>' +
+        '</div></div>' +
+        '<div class="ojs-file-item-meta"></div>' +
+        (genre
+          ? '<div class="ojs-file-genre-set" data-genre-set><span class="ojs-genre-chip"></span></div>'
+          : GENRE_PROMPT_HTML);
+      item.querySelector('.ojs-file-item-name').textContent = fileName;
+      item.querySelector('.ojs-file-item-meta').textContent = size || '';
+      if (genre) {
+        item.querySelector('.ojs-genre-chip').textContent = genre;
+      }
+      return item;
+    }
+
+    function getFileSection() {
+      var section = document.querySelector('.uploaded-files-section');
+      if (section) return section;
+      var filesForm = document.getElementById('submission-files-form');
+      var noFiles = document.getElementById('no-files');
+      if (noFiles) noFiles.remove();
+      var html =
+        '<div class="uploaded-files-section">' +
+        '<h3 class="ojs-section-title">Uploaded files (<span id="file-count">0</span>)</h3>' +
+        '<div class="ojs-file-list" id="saved-files"></div></div>';
+      filesForm.insertAdjacentHTML('beforebegin', html);
+      return document.querySelector('.uploaded-files-section');
+    }
+
+    function updateFileCount() {
+      var count = document.querySelectorAll('.ojs-file-item').length;
+      var el = document.getElementById('file-count');
+      if (el) el.textContent = String(count);
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function addUploadedFile(file) {
+      var box = getFileSection();
+      var item = buildFileItem(file.name, formatFileSize(file.size), null);
+      item.setAttribute('data-uploaded', '');
+      box.querySelector('#saved-files').appendChild(item);
+      updateFileCount();
+    }
+
     function addDemoFile(idx) {
       if (!hasId('submission-dropzone')) return;
       var file = demoFiles[idx % demoFiles.length];
-      var section = document.querySelector('.uploaded-files-section');
-      var tbody;
-      if (section) {
-        tbody = document.querySelector('.uploaded-files-table tbody');
-      } else {
-        var html =
-          '<div class="uploaded-files-section">' +
-          '<h3 class="ojs-section-title">Uploaded files (1)</h3>' +
-          '<div class="submissions-table-wrapper">' +
-          '<table class="submissions-table uploaded-files-table ojs-workflow-table">' +
-          '<thead><tr><th>FILE NAME</th><th>GENRE</th><th>SIZE</th><th>DATE UPLOADED</th><th class="col-actions"></th></tr></thead>' +
-          '<tbody></tbody></table></div></div>';
-        var filesForm = document.getElementById('submission-files-form');
-        filesForm.insertAdjacentHTML('beforebegin', html);
-        tbody = document.querySelector('.uploaded-files-table tbody');
-      }
-      var today = new Date().toISOString().slice(0, 10);
-      var existing = tbody.querySelectorAll('tr[data-demo]');
+      var box = getFileSection();
+      var existing = box.querySelectorAll('[data-demo]');
       if (existing.length >= demoFiles.length) return;
-      var tr = document.createElement('tr');
-      tr.setAttribute('data-demo', '');
-      tr.innerHTML =
-        '<td class="ojs-file-name-cell">' + file.name + '</td>' +
-        '<td>' + file.genre + '</td>' +
-        '<td>' + file.size + '</td>' +
-        '<td>' + today + '</td>' +
-        '<td class="col-actions"><a href="#" class="btn-view">Download</a></td>';
-      tbody.appendChild(tr);
-      var count = document.querySelectorAll('.uploaded-files-table tbody tr').length;
-      var title = document.querySelector('.uploaded-files-section .ojs-section-title');
-      if (title) title.textContent = 'Uploaded files (' + count + ')';
+      var item = buildFileItem(file.name, file.size, file.genre);
+      item.setAttribute('data-demo', '');
+      box.querySelector('#saved-files').appendChild(item);
+      updateFileCount();
     }
+
+    // Genre selection, Edit and Remove (delegated so it also covers files added later)
+    document.addEventListener('click', function (e) {
+      var row = e.target.closest('.ojs-file-item');
+      if (!row) return;
+
+      if (e.target.closest('[data-file-remove]')) {
+        row.remove();
+        updateFileCount();
+      } else if (e.target.closest('[data-file-edit]')) {
+        var genreSet = row.querySelector('[data-genre-set]');
+        if (genreSet) {
+          genreSet.insertAdjacentHTML('afterend', buildGenrePicker(currentGenreOf(genreSet)));
+          genreSet.remove();
+        }
+      } else if (e.target.closest('[data-genre-cancel]')) {
+        var picker = row.querySelector('[data-genre-picker]');
+        if (picker) {
+          var current = picker.getAttribute('data-current-genre') || '';
+          if (current) {
+            var setEl = document.createElement('div');
+            setEl.className = 'ojs-file-genre-set';
+            setEl.setAttribute('data-genre-set', '');
+            var chipEl = document.createElement('span');
+            chipEl.className = 'ojs-genre-chip';
+            chipEl.textContent = current;
+            setEl.appendChild(chipEl);
+            picker.insertAdjacentElement('afterend', setEl);
+          } else {
+            picker.insertAdjacentHTML('afterend', GENRE_PROMPT_HTML);
+          }
+          picker.remove();
+        }
+      } else if (e.target.closest('[data-genre]')) {
+        var btn = e.target.closest('[data-genre]');
+        if (btn.getAttribute('data-genre') === 'other') {
+          var prompt = row.querySelector('[data-genre-prompt]');
+          if (prompt) {
+            prompt.insertAdjacentHTML('afterend', buildGenrePicker(null));
+            prompt.remove();
+          }
+        } else {
+          var source =
+            row.querySelector('[data-genre-prompt]') || row.querySelector('[data-genre-picker]');
+          if (source) {
+            var set = document.createElement('div');
+            set.className = 'ojs-file-genre-set';
+            set.setAttribute('data-genre-set', '');
+            var chip = document.createElement('span');
+            chip.className = 'ojs-genre-chip';
+            chip.textContent = btn.getAttribute('data-genre');
+            set.appendChild(chip);
+            source.insertAdjacentElement('afterend', set);
+            source.remove();
+          }
+        }
+      }
+    });
 
     if (btnDemo) {
       btnDemo.addEventListener('click', function (e) {
         e.preventDefault();
-        addDemoFile(document.querySelectorAll('.uploaded-files-table tbody tr').length);
+        addDemoFile(document.querySelectorAll('.ojs-file-item').length);
       });
     }
 
-    if (btnPick) {
+    if (btnPick && fileInput) {
       btnPick.addEventListener('click', function (e) {
         e.preventDefault();
-        addDemoFile(document.querySelectorAll('.uploaded-files-table tbody tr').length);
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', function () {
+        for (var i = 0; i < fileInput.files.length; i++) {
+          addUploadedFile(fileInput.files[i]);
+        }
+        fileInput.value = '';
       });
     }
 
-    // Drag & drop visual feedback
+    // Serialize uploaded file rows into JSON before saving/continuing
+    var filesForm = document.getElementById('submission-files-form');
+    if (filesForm) {
+      filesForm.addEventListener('submit', function () {
+        var jsonInput = document.getElementById('files-json-input');
+        if (!jsonInput) return;
+        var rows = document.querySelectorAll('.ojs-file-item');
+        var files = [];
+        Array.prototype.forEach.call(rows, function (row) {
+          var nameEl = row.querySelector('.ojs-file-item-name');
+          var metaEl = row.querySelector('.ojs-file-item-meta');
+          var chip = row.querySelector('[data-genre-set] .ojs-genre-chip');
+          var size = '';
+          var date = '';
+          if (metaEl) {
+            var parts = metaEl.textContent.split('\u00b7');
+            size = (parts[0] || '').trim();
+            date = (parts[1] || '').trim();
+          }
+          files.push({
+            filename: nameEl ? nameEl.textContent.trim() : '',
+            size: size,
+            date: date,
+            genre: chip ? chip.textContent.trim() : ''
+          });
+        });
+        jsonInput.value = JSON.stringify(files);
+      });
+    }
+
+    // Drag & drop: pick up real files
     if (dz) {
       ['dragenter', 'dragover'].forEach(function (evt) {
         dz.addEventListener(evt, function (e) {
@@ -699,61 +1386,17 @@
           dz.classList.add('dragging');
         });
       });
-      ['dragleave', 'drop'].forEach(function (evt) {
+      ['dragleave'].forEach(function (evt) {
         dz.addEventListener(evt, function (e) {
           e.preventDefault();
           dz.classList.remove('dragging');
         });
       });
-    }
-
-    // Add contributor card (inline editor)
-    var btnAddContributor = document.getElementById('btn-add-contributor');
-    if (btnAddContributor) {
-      btnAddContributor.addEventListener('click', function (e) {
+      dz.addEventListener('drop', function (e) {
         e.preventDefault();
-        var built = '<div class="ojs-contributor-card">' +
-          '<div class="ojs-contributor-avatar">?</div>' +
-          '<div class="ojs-contributor-info">' +
-          '<div class="ojs-contributor-name">Nama Baru</div>' +
-          '<div class="ojs-contributor-detail">email@universitas.ac.id</div>' +
-          '<div class="ojs-contributor-detail">Universitas</div>' +
-          '</div>' +
-          '<a href="#" class="btn-view">Edit</a>' +
-          '</div>';
-        var list = document.querySelector('.ojs-contributors-list');
-        if (!list) {
-          list = document.createElement('div');
-          list.className = 'ojs-contributors-list';
-          document.getElementById('submission-contributors-form').insertAdjacentHTML('beforebegin',
-            '<div class="ojs-contributors-list">' + built + '</div>');
-        } else {
-          list.insertAdjacentHTML('beforeend', built);
-        }
-      });
-    }
-
-    var btnAddEditor = document.getElementById('btn-add-editor');
-    if (btnAddEditor) {
-      btnAddEditor.addEventListener('click', function (e) {
-        e.preventDefault();
-        var name = prompt('Nama editor:');
-        if (!name) return;
-        var built = '<div class="ojs-editor-row">' +
-          '<div class="ojs-editor-avatar">' + name.charAt(0) + '</div>' +
-          '<div class="ojs-editor-info"><div class="ojs-editor-name">' + name + '</div>' +
-          '<div class="ojs-editor-role">Editor</div></div>' +
-          '<div class="ojs-editor-email">editor@universitas.ac.id</div>' +
-          '<a href="#" class="btn-view">Remove</a>' +
-          '</div>';
-        var list = document.querySelector('.ojs-editors-list');
-        if (!list) {
-          list = document.createElement('div');
-          list.className = 'ojs-editors-list';
-          document.getElementById('submission-editors-form').insertAdjacentHTML('beforebegin',
-            '<div class="ojs-editors-list">' + built + '</div>');
-        } else {
-          list.insertAdjacentHTML('beforeend', built);
+        dz.classList.remove('dragging');
+        for (var i = 0; i < e.dataTransfer.files.length; i++) {
+          addUploadedFile(e.dataTransfer.files[i]);
         }
       });
     }

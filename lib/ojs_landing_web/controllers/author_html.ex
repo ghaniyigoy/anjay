@@ -95,15 +95,147 @@ defmodule OjsLandingWeb.AuthorHTML do
   def submission_form_action(submission, tab),
     do: "/submission/wizard/#{submission.id}?tab=#{tab}"
 
+  def submission_form_action(submission, tab, view: view),
+    do: "/submission/wizard/#{submission.id}?tab=#{tab}&view=#{view}"
+
+  def submission_form_action(submission, tab, view: view, contributor_id: contributor_id),
+    do:
+      "/submission/wizard/#{submission.id}?tab=#{tab}&view=#{view}&contributor_id=#{contributor_id}"
+
+  def wizard_step_title("details"), do: "Make a Submission: Details"
+  def wizard_step_title("files"), do: "Make a Submission: Upload Files"
+  def wizard_step_title("contributors"), do: "Make a Submission: Contributors"
+  def wizard_step_title("editors"), do: "Make a Submission: For the Editor"
+  def wizard_step_title("review"), do: "Make a Submission: Review"
+
+  def wizard_step_labels do
+    [
+      {"details", "Details"},
+      {"files", "Upload Files"},
+      {"contributors", "Contributors"},
+      {"editors", "For the Editor"},
+      {"review", "Review"}
+    ]
+  end
+
+  def wizard_step_done?(tab, submission), do: step_done_class(tab, submission) == "✓"
+
+  def wizard_prev_tab("files"), do: "details"
+  def wizard_prev_tab("contributors"), do: "files"
+  def wizard_prev_tab("editors"), do: "contributors"
+  def wizard_prev_tab("review"), do: "editors"
+  def wizard_prev_tab(_tab), do: nil
+
   def file_count(submission), do: length(submission.files || [])
   def contributors_count(submission), do: length(submission.contributors || [])
   def editors_count(submission), do: length(submission.editors || [])
+
+  def strip_html(nil), do: ""
+
+  def strip_html(value) when is_binary(value) do
+    value
+    |> String.replace("<br>", " ")
+    |> String.replace("<br/>", " ")
+    |> String.replace("<br />", " ")
+    |> String.replace("</p>", " ")
+    |> Phoenix.HTML.html_escape()
+    |> Phoenix.HTML.safe_to_string()
+    |> String.replace("&nbsp;", " ")
+    |> String.replace(~r/<[^>]*>/, "")
+    |> String.trim()
+  end
 
   def short_name(%{family_name: name}) when name not in [nil, ""], do: name
   def short_name(%{given_name: name}), do: name
   def short_name(_), do: "?"
 
   def primary_contact?(contributor), do: Map.get(contributor, :primary) == true
+
+  def display_contributors(submission, user) do
+    case submission.contributors do
+      list when is_list(list) and list != [] -> list
+      _ -> [default_contributor(user)]
+    end
+  end
+
+  def contributor_form(contributor) do
+    to_form(%{
+      "given_name" => Map.get(contributor, :given_name, ""),
+      "family_name" => Map.get(contributor, :family_name, ""),
+      "preferred_public_name" => Map.get(contributor, :preferred_public_name, ""),
+      "email" => Map.get(contributor, :email, ""),
+      "country" => Map.get(contributor, :country, ""),
+      "bio_statement" => Map.get(contributor, :bio_statement, ""),
+      "affiliation" => Map.get(contributor, :affiliation, ""),
+      "role" => contributor_role_value(contributor.role),
+      "primary" => to_string(contributor.primary == true),
+      "public_list" => to_string(Map.get(contributor, :public_list, true) == true)
+    })
+  end
+
+  def contributor_roles do
+    [
+      {"author", "Author"},
+      {"translator", "Translator"},
+      {"cover_designer", "Cover Designer"}
+    ]
+  end
+
+  def contributor_role_value(:author), do: "author"
+  def contributor_role_value(:translator), do: "translator"
+  def contributor_role_value(:cover_designer), do: "cover_designer"
+  def contributor_role_value("author"), do: "author"
+  def contributor_role_value("translator"), do: "translator"
+  def contributor_role_value("cover_designer"), do: "cover_designer"
+  def contributor_role_value("Author"), do: "author"
+  def contributor_role_value("Translator"), do: "translator"
+  def contributor_role_value("Cover Designer"), do: "cover_designer"
+  def contributor_role_value(_), do: "author"
+
+  def default_contributor(user) do
+    %{
+      id: user.id,
+      given_name: user.given_name || "Penulis",
+      family_name: user.family_name || "",
+      preferred_public_name: "",
+      email: user.email || "",
+      country: user.country || "",
+      bio_statement: "",
+      affiliation: user.affiliation || "",
+      role: :author,
+      primary: true,
+      public_list: true
+    }
+  end
+
+  def new_contributor(id) do
+    %{
+      id: id,
+      given_name: "",
+      family_name: "",
+      preferred_public_name: "",
+      email: "",
+      country: "",
+      bio_statement: "",
+      affiliation: "",
+      role: :author,
+      primary: false,
+      public_list: true
+    }
+  end
+
+  def next_contributor_id(submission, user) do
+    ids = Enum.map(display_contributors(submission, user), & &1.id)
+    if ids == [], do: 1, else: Enum.max(ids) + 1
+  end
+
+  def contributor_role_label(:author), do: "Author"
+  def contributor_role_label(:translator), do: "Translator"
+  def contributor_role_label(:cover_designer), do: "Cover Designer"
+  def contributor_role_label("author"), do: "Author"
+  def contributor_role_label("translator"), do: "Translator"
+  def contributor_role_label("cover_designer"), do: "Cover Designer"
+  def contributor_role_label(_), do: "Author"
 
   # --- Start A New Submission (OJS PKP preliminary information) ------------
 

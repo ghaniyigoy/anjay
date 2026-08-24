@@ -65,6 +65,10 @@ defmodule OjsLandingWeb.Router do
     # Make a Submission: Details (OJS 3.5 wizard)
     get "/submission/:id/details", AuthorController, :details
     post "/submission/:id/details", AuthorController, :save_details
+
+    # Make a Submission: LiveView wizard (5 steps)
+    live "/submission/:id/wizard", SubmissionWizardLive
+    live "/submission/:id/wizard/:step", SubmissionWizardLive
   end
 
   # ============================================

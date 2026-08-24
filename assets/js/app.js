@@ -1,6 +1,11 @@
 // ==========================================
-// MINIMAL APP.JS - Tanpa Import Statement
+// APP.JS - Phoenix LiveView + OJS helpers
 // ==========================================
+
+import "phoenix_html"
+import { Socket } from "phoenix"
+import { LiveSocket } from "phoenix_live_view"
+import topbar from "../vendor/topbar"
 
 // User Dropdown Toggle
 window.toggleUserDropdown = function(button) {
@@ -67,62 +72,72 @@ document.addEventListener('DOMContentLoaded', function() {
 // Make a Submission: Details (OJS 3.5 wizard)
 // ==========================================
 (function () {
-  function initOjsDetails() {
-    var editor = document.getElementById('abstract-editor');
-    var hidden = document.getElementById('abstract');
-    if (!editor || !hidden) return;
+  function initRichtextEditors() {
+    var editors = document.querySelectorAll('.ojs-richtext[data-target]');
 
-    editor.innerHTML = hidden.value || '';
+    Array.prototype.forEach.call(editors, function (editor) {
+      if (editor.__richtextInit) return;
+      editor.__richtextInit = true;
 
-    var toolbar = document.getElementById('abstract-toolbar');
-    var buttons = toolbar ? toolbar.querySelectorAll('button[data-cmd]') : [];
+      var targetId = editor.getAttribute('data-target');
+      var hidden = document.getElementById(targetId);
+      if (!hidden) return;
 
-    Array.prototype.forEach.call(buttons, function (btn) {
-      btn.addEventListener('mousedown', function (e) {
-        e.preventDefault();
-      });
-    });
+      var toolbar = document.getElementById(targetId + '-toolbar');
+      var buttons = toolbar ? toolbar.querySelectorAll('button[data-cmd]') : [];
 
-    function stateActive(cmd) {
-      try {
-        if (cmd === 'bold') return document.queryCommandState('bold');
-        if (cmd === 'italic') return document.queryCommandState('italic');
-        if (cmd === 'superscript') return document.queryCommandState('superscript');
-        if (cmd === 'subscript') return document.queryCommandState('subscript');
-      } catch (e) {}
-      return false;
-    }
+      editor.innerHTML = hidden.value || '';
 
-    function sync() {
-      hidden.value = editor.innerHTML;
       Array.prototype.forEach.call(buttons, function (btn) {
-        var cmd = btn.getAttribute('data-cmd');
-        btn.classList.toggle('is-active', stateActive(cmd));
+        btn.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+        });
       });
-    }
 
-    function exec(cmd) {
-      editor.focus();
-      if (cmd === 'createLink') {
-        var url = window.prompt('Enter the link URL:', 'https://');
-        if (!url) return;
-        document.execCommand('createLink', false, url);
-      } else {
-        document.execCommand(cmd, false, null);
+      function stateActive(cmd) {
+        try {
+          if (cmd === 'bold') return document.queryCommandState('bold');
+          if (cmd === 'italic') return document.queryCommandState('italic');
+          if (cmd === 'superscript') return document.queryCommandState('superscript');
+          if (cmd === 'subscript') return document.queryCommandState('subscript');
+        } catch (e) {}
+        return false;
       }
-      sync();
-    }
 
-    Array.prototype.forEach.call(buttons, function (btn) {
-      btn.addEventListener('click', function () {
-        exec(btn.getAttribute('data-cmd'));
+      function sync() {
+        hidden.value = editor.innerHTML;
+        Array.prototype.forEach.call(buttons, function (btn) {
+          var cmd = btn.getAttribute('data-cmd');
+          btn.classList.toggle('is-active', stateActive(cmd));
+        });
+      }
+
+      function exec(cmd) {
+        editor.focus();
+        if (cmd === 'createLink') {
+          var url = window.prompt('Enter the link URL:', 'https://');
+          if (!url) return;
+          document.execCommand('createLink', false, url);
+        } else {
+          document.execCommand(cmd, false, null);
+        }
+        sync();
+      }
+
+      Array.prototype.forEach.call(buttons, function (btn) {
+        btn.addEventListener('click', function () {
+          exec(btn.getAttribute('data-cmd'));
+        });
       });
-    });
 
-    editor.addEventListener('input', sync);
-    editor.addEventListener('keyup', sync);
-    editor.addEventListener('blur', sync);
-    document.addEventListener('selectionchange', sync);
+      editor.addEventListener('input', sync);
+      editor.addEventListener('keyup', sync);
+      editor.addEventListener('blur', sync);
+      document.addEventListener('selectionchange', sync);
+
+      var form = hidden.form || hidden.closest('form');
+      if (form) form.addEventListener('submit', sync);
+    });
   }
 
   function initOjsDetailsValidation() {
@@ -209,7 +224,44 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    initOjsDetails();
+    initRichtextEditors();
     initOjsDetailsValidation();
   });
 })();
+
+// ==========================================
+// File Upload Section: open the file picker
+// ==========================================
+document.addEventListener('click', function (e) {
+  var addBtn = e.target.closest('.ojs-add-file-btn');
+  var link = e.target.closest('.ojs-upload-file-link');
+  if (addBtn || link) {
+    e.preventDefault();
+    var input = document.getElementById('file-input');
+    if (input) input.click();
+    return;
+  }
+  if (e.target.closest('button, a, input, label')) return;
+  var dz = e.target.closest('.ojs-dropzone');
+  if (dz) {
+    var input = dz.querySelector('input[type="file"]');
+    if (input) input.click();
+  }
+});
+
+// ==========================================
+// Phoenix LiveSocket
+// ==========================================
+let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
+
+let liveSocket = new LiveSocket("/live", Socket, {
+  longPollFallbackMs: 2500,
+  params: { _csrf_token: csrfToken }
+});
+
+topbar.config({ barColors: { 0: "#1E6292" }, shadowColor: "rgba(0, 0, 0, .3)" });
+window.addEventListener("phx:page-loading-start", function () { topbar.delayedShow(200); });
+window.addEventListener("phx:page-loading-stop", function () { topbar.hide(); });
+
+liveSocket.connect();
+window.liveSocket = liveSocket;

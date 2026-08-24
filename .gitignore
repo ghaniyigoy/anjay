@@ -35,3 +35,7 @@ ojs_landing-*.tar
 npm-debug.log
 /assets/node_modules/
 
+
+# Server logs
+*.log
+*.log.err

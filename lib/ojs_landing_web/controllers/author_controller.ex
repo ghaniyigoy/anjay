@@ -113,6 +113,14 @@ defmodule OjsLandingWeb.AuthorController do
         |> render(:edit_submission,
           submission: submission,
           current_tab: tab,
+          contributor_view: normalize_contributor_view(Map.get(params, "view")),
+          editing_contributor:
+            find_contributor(
+              submission,
+              Map.get(params, "view"),
+              Map.get(params, "contributor_id"),
+              user
+            ),
           tabs: @tabs,
           user: user,
           all_submissions: Submission.get_by_author(user.username),
@@ -124,27 +132,19 @@ defmodule OjsLandingWeb.AuthorController do
   def update_submission(conn, %{"id" => id, "submission" => submission_params} = params) do
     tab = current_tab(params)
 
-    case {conn.assigns.current_user, Submission.update(id, submission_params)} do
-      {nil, _} ->
+    cond do
+      is_nil(conn.assigns.current_user) ->
         redirect_to_login(conn, "Silakan login terlebih dahulu untuk memperbarui submission.")
 
-      {_, {:ok, _submission}} ->
-        message =
-          if submission_params["submit_to_journal"] in ["1", "true"] do
-            Submission.set_status(id, :active)
-            "Submission #{id} berhasil dikirim ke jurnal!"
-          else
-            "Submission #{id} berhasil disimpan."
-          end
+      is_binary(submission_params["delete_contributor_id"]) ->
+        handle_contributor_delete(conn, id, submission_params["delete_contributor_id"], tab)
 
-        conn
-        |> put_flash(:info, message)
-        |> redirect(to: submission_path(id, tab))
+      (edit_id = submission_params["contributor_edit_id"]) &&
+          is_map(submission_params["contributor_edit"]) ->
+        handle_contributor_edit(conn, id, edit_id, submission_params["contributor_edit"], tab)
 
-      {_, {:error, :not_found}} ->
-        conn
-        |> put_flash(:error, "Submission tidak ditemukan.")
-        |> redirect(to: "/dashboard/mySubmissions")
+      true ->
+        handle_generic_update(conn, id, submission_params, tab, Map.get(params, "action"))
     end
   end
 
@@ -270,6 +270,122 @@ defmodule OjsLandingWeb.AuthorController do
       "details"
     end
   end
+
+  defp normalize_contributor_view(view) when view in ["order", "preview", "list", "edit"],
+    do: String.to_atom(view)
+
+  defp normalize_contributor_view(_view), do: :list
+
+  defp find_contributor(_submission, view, _contributor_id, _user) when view != "edit", do: nil
+
+  defp find_contributor(submission, "edit", contributor_id, user) do
+    case Integer.parse(contributor_id || "") do
+      {int, _} ->
+        cond do
+          Enum.any?(submission.contributors || [], &(&1.id == int)) ->
+            Enum.find(submission.contributors || [], &(&1.id == int))
+
+          submission.contributors in [nil, []] and int == user.id ->
+            AuthorHTML.default_contributor(user)
+
+          int == AuthorHTML.next_contributor_id(submission, user) ->
+            AuthorHTML.new_contributor(int)
+
+          true ->
+            nil
+        end
+
+      :error ->
+        nil
+    end
+  end
+
+  defp handle_contributor_delete(conn, id, contributor_id, tab) do
+    case Submission.delete_contributor(id, contributor_id) do
+      {:ok, _submission} ->
+        conn
+        |> put_flash(:info, "Kontributor berhasil dihapus.")
+        |> redirect(to: submission_path(id, tab))
+
+      {:error, :not_found} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+    end
+  end
+
+  defp handle_contributor_edit(conn, id, edit_id, fields, tab) do
+    case Submission.update_contributor(id, edit_id, fields) do
+      {:ok, _submission} ->
+        conn
+        |> put_flash(:info, "Kontributor berhasil diperbarui.")
+        |> redirect(to: submission_path(id, tab))
+
+      {:error, :not_found} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+    end
+  end
+
+  defp handle_generic_update(conn, id, submission_params, tab, action) do
+    case Submission.update(id, submission_params) do
+      {:ok, _submission} ->
+        cond do
+          submission_params["submit_to_journal"] in ["1", "true"] ->
+            Submission.set_status(id, :active)
+
+            conn
+            |> put_flash(:info, "Submission #{id} berhasil dikirim ke jurnal!")
+            |> redirect(to: submission_path(id, tab))
+
+          action == "continue" ->
+            continue_from(conn, id, submission_params, tab)
+
+          true ->
+            conn
+            |> put_flash(:info, "Submission #{id} berhasil disimpan.")
+            |> redirect(to: submission_path(id, tab))
+        end
+
+      {:error, :not_found} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+    end
+  end
+
+  defp continue_from(conn, id, submission_params, tab) do
+    case validate_step(submission_params, tab) do
+      :ok ->
+        conn
+        |> put_flash(:info, "Submission #{id} berhasil disimpan.")
+        |> redirect(to: submission_path(id, next_tab(tab)))
+
+      {:error, message} ->
+        conn
+        |> put_flash(:error, message)
+        |> redirect(to: submission_path(id, tab))
+    end
+  end
+
+  defp validate_step(submission_params, "details") do
+    errors = validate_details(submission_params)
+
+    if map_size(errors) == 0 do
+      :ok
+    else
+      {:error, errors |> Map.values() |> Enum.join(" ")}
+    end
+  end
+
+  defp validate_step(_submission_params, _tab), do: :ok
+
+  defp next_tab("details"), do: "files"
+  defp next_tab("files"), do: "contributors"
+  defp next_tab("contributors"), do: "editors"
+  defp next_tab("editors"), do: "review"
+  defp next_tab(tab), do: tab
 
   defp submission_path(id, tab), do: "/submission/wizard/#{id}?tab=#{tab}"
 end

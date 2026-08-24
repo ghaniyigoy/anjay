@@ -1,5 +1,28 @@
 This is a web application written using the Phoenix web framework.
 
+## Environment & dev workflow (Windows + WSL)
+
+- The dev server (`mix phx.server`) runs **inside WSL (Ubuntu)** against `/mnt/c/Users/HP/Documents/anjay`, serving `http://localhost:4000`
+- **Run all mix commands (compile, test, `mix precommit`) from WSL**, not from Windows PowerShell — the running WSL server holds locks on the shared `_build` folder and Windows-side compiles fail with `(File.Error) could not remove files ... file already exists`:
+
+      wsl -d Ubuntu --cd /mnt/c/Users/HP/Documents/anjay -- bash -lc "mix precommit"
+
+- If CSS changes are not picked up by the tailwind watcher, rebuild assets from WSL (`wsl -d Ubuntu --cd /mnt/c/Users/HP/Documents/anjay -- bash -lc "mix assets.build"`) and hard-refresh the browser (Ctrl+F5)
+- To restart the server from an agent tool session, spawn the process detached via WMI so it survives the session ending:
+
+      Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+        CommandLine = 'wsl.exe -d Ubuntu --cd /mnt/c/Users/HP/Documents/anjay -- bash -lc "exec mix phx.server"'
+      }
+
+- Data lives in **in-memory Agent stores** (`OjsLanding.Submission`, `OjsLanding.User`) and resets whenever the server restarts
+  - Seeded submissions use IDs 9–14 (authors: author1 = Ahmad Fauzi, etc.)
+  - Test logins (all password `password123`): `author1@informatika.ac.id` (author), `editor@test.com` (editor), `alief@admin.com` (admin)
+- Author submission wizard: `/submission/wizard/:id?tab=details|files|contributors|editors|review` (controller-driven, `AuthorController`). "Submit to Journal" sets status `:active`, which makes the submission appear in the editor dashboard `/dashboard/editorial`
+  - Wizard **Continue** buttons are real form submits (`name="action" value="continue"`); `AuthorController.handle_generic_update/5` saves and redirects to the next tab (details→files→contributors→editors→review). Details Continue requires a non-blank title + abstract, otherwise it redirects back with an error flash
+  - Uploaded files exist client-side only until the files form is submitted; inline JS in `edit_submission.html.heex` serializes the `.ojs-file-item` rows into the hidden `submission[files_json]` input (JSON), and `OjsLanding.Submission.update/2` parses it into normalized `%{id:, filename:, size:, date:, genre:}` maps. Files/contributors are never persisted by merely navigating between tabs — the form must be submitted (Continue or Save for Later)
+  - Rich-text fields (abstract, editor comments) are contenteditable divs synced into their hidden inputs on form submit (see `assets/js/app.js`)
+- Editor dashboard `/dashboard/editorial`: the author column shows the submission's contributor name (primary contact first, then any listed contributor), falling back to the account name from `OjsLanding.User` only when the submission has no contributors (`EditorController.author_name/1`)
+
 ## Project guidelines
 
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues

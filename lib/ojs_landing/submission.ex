@@ -32,6 +32,7 @@ defmodule OjsLanding.Submission do
     :files,
     :contributors,
     :editors,
+    :editor_comments,
     :review,
     :created_at,
     :date_submitted
@@ -97,6 +98,7 @@ defmodule OjsLanding.Submission do
       files: [],
       contributors: [],
       editors: [],
+      editor_comments: "",
       review: nil,
       created_at: DateTime.utc_now(),
       date_submitted: nil
@@ -127,6 +129,9 @@ defmodule OjsLanding.Submission do
         |> maybe_put(:keywords, params["keywords"])
         |> maybe_put(:language, params["language"])
         |> maybe_put(:references, params["references"])
+        |> maybe_put_cleared(:editor_comments, params)
+        |> maybe_put_files(params)
+        |> maybe_put_list(:contributors, params["contributors"])
         |> maybe_put_status(params)
 
       Agent.update(__MODULE__, fn subs ->
@@ -134,6 +139,78 @@ defmodule OjsLanding.Submission do
       end)
 
       {:ok, updated}
+    end
+  end
+
+  @doc """
+  Update a single contributor (matched by id) with string-keyed fields.
+  Setting `primary` to true clears the flag on every other contributor.
+  """
+  def update_contributor(id, contributor_id, fields) when is_map(fields) do
+    id = normalize_id(id)
+    contributor_id = normalize_id(contributor_id)
+    current = get(id)
+
+    if is_nil(current) do
+      {:error, :not_found}
+    else
+      primary = fields["primary"] in ["true", "on", "1"]
+      normalized = normalize_contributor_fields(fields)
+      existing = Enum.any?(current.contributors || [], &(&1.id == contributor_id))
+
+      contributors =
+        cond do
+          existing ->
+            Enum.map(current.contributors || [], fn c ->
+              cond do
+                c.id == contributor_id ->
+                  Map.merge(c, normalized)
+
+                primary ->
+                  %{c | primary: false}
+
+                true ->
+                  c
+              end
+            end)
+
+          true ->
+            new_contributor = Map.merge(%{id: contributor_id}, normalized)
+
+            [
+              new_contributor
+              | Enum.map(current.contributors || [], fn c ->
+                  if primary, do: %{c | primary: false}, else: c
+                end)
+            ]
+        end
+
+      Agent.update(__MODULE__, fn subs ->
+        Enum.map(subs, fn s -> if s.id == id, do: %{s | contributors: contributors}, else: s end)
+      end)
+
+      {:ok, %{current | contributors: contributors}}
+    end
+  end
+
+  @doc """
+  Remove a single contributor (matched by id) from a submission.
+  """
+  def delete_contributor(id, contributor_id) do
+    id = normalize_id(id)
+    contributor_id = normalize_id(contributor_id)
+    current = get(id)
+
+    if is_nil(current) do
+      {:error, :not_found}
+    else
+      contributors = Enum.reject(current.contributors || [], &(&1.id == contributor_id))
+
+      Agent.update(__MODULE__, fn subs ->
+        Enum.map(subs, fn s -> if s.id == id, do: %{s | contributors: contributors}, else: s end)
+      end)
+
+      {:ok, %{current | contributors: contributors}}
     end
   end
 
@@ -584,6 +661,81 @@ defmodule OjsLanding.Submission do
 
   defp maybe_put(current, _key, value) when value in [nil, ""], do: current
   defp maybe_put(current, key, value), do: Map.put(current, key, value)
+
+  defp maybe_put_cleared(current, key, params) do
+    if Map.has_key?(params, "#{key}") do
+      Map.put(current, key, params["#{key}"] || "")
+    else
+      current
+    end
+  end
+
+  defp maybe_put_list(current, _key, value) when not is_list(value), do: current
+  defp maybe_put_list(current, key, value), do: Map.put(current, key, value)
+
+  # Files arrive as a JSON string produced by the upload UI ("files_json").
+  defp maybe_put_files(current, %{"files" => files}) when is_list(files),
+    do: Map.put(current, :files, normalize_files(files))
+
+  defp maybe_put_files(current, %{"files_json" => json}) when is_binary(json) and json != "" do
+    case Jason.decode(json) do
+      {:ok, files} when is_list(files) -> Map.put(current, :files, normalize_files(files))
+      _ -> current
+    end
+  end
+
+  defp maybe_put_files(current, _params), do: current
+
+  defp normalize_files(files) do
+    files
+    |> Enum.with_index(1)
+    |> Enum.map(fn {file, index} ->
+      %{
+        id: index,
+        filename: file_field(file, :filename),
+        size: file_field(file, :size),
+        date: file_field(file, :date),
+        genre: file_field(file, :genre)
+      }
+    end)
+  end
+
+  defp file_field(file, key) when is_map(file) do
+    Map.get(file, key) || Map.get(file, Atom.to_string(key)) || ""
+  end
+
+  defp file_field(_file, _key), do: ""
+
+  defp normalize_contributor_fields(fields) do
+    %{
+      given_name: blank_to_nil(fields["given_name"]),
+      family_name: blank_to_nil(fields["family_name"]),
+      preferred_public_name: blank_to_nil(fields["preferred_public_name"]),
+      email: blank_to_nil(fields["email"]),
+      country: blank_to_nil(fields["country"]),
+      bio_statement: blank_to_nil(fields["bio_statement"]),
+      affiliation: blank_to_nil(fields["affiliation"]),
+      role: normalize_role(fields["role"]),
+      primary: checkbox_value?(fields["primary"]),
+      public_list: checkbox_value?(fields["public_list"])
+    }
+  end
+
+  defp checkbox_value?(value) when is_list(value),
+    do: Enum.any?(value, &(&1 in ["true", "on", "1"]))
+
+  defp checkbox_value?(value), do: value in ["true", "on", "1"]
+
+  defp blank_to_nil(value) when value in [nil, ""], do: nil
+  defp blank_to_nil(value), do: value
+
+  defp normalize_role(role) when role in ["author", "translator", "cover_designer"],
+    do: String.to_atom(role)
+
+  defp normalize_role("Author"), do: :author
+  defp normalize_role("Translator"), do: :translator
+  defp normalize_role("Cover Designer"), do: :cover_designer
+  defp normalize_role(_), do: :author
 
   defp maybe_put_status(current, params) do
     cond do

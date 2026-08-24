@@ -24,7 +24,9 @@ defmodule OjsLandingWeb.AuthorControllerTest do
       assert html =~ "Submission 14"
       assert html =~ "submission-details-form"
       assert html =~ "Deteksi Berita Palsu"
-      assert html =~ "wizard-tab-files"
+      assert html =~ "step-files"
+      assert html =~ "Make a Submission: Details"
+      assert html =~ "Please provide the following details to help us manage your submission"
     end
 
     test "GET /submission/wizard/14 renders every workflow tab", %{conn: conn} do
@@ -32,7 +34,7 @@ defmodule OjsLandingWeb.AuthorControllerTest do
             {"details", "submission-details-form"},
             {"files", "submission-dropzone"},
             {"contributors", "btn-add-contributor"},
-            {"editors", "btn-add-editor"},
+            {"editors", "editor-comments-editor"},
             {"review", "btn-submit-journal"}
           ] do
         conn = get(conn, "/submission/wizard/14?tab=#{tab}")
@@ -40,6 +42,226 @@ defmodule OjsLandingWeb.AuthorControllerTest do
         assert html_response(conn, 200) =~ needle,
                "expected tab #{tab} to render #{needle}"
       end
+    end
+
+    test "contributors tab in order view shows Save Order and Cancel", %{conn: conn} do
+      conn = get(conn, "/submission/wizard/14?tab=contributors&view=order")
+      html = html_response(conn, 200)
+
+      assert html =~ "btn-save-order"
+      assert html =~ "btn-cancel-order"
+      assert html =~ "Save Order"
+      assert html =~ "Cancel"
+      refute html =~ ~s(id="btn-add-contributor")
+    end
+
+    test "edit view renders the contributor edit form", %{conn: conn} do
+      conn = get(conn, "/submission/wizard/14?tab=contributors&view=edit&contributor_id=1")
+      html = html_response(conn, 200)
+
+      assert html =~ "contributor-edit-form"
+      assert html =~ "Edit Contributor"
+      assert html =~ "edit-given-name"
+      assert html =~ "edit-family-name"
+      assert html =~ "edit-preferred-name"
+      assert html =~ "edit-bio"
+      assert html =~ "edit-public-list"
+      assert html =~ "Ahmad"
+    end
+
+    test "updates a contributor via the edit form", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      {:ok, _} =
+        Submission.update(submission.id, %{
+          "contributors" => [
+            %{id: 1, given_name: "Ahmad", family_name: "Fauzi", role: :author, primary: true}
+          ]
+        })
+
+      conn =
+        put(conn, "/submission/wizard/#{submission.id}?tab=contributors", %{
+          "submission" => %{
+            "contributor_edit_id" => "1",
+            "contributor_edit" => %{
+              "given_name" => "Budi",
+              "family_name" => "Santoso",
+              "preferred_public_name" => "B. Santoso",
+              "email" => "budi@test.com",
+              "country" => "Malaysia",
+              "bio_statement" => "Peneliti sistem informasi.",
+              "affiliation" => "Universitas Teknologi",
+              "role" => "author",
+              "primary" => "false",
+              "public_list" => "false"
+            }
+          }
+        })
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=contributors"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "berhasil diperbarui"
+
+      [contributor] = Submission.get(submission.id).contributors
+      assert contributor.given_name == "Budi"
+      assert contributor.family_name == "Santoso"
+      assert contributor.preferred_public_name == "B. Santoso"
+      assert contributor.email == "budi@test.com"
+      assert contributor.country == "Malaysia"
+      assert contributor.bio_statement == "Peneliti sistem informasi."
+      assert contributor.affiliation == "Universitas Teknologi"
+      assert contributor.public_list == false
+    end
+
+    test "edit view renders the form for the default author of a fresh submission", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      conn =
+        get(
+          conn,
+          "/submission/wizard/#{submission.id}?tab=contributors&view=edit&contributor_id=2"
+        )
+
+      html = html_response(conn, 200)
+
+      assert html =~ "contributor-edit-form"
+      assert html =~ "Edit Contributor"
+      assert html =~ "edit-given-name"
+      assert html =~ "Ahmad"
+      assert html =~ "edit-public-list"
+    end
+
+    test "updates and persists the default author of a fresh submission", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      conn =
+        put(conn, "/submission/wizard/#{submission.id}?tab=contributors", %{
+          "submission" => %{
+            "contributor_edit_id" => "2",
+            "contributor_edit" => %{
+              "given_name" => "Ahmad",
+              "family_name" => "Fauzi",
+              "email" => "ahmad@informatika.ac.id",
+              "affiliation" => "Universitas Teknologi",
+              "country" => "Indonesia",
+              "role" => "author",
+              "primary" => "true",
+              "public_list" => "true"
+            }
+          }
+        })
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=contributors"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "berhasil diperbarui"
+
+      assert [contributor] = Submission.get(submission.id).contributors
+      assert contributor.id == 2
+      assert contributor.given_name == "Ahmad"
+      assert contributor.family_name == "Fauzi"
+      assert contributor.email == "ahmad@informatika.ac.id"
+      assert contributor.primary == true
+    end
+
+    test "deletes a contributor via the delete button", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      {:ok, _} =
+        Submission.update(submission.id, %{
+          "contributors" => [
+            %{id: 1, given_name: "Ahmad", family_name: "Fauzi", role: :author, primary: true},
+            %{id: 2, given_name: "Dewi", family_name: "Lestari", role: :author, primary: false}
+          ]
+        })
+
+      conn =
+        put(conn, "/submission/wizard/#{submission.id}?tab=contributors", %{
+          "submission" => %{"delete_contributor_id" => "1"}
+        })
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=contributors"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "dihapus"
+
+      assert [contributor] = Submission.get(submission.id).contributors
+      assert contributor.id == 2
+    end
+
+    test "Add Contributor opens the edit form for a new blank contributor", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      conn =
+        get(
+          conn,
+          "/submission/wizard/#{submission.id}?tab=contributors&view=edit&contributor_id=3"
+        )
+
+      html = html_response(conn, 200)
+
+      assert html =~ "contributor-edit-form"
+      assert html =~ "edit-given-name"
+      assert html =~ ~s(id="edit-given-name")
+      assert html =~ "Edit Contributor"
+      refute html =~ ~s(name="submission[contributor_edit][given_name]" value="Ahmad")
+    end
+
+    test "adds and persists a new contributor via the edit form", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      conn =
+        put(conn, "/submission/wizard/#{submission.id}?tab=contributors", %{
+          "submission" => %{
+            "contributor_edit_id" => "3",
+            "contributor_edit" => %{
+              "given_name" => "Cahyo",
+              "family_name" => "Prakoso",
+              "email" => "cahyo@test.com",
+              "affiliation" => "Institut Teknologi",
+              "country" => "Indonesia",
+              "role" => "author",
+              "primary" => "false",
+              "public_list" => "true"
+            }
+          }
+        })
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=contributors"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "berhasil diperbarui"
+
+      contributors = Submission.get(submission.id).contributors
+      assert Enum.any?(contributors, &(&1.id == 3))
+      cahyo = Enum.find(contributors, &(&1.id == 3))
+      assert cahyo.given_name == "Cahyo"
+      assert cahyo.family_name == "Prakoso"
+      assert cahyo.email == "cahyo@test.com"
+      assert cahyo.primary == false
+    end
+
+    test "files tab renders Edit/Remove actions and the genre prompt for files without a genre",
+         %{conn: conn} do
+      submission = Submission.create("author1")
+
+      {:ok, _} =
+        Submission.update(submission.id, %{
+          "files" => [
+            %{id: 1, filename: "draft.docx", genre: "", size: "2 MB", date: "2026-08-19"},
+            %{
+              id: 2,
+              filename: "manuscript.pdf",
+              genre: "Manuscript",
+              size: "1 MB",
+              date: "2026-08-19"
+            }
+          ]
+        })
+
+      conn = get(conn, "/submission/wizard/#{submission.id}?tab=files")
+      html = html_response(conn, 200)
+
+      assert html =~ "draft.docx"
+      assert html =~ "data-file-edit"
+      assert html =~ "data-file-remove"
+      assert html =~ "What kind of file is this?"
+      assert html =~ "Article Text"
+      assert html =~ "Other"
+      assert html =~ "ojs-genre-chip"
     end
 
     test "GET /submission/wizard/:id redirects to my submissions when not found", %{conn: conn} do
@@ -85,6 +307,140 @@ defmodule OjsLandingWeb.AuthorControllerTest do
 
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "dikirim ke jurnal"
       assert Submission.get(submission.id).status == :active
+    end
+
+    test "PUT /submission/wizard/:id with action=continue saves details and advances to files", %{
+      conn: conn
+    } do
+      submission = Submission.create("author1")
+
+      conn =
+        put(
+          conn,
+          "/submission/wizard/#{submission.id}?tab=details",
+          %{
+            "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+            "action" => "continue",
+            "submission" => %{
+              "title" => "Judul Lanjut",
+              "abstract" => "Abstrak lanjut.",
+              "keywords" => "elixir, phoenix",
+              "references" => "1. Author. (2026). Title."
+            }
+          }
+        )
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=files"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "berhasil disimpan"
+
+      updated = Submission.get(submission.id)
+      assert updated.title == "Judul Lanjut"
+      assert updated.abstract == "Abstrak lanjut."
+      assert updated.keywords == "elixir, phoenix"
+      assert updated.references == "1. Author. (2026). Title."
+    end
+
+    test "PUT /submission/wizard/:id with action=continue blocks blank abstract", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      conn =
+        put(
+          conn,
+          "/submission/wizard/#{submission.id}?tab=details",
+          %{
+            "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+            "action" => "continue",
+            "submission" => %{"title" => "Judul Tanpa Abstrak", "abstract" => ""}
+          }
+        )
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=details"
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "abstract"
+    end
+
+    test "PUT /submission/wizard/:id persists uploaded files via files_json", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      files =
+        Jason.encode!([
+          %{"filename" => "manuscript.docx", "size" => "2.1 MB", "date" => "", "genre" => ""},
+          %{
+            "filename" => "figures.zip",
+            "size" => "4.8 MB",
+            "date" => "2026-08-24",
+            "genre" => "Article Text"
+          }
+        ])
+
+      conn =
+        put(
+          conn,
+          "/submission/wizard/#{submission.id}?tab=files",
+          %{
+            "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+            "action" => "continue",
+            "submission" => %{"files_json" => files}
+          }
+        )
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=contributors"
+
+      [first, second] = Submission.get(submission.id).files
+      assert first.filename == "manuscript.docx"
+      assert first.size == "2.1 MB"
+      assert first.genre == ""
+      assert second.filename == "figures.zip"
+      assert second.genre == "Article Text"
+      assert second.date == "2026-08-24"
+    end
+
+    test "PUT /submission/wizard/:id persists comments for the editor and advances to review", %{
+      conn: conn
+    } do
+      submission = Submission.create("author1")
+
+      conn =
+        put(
+          conn,
+          "/submission/wizard/#{submission.id}?tab=editors",
+          %{
+            "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+            "action" => "continue",
+            "submission" => %{"editor_comments" => "<p>Mohon diperiksa segera.</p>"}
+          }
+        )
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=review"
+
+      assert Submission.get(submission.id).editor_comments ==
+               "<p>Mohon diperiksa segera.</p>"
+    end
+
+    test "review tab shows saved details, files, and editor comments", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      {:ok, _} =
+        Submission.update(submission.id, %{
+          "title" => "Judul Review",
+          "abstract" => "Abstrak Review.",
+          "keywords" => "kunci satu, kunci dua",
+          "references" => "1. Referensi.",
+          "editor_comments" => "Komentar editor.",
+          "files" => [
+            %{filename: "naskah.pdf", size: "1 MB", date: "2026-08-24", genre: "Manuscript"}
+          ]
+        })
+
+      conn = get(conn, "/submission/wizard/#{submission.id}?tab=review")
+      html = html_response(conn, 200)
+
+      assert html =~ "Judul Review"
+      assert html =~ "Abstrak Review."
+      assert html =~ "kunci satu"
+      assert html =~ "kunci dua"
+      assert html =~ "1. Referensi."
+      assert html =~ "naskah.pdf"
+      assert html =~ "Komentar editor."
     end
   end
 

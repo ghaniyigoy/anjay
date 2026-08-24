@@ -1,0 +1,133 @@
+<%= if @submitted do %>
+  <div class="ojs-received-page">
+    <div class="ojs-received-card" id="submission-received">
+      <div class="ojs-received-icon" aria-hidden="true">✓</div>
+
+      <h1>Submission Received</h1>
+
+      <p class="ojs-received-lead">
+        Thank you for submitting your manuscript to our journal. A member of our editorial team
+        will review it shortly.
+      </p>
+
+      <div class="ojs-received-meta">
+        <div class="ojs-received-meta-row">
+          <span class="ojs-received-meta-label">Submission ID</span>
+          <span class="ojs-received-meta-value">{@submission.id}</span>
+        </div>
+
+        <div class="ojs-received-meta-row">
+          <span class="ojs-received-meta-label">Title</span>
+          <span class="ojs-received-meta-value">
+            {if @form[:title].value == "", do: "(Untitled submission)", else: @form[:title].value}
+          </span>
+        </div>
+      </div>
+
+      <div class="ojs-received-actions">
+        <.link
+          navigate="/dashboard/mySubmissions"
+          class="btn-ojs-primary"
+          id="btn-back-to-submissions"
+        >
+          Back to My Submissions
+        </.link>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <div class="ojs-details-container">
+    <%!-- Breadcrumb (OJS PKP) --%>
+    <nav class="ojs-breadcrumb" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/dashboard">Dashboard</a></li>
+
+        <li><a href="/dashboard/mySubmissions">My Submissions</a></li>
+
+        <li aria-current="page">Submission {@submission.id}</li>
+      </ol>
+    </nav>
+
+    <%!-- Page header --%>
+    <div class="ojs-details-header">
+      <h1 id="page-title">{@step_titles[@step]}</h1>
+    </div>
+
+    <%!-- Horizontal progress steps (white card) --%>
+    <div class="ojs-progress-card">
+      <ol class="ojs-progress-steps" id="wizard-steps">
+        <%= for {step, index} <- Enum.with_index(@steps) do %>
+          <li
+            class={[
+              "ojs-progress-step",
+              step == @step && "is-current",
+              step_done?(step, @step) && "is-done"
+            ]}
+            id={"step-" <> step}
+          >
+            <.link patch={wizard_path(@submission.id, step)} class="ojs-progress-link">
+              <span class="ojs-progress-number">
+                {if step_done?(step, @step), do: "✓", else: index + 1}
+              </span>
+              <span class="ojs-progress-label">{@step_labels[step]}</span>
+            </.link>
+
+            <%= if index < length(@steps) - 1 do %>
+              <span class="ojs-progress-arrow" aria-hidden="true">→</span>
+            <% end %>
+          </li>
+        <% end %>
+      </ol>
+    </div>
+
+    <%!-- Main card --%>
+    <div class="ojs-details-card">
+      <%= cond do %>
+        <% @step == "details" -> %>
+          <.details_step
+            form={@form}
+            details_errors={@details_errors}
+            submission={@submission}
+            step={@step}
+            last_saved={@last_saved}
+          />
+        <% @step == "files" -> %>
+          <.files_step
+            form={@form}
+            uploads={@uploads}
+            saved_files={@saved_files}
+            genres={@genres}
+            submission={@submission}
+            step={@step}
+            last_saved={@last_saved}
+          />
+        <% @step == "contributors" -> %>
+          <.contributors_step
+            contributors={@contributors}
+            roles={@roles}
+            contributor_view={@contributor_view}
+            submission={@submission}
+            step={@step}
+            last_saved={@last_saved}
+          />
+        <% @step == "editors" -> %>
+          <.editors_step
+            form={@form}
+            editor_comments={@editor_comments}
+            submission={@submission}
+            step={@step}
+            last_saved={@last_saved}
+          />
+        <% true -> %>
+          <.review_step
+            form={@form}
+            saved_files={@saved_files}
+            contributors={@contributors}
+            submission={@submission}
+            step={@step}
+            last_saved={@last_saved}
+          />
+      <% end %>
+    </div>
+  </div>
+<% end %>

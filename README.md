@@ -26,7 +26,7 @@ Username `alief` adalah admin, sisanya seeded user:
 * **Dashboard** — Arahkan pengguna berdasarkan role (admin, author, editor, reviewer)
 * **Jurnal** — Halaman jurnal, current issue, arsip, daftar isu, halaman about (submissions, editorial masthead, privacy, contact), halaman detail artikel
 * **Journal Submission Workflow** — Halaman submission per-jurnal dengan tab Details, Files, Contributors, Editors, dan Review (`/:journal_path/submission?id=X#tab`)
-* **Submissions** — Wizard & manajemen submission untuk author (details, files, contributors, editors, review) dengan tampilan flat OJS PKP di dalam dashboard
+* **Submissions** — Wizard & manajemen submission untuk author (details, files, contributors, editors, review) dengan tampilan flat OJS PKP di dalam dashboard; langkah-langkah wizard kini dirender sebagai **LiveView** 5 langkah (`/submission/:id/wizard`) dengan progress, dropzone upload, manajemen contributor, dan halaman Submission Received
 * **Editorial** — Workflow editorial untuk editor
 * **Review** — Pengelolaan penugasan review untuk reviewer, termasuk halaman detail review per-assignment (`/review/:id`) dengan form kriteria & rekomendasi
 * **Journal Settings** — Pengaturan jurnal bergaya OJS PKP (Journal, Website, Workflow, Distribution, Users & Roles), dapat diakses oleh **admin & editor**
@@ -288,10 +288,26 @@ Membuat & mengelola submission membutuhkan login sebagai **author**; bila belum 
 | `/submission/create` | POST | Buat submission baru, lalu redirect ke wizard |
 | `/submission/wizard` | GET/POST | Alias dari `/submission/new` & `/submission/create` |
 | `/submission/wizard/:id?tab=details` | GET/PUT | Wizard detail submission (tab: details, files, contributors, editors, review), dirender di dalam layout dashboard |
+| `/submission/:id/wizard/:step` | GET | **LiveView** wizard submission 5 langkah (LiveView: details, files, contributors, editors, review), full-page tanpa header/sidebar, dengan halaman Submission Received setelah submit |
 
-Submission seed aktif untuk author1: ID `14` (`/submission/wizard/14?tab=details`, status *Active*).
+Submission seed aktif untuk author1: ID `14` (`/submission/14/wizard/details`, status *Active*).
 
 Contoh: `http://localhost:4000/submission/new`
+
+**Upload Files** pada wizard controller (`/submission/wizard/:id?tab=files`): tombol **Upload File**
+membuka dialog pemilih file sungguhan (PDF, DOCX, DOC, ODT, TXT, multiple) dan **drag & drop**
+memproses file asli milik user; file pilihan tampil di tabel "Uploaded files" beserta nama, ukuran,
+dan tanggal asli. Tombol **Load Sample File** tetap tersedia untuk memasukkan file contoh (demo).
+
+## Submission Wizard LiveView (referensi)
+
+* `lib/ojs_landing_web/live/submission_wizard_live.ex` — LiveView wizard 5 langkah + step components (`details_step`, `files_step`, `contributors_step`, `editors_step`, `review_step`) dan helper (validate, persist, normalize_files, build_contributors)
+* `lib/ojs_landing_web/live/submission_wizard_live.html.heex` — template utama (halaman received + kerangka wizard dengan progress & breadcrumb)
+* `lib/ojs_landing_web/components/layouts.ex` — komponen layout `submission_live/1` (full-page, tanpa header/sidebar)
+* `lib/ojs_landing_web/router.ex` — route live `/submission/:id/wizard` & `/submission/:id/wizard/:step`
+* `assets/js/app.js` — setup LiveSocket (phoenix, phoenix_live_view, topbar)
+* `assets/css/app.css` — gaya `.ojs-*` untuk wizard (dropzone, tabel file, contributor, review, received page)
+* `test/ojs_landing_web/live/submission_wizard_live_test.exs` — test LiveView (auth, tiap step, validasi, save, contributor, submit)
 
 ## Struktur
 

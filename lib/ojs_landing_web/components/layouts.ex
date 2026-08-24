@@ -25,6 +25,35 @@ defmodule OjsLandingWeb.Layouts do
   def user_initials(_), do: "?"
 
   @doc """
+  Full-page layout used by the "Make a Submission" wizard (LiveView).
+
+  Because the wizard disables the root layout (no site header/footer), this
+  layout renders the complete HTML document. The LiveView content is provided
+  as `@inner_content`.
+  """
+  def submission_live(assigns) do
+    ~H"""
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="csrf-token" content={get_csrf_token()} />
+        <title>{assigns[:page_title] || "Make a Submission"}</title>
+        <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
+        <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
+        </script>
+      </head>
+
+      <body class="ojs-details-body">
+        <.flash_group flash={@flash} />
+        <main class="ojs-details-page">{@inner_content}</main>
+      </body>
+    </html>
+    """
+  end
+
+  @doc """
   Renders your app layout.
 
   This function is typically invoked from every template,
