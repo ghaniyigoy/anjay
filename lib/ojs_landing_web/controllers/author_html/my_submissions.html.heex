@@ -146,11 +146,11 @@
                 <td class="col-actions">
                   <%= if submission.status == :incomplete do %>
                     <a
-                      href={"/submission/#{submission.id}?tab=details"}
+                      href={"/submission/wizard/#{submission.id}?tab=details"}
                       class="btn-view btn-continue"
                     >Continue</a>
                   <% else %>
-                    <a href={"/submission/#{submission.id}"} class="btn-view">View</a>
+                    <a href={"/submission/wizard/#{submission.id}?tab=review"} class="btn-view">View</a>
                   <% end %>
                 </td>
               </tr>
