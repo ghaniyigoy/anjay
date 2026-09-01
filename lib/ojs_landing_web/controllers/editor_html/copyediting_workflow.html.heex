@@ -1,0 +1,40 @@
+<.submission_workflow_layout submission={@submission} active_section={@active_section}>
+  <.workflow_page title="Copyediting" submission={@submission}>
+    <:actions>
+      <a href="#" class="wf-action-btn">Add Copyediting Discussion</a>
+      <a href="#" class="wf-action-btn wf-action-primary">Send to Production</a>
+    </:actions>
+
+    <%!-- Copyediting status indicator --%>
+    <div class="wf-status-overview">
+      <div class="wf-status-overview-item">
+        <span class="wf-status-overview-label">Copyediting Status</span>
+        <span class={[
+          "wf-copyedit-status",
+          @submission.copyedit_status == "Complete" && "wf-copyedit-complete"
+        ]}>
+          <span class="wf-copyedit-dot"></span>
+          {@submission.copyedit_status}
+        </span>
+      </div>
+      <div class="wf-status-overview-item">
+        <span class="wf-status-overview-label">Copyeditor</span>
+        <span class="wf-status-overview-value">Nina Putri</span>
+      </div>
+      <div class="wf-status-overview-item">
+        <span class="wf-status-overview-label">Files Under Copyediting</span>
+        <span class="wf-status-overview-value">
+          {Enum.count(@submission.copyedit_files)}
+        </span>
+      </div>
+    </div>
+
+    <.workflow_files title="Copyediting Files" files={@submission.copyedit_files} />
+
+    <.workflow_discussions
+      title="Copyediting Discussions"
+      discussions={@submission.copyedit_discussions}
+      add_label="Add Discussion"
+    />
+  </.workflow_page>
+</.submission_workflow_layout>

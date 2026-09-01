@@ -1,0 +1,40 @@
+<.submission_workflow_layout submission={@submission} active_section={@active_section}>
+  <.workflow_page title="Production" submission={@submission}>
+    <:actions>
+      <a href="#" class="wf-action-btn">Add Production Discussion</a>
+      <a href="#" class="wf-action-btn wf-action-primary">Schedule For Publication</a>
+    </:actions>
+
+    <%!-- Production status overview --%>
+    <div class="wf-status-overview">
+      <div class="wf-status-overview-item">
+        <span class="wf-status-overview-label">Production Status</span>
+        <span class="wf-copyedit-status">
+          <span class="wf-copyedit-dot"></span>
+          {if @submission.status == :published, do: "Published", else: "In Production"}
+        </span>
+      </div>
+      <div class="wf-status-overview-item">
+        <span class="wf-status-overview-label">Layout Editor</span>
+        <span class="wf-status-overview-value">Rudi Hartono</span>
+      </div>
+      <div class="wf-status-overview-item">
+        <span class="wf-status-overview-label">Generating Files</span>
+        <span class="wf-status-overview-value">
+          {Enum.count(@submission.production_files)}
+        </span>
+      </div>
+    </div>
+
+    <.workflow_files
+      title="Production Generating Files"
+      files={@submission.production_files}
+    />
+
+    <.workflow_discussions
+      title="Production Discussions"
+      discussions={@submission.production_discussions}
+      add_label="Add Discussion"
+    />
+  </.workflow_page>
+</.submission_workflow_layout>

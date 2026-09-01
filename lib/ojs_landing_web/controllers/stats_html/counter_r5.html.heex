@@ -3,12 +3,12 @@
   <div class="editor-main-content stats-main">
     <.stats_breadcrumb section="COUNTER R5" />
     <h1 class="page-heading">COUNTER R5</h1>
-    
+
     <p class="stats-subtitle">
       COUNTER 5 compliant usage reports. Select a report type and date range to view title (TR) or
       item (IR) usage of the journal's publications.
     </p>
-    
+
     <form
       class="stats-filter-bar"
       method="get"
@@ -22,11 +22,11 @@
           name="report"
         >
           <option value="tr" selected={@report == "tr"}>Journal Report 1 (TR)</option>
-          
+
           <option value="ir" selected={@report == "ir"}>Journal Report 1 (IR)</option>
         </select>
       </div>
-      
+
       <div class="stats-field">
         <label for="from">Start Date</label>
         <input
@@ -37,12 +37,12 @@
           value={@from}
         />
       </div>
-      
+
       <div class="stats-field">
         <label for="to">End Date</label>
         <input class="settings-input stats-date-input" type="date" id="to" name="to" value={@to} />
       </div>
-      
+
       <div class="stats-field stats-field-actions">
         <button type="submit" class="btn-settings-secondary">Apply</button>
         <a
@@ -53,7 +53,7 @@
         </a>
       </div>
     </form>
-    
+
     <div class="ojs-submission-tabs stats-tabs">
       <a
         href={"/#{@journal_path}/stats/counterR5/counterR5?report=tr"}
@@ -61,7 +61,7 @@
       >
         Journal Report 1 (TR)
       </a>
-      
+
       <a
         href={"/#{@journal_path}/stats/counterR5/counterR5?report=ir"}
         class={if @report == "ir", do: "active"}
@@ -69,34 +69,34 @@
         Journal Report 1 (IR)
       </a>
     </div>
-     <.bar_chart series={@series} mode={:count} />
+    <.bar_chart series={@series} mode={:count} />
     <div class="stats-report-panel">
       <div class="stats-panel-heading">
         <h2>{if @report == "tr", do: "Title Usage (TR)", else: "Item Usage (IR)"}</h2>
-         <span class="ojs-tab-count">{length(@series)}</span>
+        <span class="ojs-tab-count">{length(@series)}</span>
       </div>
-      
+
       <div class="submissions-table-wrapper stats-table-wrap">
         <table class="submissions-table stats-table">
           <thead>
             <tr>
               <th>Month</th>
-              
+
               <th>Total Usage</th>
             </tr>
           </thead>
-          
+
           <tbody>
             <%= for row <- @series do %>
               <tr>
                 <td><span class="stats-item-title">{row.label}</span></td>
-                
+
                 <td>{row.count}</td>
               </tr>
             <% end %>
           </tbody>
         </table>
-        
+
         <div class="table-footer">
           Showing <strong>0 to {length(@series)}</strong> of <strong>{length(@series)}</strong>
         </div>

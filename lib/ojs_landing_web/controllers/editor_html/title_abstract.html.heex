@@ -1,0 +1,129 @@
+<.submission_workflow_layout submission={@submission} active_section={@active_section}>
+  <.publication_section_page section_title="Title & Abstract" submission={@submission}>
+    <%!-- Prefix --%>
+    <div class="pub-field">
+      <label class="pub-label">Prefix</label>
+      <input type="text" class="pub-input pub-input-small" placeholder="A, The" value="" />
+      <p class="pub-hint">Example: A, The</p>
+    </div>
+
+    <%!-- Title --%>
+    <div class="pub-field">
+      <label class="pub-label">
+        Title <span class="pub-required" title="Required">*</span>
+      </label>
+      <input
+        type="text"
+        class="pub-input"
+        value={@submission.title}
+        placeholder="Enter the full article title"
+      />
+    </div>
+
+    <%!-- Subtitle --%>
+    <div class="pub-field">
+      <label class="pub-label">Subtitle</label>
+      <input
+        type="text"
+        class="pub-input"
+        placeholder="Enter an optional subtitle"
+        value=""
+      />
+    </div>
+
+    <%!-- Abstract --%>
+    <div class="pub-field">
+      <label class="pub-label">
+        Abstract <span class="pub-required" title="Required">*</span>
+      </label>
+
+      <div class="rte">
+        <div class="rte-toolbar" id="abstract-rte-toolbar">
+          <button
+            type="button"
+            class="rte-btn rte-bold"
+            title="Bold"
+            onclick="rteCmd(event, 'bold')"
+          >
+            <strong>B</strong>
+          </button>
+          <button
+            type="button"
+            class="rte-btn rte-italic"
+            title="Italic"
+            onclick="rteCmd(event, 'italic')"
+          >
+            <em>I</em>
+          </button>
+          <span class="rte-sep"></span>
+          <button
+            type="button"
+            class="rte-btn"
+            title="Subscript"
+            onclick="rteCmd(event, 'subscript')"
+          >
+            x<sub>2</sub>
+          </button>
+          <button
+            type="button"
+            class="rte-btn"
+            title="Superscript"
+            onclick="rteCmd(event, 'superscript')"
+          >
+            x<sup>2</sup>
+          </button>
+          <span class="rte-sep"></span>
+          <button type="button" class="rte-btn" title="Insert/Edit Link" onclick="rteLink(event)">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div
+          class="rte-content"
+          id="abstract-rte-content"
+          contenteditable="true"
+          data-placeholder="Type or paste the abstract here..."
+        >
+          {raw(@submission.abstract || "")}
+        </div>
+      </div>
+      <p class="pub-hint">Abstract is required. Recommended length: up to 300 words.</p>
+    </div>
+
+    <div class="pub-actions">
+      <a href="#" class="pub-save-btn">Save</a>
+    </div>
+
+    <script>
+      function rteCmd(event, command) {
+        event.preventDefault();
+        document.execCommand(command, false, null);
+        focusRte();
+      }
+
+      function rteLink(event) {
+        event.preventDefault();
+        var url = prompt('Enter the link URL:');
+        if (url) {
+          document.execCommand('createLink', false, url);
+          focusRte();
+        }
+      }
+
+      function focusRte() {
+        var el = document.getElementById('abstract-rte-content');
+        if (el) el.focus();
+      }
+    </script>
+  </.publication_section_page>
+</.submission_workflow_layout>

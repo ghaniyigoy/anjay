@@ -13,16 +13,16 @@
           stroke-width="2"
         >
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          
+
           <polyline points="14 2 14 8 20 8"></polyline>
-          
+
           <line x1="16" y1="13" x2="8" y2="13"></line>
-          
+
           <line x1="16" y1="17" x2="8" y2="17"></line>
-          
+
           <polyline points="10 9 9 9 8 9"></polyline>
         </svg>
-         <span class="sidebar-title">My Submissions as Author</span>
+        <span class="sidebar-title">My Submissions as Author</span>
         <svg
           class="sidebar-arrow"
           width="14"
@@ -35,7 +35,7 @@
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
-      
+
       <ul class="sidebar-menu">
         <%= for view <- @views do %>
           <li class={if @current_view == view.id, do: "active"}>
@@ -46,7 +46,7 @@
         <% end %>
       </ul>
     </div>
-    
+
     <div class="sidebar-footer">
       <a href="/submission/new" class="btn-new-submission">Start A New Submission</a>
     </div>
@@ -57,33 +57,33 @@
     <nav class="ojs-breadcrumb" aria-label="Breadcrumb">
       <ol>
         <li><a href="/dashboard">Dashboard</a></li>
-        
+
         <li><a href="/dashboard/mySubmissions">My Submissions</a></li>
-        
+
         <li aria-current="page">New Submission</li>
       </ol>
     </nav>
-    
+
     <h1 class="ojs-wizard-title">Start A New Submission</h1>
     <!-- Wizard steps (OJS PKP) -->
     <div class="ojs-wizard-steps" role="list">
       <div class="ojs-step is-current" role="listitem">
         <span class="ojs-step-number">1</span> <span class="ojs-step-label">Prepare</span>
       </div>
-      
+
       <div class="ojs-step" role="listitem">
         <span class="ojs-step-number">2</span> <span class="ojs-step-label">Upload</span>
       </div>
-      
+
       <div class="ojs-step" role="listitem">
         <span class="ojs-step-number">3</span> <span class="ojs-step-label">Metadata</span>
       </div>
-      
+
       <div class="ojs-step" role="listitem">
         <span class="ojs-step-number">4</span> <span class="ojs-step-label">Confirmation</span>
       </div>
     </div>
-    
+
     <div class="ojs-wizard-layout">
       <!-- Main form -->
       <div class="ojs-wizard-main">
@@ -97,11 +97,11 @@
           <!-- Choose a Section -->
           <div class="ojs-form-block">
             <h2 class="ojs-block-title">Choose a Section</h2>
-            
+
             <p class="ojs-block-help">
               Pilih bagian jurnal yang paling sesuai dengan makalah Anda.
             </p>
-            
+
             <select class="ojs-select" id="submission-section" name="submission[section]">
               <%= for section <- ["Artikel Penelitian", "Tinjauan Literatur", "Studi Kasus", "Laporan Riset"] do %>
                 <option value={section}>{section}</option>
@@ -111,11 +111,11 @@
           <!-- Submission Requirements -->
           <div class="ojs-form-block">
             <h2 class="ojs-block-title">Submission Requirements</h2>
-            
+
             <p class="ojs-block-help">
               Anda harus menyetujui setiap pernyataan di bawah ini untuk mengirimkan naskah.
             </p>
-            
+
             <ul class="ojs-checklist">
               <%= for {text, type} <- submission_checklist() do %>
                 <li>
@@ -136,11 +136,11 @@
           <!-- Comments for the Editor -->
           <div class="ojs-form-block">
             <h2 class="ojs-block-title">Comments for the Editor</h2>
-            
+
             <p class="ojs-block-help">
               (Opsional) Catatan yang hanya terlihat oleh tim editorial.
             </p>
-             <textarea
+            <textarea
               class="ojs-textarea"
               id="comments-for-editor"
               name="comments_for_editor"
@@ -150,7 +150,7 @@
           <!-- Privacy Statement -->
           <div class="ojs-form-block">
             <h2 class="ojs-block-title">Privacy Statement</h2>
-            
+
             <div class="ojs-privacy-box">
               <p class="ojs-privacy-text">
                 Nama dan alamat email yang dimasukkan di situs jurnal ini hanya akan digunakan untuk
@@ -161,7 +161,7 @@
               </p>
             </div>
           </div>
-          
+
           <div class="ojs-wizard-actions">
             <button
               type="submit"
@@ -178,28 +178,28 @@
       <div class="ojs-wizard-side">
         <div class="ojs-side-block">
           <h2 class="ojs-block-title">What Happens Next?</h2>
-          
+
           <ol class="ojs-prep-steps">
             <li>Isi detail makalah: judul, abstrak, bagian, dan kata kunci.</li>
-            
+
             <li>Unggah berkas naskah dan berkas pendukung.</li>
-            
+
             <li>Daftarkan kontributor beserta afiliasi dan email.</li>
-            
+
             <li>Pilih editor yang akan menangani submission.</li>
-            
+
             <li>Tinjau kembali seluruh informasi sebelum dikirim ke editor.</li>
           </ol>
         </div>
-        
+
         <div class="ojs-side-block">
           <h2 class="ojs-block-title">For Contributors</h2>
-          
+
           <ul class="ojs-side-links">
             <li>
               <a href="/informatika/about/submissions">Panduan Penyerahan</a>
             </li>
-            
+
             <li>
               <a href="/informatika/about/contact">Hubungi Editorial Office</a>
             </li>

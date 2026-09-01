@@ -1,0 +1,112 @@
+<.submission_workflow_layout submission={@submission} active_section={@active_section}>
+  <.workflow_page title="Review" submission={@submission}>
+    <:actions>
+      <a href="#" class="wf-action-btn">Add Reviewer</a>
+      <a href="#" class="wf-action-btn wf-action-primary">Send to Copyediting</a>
+    </:actions>
+
+    <%!-- Review status overview --%>
+    <div class="wf-status-overview">
+      <div class="wf-status-overview-item">
+        <span class="wf-status-overview-label">Review Type</span>
+        <span class="wf-status-overview-value">Editorial Review</span>
+      </div>
+      <div class="wf-status-overview-item">
+        <span class="wf-status-overview-label">Current Round</span>
+        <span class="wf-status-overview-value">
+          {Enum.count(@submission.reviews)}
+        </span>
+      </div>
+      <div class="wf-status-overview-item">
+        <span class="wf-status-overview-label">Overdue Reviews</span>
+        <span class="wf-status-overview-value wf-status-warn">
+          {Enum.count(Enum.flat_map(@submission.reviews, & &1.reviewers), fn r ->
+            r.status == "Overdue"
+          end)}
+        </span>
+      </div>
+    </div>
+
+    <%!-- Review rounds --%>
+    <%= for round <- @submission.reviews do %>
+      <div class="submission-section">
+        <div class="submission-section-header">
+          <h3>Round {round.round}</h3>
+          <div class="submission-section-actions">
+            <a href="#" class="submission-btn">Add Reviewer</a>
+            <a href="#" class="submission-btn">Round {round.round} Discussion</a>
+          </div>
+        </div>
+
+        <div class="submission-files-table">
+          <table>
+            <thead>
+              <tr>
+                <th class="submission-file-name">REVIEWER</th>
+                <th>RECOMMENDATION</th>
+                <th>DUE</th>
+                <th>STATUS</th>
+                <th class="submission-file-actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <%= for reviewer <- round.reviewers do %>
+                <tr>
+                  <td class="submission-file-name">
+                    <a href="#" class="submission-file-link">{reviewer.name}</a>
+                  </td>
+                  <td>
+                    <%= if reviewer.recommendation do %>
+                      <span class="wf-recommendation">
+                        {reviewer.recommendation}
+                      </span>
+                    <% else %>
+                      <span class="wf-pending">Pending</span>
+                    <% end %>
+                  </td>
+                  <td>{reviewer.due}</td>
+                  <td>
+                    <span class={[
+                      "wf-review-status",
+                      reviewer.status == "Overdue" && "wf-review-overdue",
+                      reviewer.status == "Review Submitted" && "wf-review-done"
+                    ]}>
+                      {reviewer.status}
+                    </span>
+                  </td>
+                  <td class="submission-file-actions">
+                    <button
+                      type="button"
+                      class="submission-ellipsis"
+                      onclick="toggleRowMenu(this)"
+                    >
+                      <span>&#8942;</span>
+                    </button>
+                    <div class="submission-row-menu">
+                      <a href="#">Review</a>
+                      <a href="#">Edit</a>
+                      <a href="#">Email</a>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+              <%= if round.reviewers == [] do %>
+                <tr>
+                  <td colspan="5" class="wf-empty">
+                    No reviewers have been assigned to this round.
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% end %>
+
+    <.workflow_discussions
+      title="Round Discussions"
+      discussions={@submission.round_discussions}
+      add_label="Add Discussion"
+    />
+  </.workflow_page>
+</.submission_workflow_layout>

@@ -1,0 +1,35 @@
+<.submission_workflow_layout submission={@submission} active_section={@active_section}>
+  <.publication_section_page section_title="Galley" submission={@submission}>
+    <div class="pub-toolbar">
+      <div class="pub-toolbar-left"></div>
+      <div class="pub-toolbar-right">
+        <a href="#" class="submission-btn">Add galley</a>
+      </div>
+    </div>
+
+    <div class="submission-files-table pub-table">
+      <table>
+        <thead>
+          <tr>
+            <th>NAME</th>
+            <th>LANGUAGE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= if length(@submission.galleys) == 0 do %>
+            <tr>
+              <td colspan="2" class="pub-empty">No Items</td>
+            </tr>
+          <% else %>
+            <%= for galley <- @submission.galleys do %>
+              <tr>
+                <td>{galley.name}</td>
+                <td>{galley.language}</td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </.publication_section_page>
+</.submission_workflow_layout>

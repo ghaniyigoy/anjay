@@ -1,0 +1,95 @@
+<.submission_workflow_layout submission={@submission} active_section={@active_section}>
+  <.publication_section_page section_title="Permissions & Disclosure" submission={@submission}>
+    <div class="pub-permissions">
+      <%!-- Copyright Holder --%>
+      <div class="pub-field">
+        <label class="pub-label">Copyright Holder</label>
+
+        <div class="pub-override-row" id="copyright-holder-row">
+          <%!-- Auto state --%>
+          <div class="pub-auto-state">
+            <span class="pub-auto-text">
+              Copyright will be determined automatically on Jurnal Perang Dunia 1 when this is published.
+            </span>
+            <button
+              type="button"
+              class="pub-override-btn"
+              onclick="pubOverride('copyright-holder')"
+            >
+              Override
+            </button>
+          </div>
+
+          <%!-- Override state --%>
+          <div class="pub-override-state" style="display:none">
+            <input type="text" class="pub-input" placeholder="Enter copyright holder" value="" />
+            <a
+              href="#"
+              class="pub-cancel-link"
+              onclick="pubCancelOverride(event, 'copyright-holder')"
+            >Cancel</a>
+          </div>
+        </div>
+      </div>
+
+      <%!-- Copyright Year --%>
+      <div class="pub-field">
+        <label class="pub-label">Copyright Year</label>
+
+        <div class="pub-override-row" id="copyright-year-row">
+          <div class="pub-auto-state">
+            <span class="pub-auto-text">
+              Copyright year will be set automatically if this is published in an issue.
+            </span>
+            <button type="button" class="pub-override-btn" onclick="pubOverride('copyright-year')">
+              Override
+            </button>
+          </div>
+
+          <div class="pub-override-state" style="display:none">
+            <input type="text" class="pub-input" placeholder="Enter year (e.g. 2026)" value="" />
+            <a
+              href="#"
+              class="pub-cancel-link"
+              onclick="pubCancelOverride(event, 'copyright-year')"
+            >Cancel</a>
+          </div>
+        </div>
+      </div>
+
+      <%!-- License URL --%>
+      <div class="pub-field">
+        <label class="pub-label">License URL</label>
+        <input
+          type="text"
+          class="pub-input"
+          value={@submission.license_url}
+          placeholder="https://..."
+        />
+      </div>
+
+      <div class="pub-actions">
+        <a href="#" class="pub-save-btn">Save</a>
+      </div>
+    </div>
+
+    <script>
+      function pubOverride(id) {
+        var row = document.getElementById(id + '-row');
+        var auto = row.querySelector('.pub-auto-state');
+        var override = row.querySelector('.pub-override-state');
+        auto.style.display = 'none';
+        override.style.display = 'block';
+      }
+
+      function pubCancelOverride(event, id) {
+        event.preventDefault();
+        var row = document.getElementById(id + '-row');
+        var auto = row.querySelector('.pub-auto-state');
+        var override = row.querySelector('.pub-override-state');
+        override.style.display = 'none';
+        auto.style.display = 'block';
+      }
+    </script>
+  </.publication_section_page>
+</.submission_workflow_layout>

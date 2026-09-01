@@ -1,0 +1,15 @@
+<.submission_workflow_layout submission={@submission} active_section={@active_section}>
+  <.publication_section_page section_title="JATS XML" submission={@submission}>
+    <div class="pub-toolbar">
+      <div class="pub-toolbar-left"></div>
+      <div class="pub-toolbar-right">
+        <a href="#" class="submission-btn">Upload</a>
+        <a href="#" class="submission-btn">Download</a>
+      </div>
+    </div>
+
+    <div class="jats-preview">
+      <pre>{jats_xml_preview(@submission)}</pre>
+    </div>
+  </.publication_section_page>
+</.submission_workflow_layout>

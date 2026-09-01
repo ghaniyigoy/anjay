@@ -1,0 +1,117 @@
+<.submission_workflow_layout submission={@submission} active_section={@active_section}>
+  <div class="submission-main-content">
+    <div class="publication-page">
+      <div class="publication-page-heading">
+        <h2>Issue</h2>
+        <span class="submission-workflow-label">Publication</span>
+      </div>
+
+      <%!-- Publication status box --%>
+      <div class="pub-status-box">
+        <div class="pub-status-box-icon">&#128197;</div>
+        <div class="pub-status-box-text">
+          <p>This article has not been scheduled for publication in an issue yet.</p>
+          <a href="#" class="pub-schedule-primary">Schedule For Publication</a>
+        </div>
+      </div>
+
+      <%!-- Issue form --%>
+      <div class="pub-form-card">
+        <div class="pub-field">
+          <label class="pub-label">Section</label>
+          <select class="pub-select">
+            <%= for sec <- @submission.sections do %>
+              <option selected={@submission.section == sec}>{sec}</option>
+            <% end %>
+          </select>
+        </div>
+
+        <%!-- Cover Image --%>
+        <div class="pub-field">
+          <label class="pub-label">Cover Image</label>
+          <div class="pub-dropzone" id="issue-cover-dropzone">
+            <p class="pub-dropzone-text">
+              <strong>Drop files here</strong> or use the button below to upload.
+            </p>
+            <button type="button" class="submission-btn" id="issue-cover-upload">Upload File</button>
+            <p class="pub-dropzone-file" id="issue-cover-file" style="display:none"></p>
+          </div>
+        </div>
+
+        <div class="pub-field">
+          <label class="pub-label">Pages</label>
+          <input type="text" class="pub-input" placeholder="e.g. 1-12" value="" />
+        </div>
+
+        <div class="pub-field">
+          <label class="pub-label">URL Path</label>
+          <input
+            type="text"
+            class="pub-input"
+            placeholder="Enter custom URL path (optional)"
+            value=""
+          />
+        </div>
+
+        <div class="pub-field">
+          <label class="pub-label">Date Published</label>
+          <input type="date" class="pub-input" value="" />
+          <p class="pub-hint">
+            Leave empty to use the default publication date, or set an explicit date.
+          </p>
+        </div>
+
+        <div class="pub-actions">
+          <a href="#" class="pub-save-btn">Save</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var dropzone = document.getElementById('issue-cover-dropzone');
+      var fileLabel = document.getElementById('issue-cover-file');
+      var uploadBtn = document.getElementById('issue-cover-upload');
+
+      function showFile(file) {
+        if (file) {
+          fileLabel.textContent = 'Selected file: ' + file.name;
+          fileLabel.style.display = 'block';
+        }
+      }
+
+      function handleDrop(e) {
+        e.preventDefault();
+        dropzone.classList.remove('dragging');
+        var files = e.dataTransfer.files;
+        if (files.length) showFile(files[0]);
+      }
+
+      if (dropzone) {
+        ['dragenter', 'dragover'].forEach(function (evt) {
+          dropzone.addEventListener(evt, function (e) {
+            e.preventDefault();
+            dropzone.classList.add('dragging');
+          });
+        });
+        ['dragleave', 'drop'].forEach(function (evt) {
+          dropzone.addEventListener(evt, handleDrop);
+        });
+      }
+
+      if (uploadBtn) {
+        uploadBtn.addEventListener('click', function () {
+          var input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.onchange = function () {
+            var file = input.files[0];
+            if (file) showFile(file);
+          };
+          input.click();
+        });
+      }
+    })();
+  </script>
+</.submission_workflow_layout>

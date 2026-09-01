@@ -1,0 +1,47 @@
+<.submission_workflow_layout submission={@submission} active_section={@active_section}>
+  <.publication_section_page section_title="Contributors" submission={@submission}>
+    <div class="pub-toolbar">
+      <div class="pub-toolbar-left">
+        <a href="#" class="submission-btn">Order</a>
+        <a href="#" class="submission-btn">Preview</a>
+      </div>
+      <div class="pub-toolbar-right">
+        <a href="#" class="submission-btn">Add Contributor</a>
+      </div>
+    </div>
+
+    <div class="submission-files-table pub-table">
+      <table>
+        <thead>
+          <tr>
+            <th class="pub-col-name">NAME</th>
+            <th class="pub-col-role">ROLE</th>
+            <th class="pub-col-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= for contributor <- @submission.contributors do %>
+            <tr>
+              <td class="pub-col-name">
+                {contributor.name}
+                <%= if contributor.primary do %>
+                  <span class="pub-primary-badge">Primary Contact</span>
+                <% end %>
+              </td>
+              <td class="pub-col-role">{contributor.role}</td>
+              <td class="pub-col-actions">
+                <div class="pub-row-actions">
+                  <%= if !contributor.primary do %>
+                    <a href="#" class="submission-link-btn">Set as Primary Contact</a>
+                  <% end %>
+                  <a href="#" class="submission-link-btn">Edit</a>
+                  <a href="#" class="submission-link-btn pub-link-danger">Delete</a>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </.publication_section_page>
+</.submission_workflow_layout>

@@ -1,0 +1,16 @@
+<.submission_workflow_layout submission={@submission} active_section={@active_section}>
+  <.publication_section_page section_title="Metadata" submission={@submission}>
+    <.pub_field label="Keywords" help={true}>
+      <input
+        type="text"
+        class="pub-input"
+        value={@submission.keywords}
+        placeholder="Enter keywords separated by commas"
+      />
+    </.pub_field>
+
+    <div class="pub-actions">
+      <a href="#" class="pub-save-btn">Save</a>
+    </div>
+  </.publication_section_page>
+</.submission_workflow_layout>
