@@ -2,6 +2,327 @@
 
 Catatan perubahan terbaru pada aplikasi.
 
+## Review Step 3: komentar "For Author and Editor" & "For Editor" tidak hilang setelah upload file
+
+### Bug
+- Pada halaman review step 3 (Download & Review), teks yang diketik di rich text editor
+  **For Author and Editor** (`comments_author`) dan **For Editor** (`comments_editor`)
+  hilang setelah mengunggah file Review (mis. lewat tombol **Upload File** di panel
+  **Reviewer Files**).
+- **Penyebab:** konten `contenteditable` hanya di-sinkronkan ke hidden input ketika form
+  `#review-form` di-submit (Submit Review). Form upload Review memakai form POST terpisah
+  (`POST /review/:id/file`) yang memicu *full page reload*, sehingga teks yang belum
+  tersinkronisasi hilang.
+
+### Perbaikan
+- **Auto-save draft lokal:** saat user mengetik, isi editor kini ikut disimpan ke
+  `localStorage` dengan key per-assignment & per-field
+  (`review-draft-{id}-author` / `review-draft-{id}-editor`).
+- **Restore setelah reload:** saat halaman dimuat ulang (mis. setelah upload/discussion),
+  isi editor dipulihkan dari `localStorage` jika tersedia, sehingga komentar tidak hilang.
+- **Hapus draft saat submit:** draft dihapus dari `localStorage` hanya ketika `#review-form`
+  benar-benar di-submit (Submit Review), bukan saat form upload/discussion.
+
+### File yang diubah
+- `assets/js/app.js` — `initRichtextEditors/0`: dukungan `data-autosave` (simpan/restore draft
+  ke `localStorage` pada `sync/0`; hapus saat form submit).
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — tambah `data-autosave`
+  pada kedua editor review step 3.
+
+### Status
+- `mix precommit` lulus: 150 test, tanpa warning.
+- `mix assets.build` sukses (asset ulang).
+
+## Review Step 3 (Download & Review): tombol aksi disederhanakan + perbaikan state "Go Back"
+
+### 1. Tombol aksi pada Step 3 (Download & Review)
+- Footer actions bawah-kanan pada halaman review step 3 diubah menjadi hanya **Go Back**,
+  **Save For Later**, dan **Submit Review** (tombol terpisah **Continue to Step #4** dihapus).
+- **Submit Review** pada step 3 kini **memajukan wizard ke Step 4 (Completion)** — sebelumnya
+  langsung menyelesaikan review (POST `/review/:id` → `submit_review/2`).
+- Agar data yang diketik (rekomendasi + komentar) tidak hilang saat maju ke step 4, `#review-form`
+  pada step 3 diubah action-nya menjadi `POST /review/:id/step`. Rekomendasi (`<select
+  form="review-form">`) dan komentar (hidden input hasil sinkronisasi rich text editor) ikut
+  terkirim, lalu `advance_review_step/2` mem-persist-nya ke assignment.
+- Step 4 (Completion) tetap punya tombol **Submit Review** miliknya sendiri yang benar-benar
+  menyelesaikan review (`submit_review/2` → status `:completed`, stage `:copyediting`).
+
+### 2. Perbaikan bug: halaman step 3 menampilkan form "Review Submission" (fallback)
+- **Gejala:** `status: :in_progress` dengan `wizard_step: 1` tidak cocok dengan branch mana pun
+  di template, sehingga jatuh ke cabang fallback `true ->` yang menampilkan form polos
+  "Review Submission" (Quality Criteria, radio Yes/No/Maybe, dst.). Keadaan ini bisa terjadi
+  setelah mengklik **Go Back** di salah satu step wizard: `go_back_review_step/1` selalu
+  mengembalikan `wizard_step: 1` sehingga halaman patah.
+- **Perbaikan:**
+  - `lib/ojs_landing/reviewer_assignment.ex` — `go_back_review_step/1` kini mundur **satu step**
+    (4 → 3, 3 → 2, 2 → 1) via `max(step - 1, 1)` alih-alih selalu reset ke 1. Klik **Go Back**
+    dari Download & Review (step 3) kini kembali ke Guidelines (step 2).
+  - `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — branch `:in_progress`
+    diperluas menjadi `wizard_step in [1, 2, 3]`, dengan step 1 dan 2 dirender sebagai
+    Guidelines. Dengan begitu kombinasi `:in_progress` + `wizard_step: 1` tidak lagi menimpa
+    form fallback.
+
+### File yang diubah
+- `lib/ojs_landing/reviewer_assignment.ex` — `advance_review_step/2` (untuk mem-persist
+  rekomendasi/komentar saat maju), `go_back_review_step/1` (mundur satu step).
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — action `#review-form` ke
+  `/step`; footer step 3 (Go Back / Save For Later / Submit Review); branch step 1 sebagai
+  Guidelines.
+- `lib/ojs_landing_web/controllers/reviewer_controller.ex` — `review_step/2` meneruskan params
+  ke `advance_review_step/2`.
+
+### Status
+- `mix test test/ojs_landing_web/controllers/reviewer_controller_test.exs` lulus: 18 test.
+- `mix format --check-formatted` bersih.
+
+## Review `/review/:id`: halaman menampilkan wizard review (stepper) + panel editor dihapus dari halaman reviewer
+
+### 1. Tidak lagi "Respond to request" untuk assignment demo
+
+- Seed assignment ID 1 diubah dari `status: :action_required` menjadi `:in_progress` dengan
+  `wizard_step: 2`. Membuka `/review/1` kini langsung menampilkan wizard review proses
+  (Guidelines → Download & Review → Completion), bukan halaman "Respond to request"
+  (Accept/Decline). Flow Accept/Decline tetap ada dan teruji lewat assignment ID 4.
+- Stepper 4 tahap (Request / Guidelines / Download & Review / Completion) selalu dirender di
+  halaman `/review/:id` untuk menunjukkan progres reviewer.
+
+### 2. Panel workflow EDITOR tidak lagi muncul di halaman reviewer
+
+- Panel **Copyediting** (tugas initial/author/final) dan **Production** (galley, proofreading,
+  publish) sebelumnya ikut dirender pada `/review/:id` saat status `:completed` (karena stage
+  assignment = copyediting/production). Ini salah secara konsep OJS — tugas copyediting &
+  production adalah tanggung jawab editor, bukan reviewer.
+- Kedua panel tersebut dihapus dari halaman reviewer. Saat review selesai (status `:completed`),
+  halaman hanya menampilkan panel "Review Submitted" (rekomendasi + komentar) + tombol
+  "Back to My Assignments". Operasi store-nya (copyediting, advance, galley, proofread, publish)
+  tetap ada dan teruji.
+- Stage bar (Submission / Review / Copyediting / Production) dihapus dari halaman reviewer.
+
+### 3. Helper & file
+
+- `lib/ojs_landing/reviewer_assignment.ex` — seed ID 1 → `:in_progress`, `wizard_step: 2`.
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — stepper selalu tampil;
+  branch `:completed` hanya menampilkan "Review Submitted" (tanpa panel copyediting/production);
+  stage bar dihapus; formulir "Review Submission" tetap di branch fallback.
+- `lib/ojs_landing_web/controllers/reviewer_html.ex` — helper `wizard_current_step/1`
+  dikembalikan ke logika semula (action_required = step 1); helper `stage_class/2` yang tak
+  terpakai dihapus.
+- `test/ojs_landing_web/controllers/reviewer_controller_test.exs` — test disesuaikan dengan
+  seed baru (flow accept diarahkan ke assignment 4); test memastikan panel editor tidak muncul
+  di halaman reviewer.
+
+### Status
+- `mix precommit` lulus: 147 test, tanpa warning.
+
+## Reviewer `/review/:id`: Upload/Search/Discussion berfungsi + lanjut Step #4 (Completion)
+
+### 1. Kontrol Upload / Search / Add Discussion yang tadinya non-fungsional kini berfungsi
+
+Pada halaman review step 3 (Download & Review), tombol-tombol:
+
+- **Search** (Review Files & Reviewer Files) — menampilkan input pencarian yang memfilter baris
+  tabel file secara real-time berdasarkan nama/tipe (client-side, tanpa reload).
+- **Upload File** (panel Reviewer Files) — membuka modal dengan input file sungguhan
+  (`multipart/form-data`). Submits ke `POST /review/:id/file` → `add_reviewer_file/2`.
+- **Add Discussion** — membuka modal (Subject + Message). Submits ke `POST /review/:id/discussion`
+  → `add_discussion/2`. Diskusi tampil sebagai daftar thread lengkap dengan badge jumlah.
+- Panel **Upload** (bagian atas) diubah hanya menjadi teks — tombol "Upload File" di dalamnya
+  dihapus per permintaan; unggah file cukup lewat tombol di panel Reviewer Files.
+
+### 2. Alur lanjut dari Step 3 ke Step 4 (Completion)
+
+- **Continue to Step #4** — ditambahkan pada footer actions step 3 (POST ke `/review/:id/step`,
+  memajukan wizard 3 → 4).
+- **View Step 4 "Completion"** — baru: untuk `status :in_progress, wizard_step == 4` dirender
+  ringkasan (Recommendation, Comments to Author/Editor) + tombol **Submit Review** (POST ke
+  `/review/:id`) dan **Go Back to Review** (POST ke `/review/:id/go-back`).
+- **Submit Review** langsung dari step 3 tetap berfungsi.
+
+### File yang diubah
+- `lib/ojs_landing/reviewer_assignment.ex` — field baru `reviewer_files` & `discussions`;
+  fungsi `add_reviewer_file/2` & `add_discussion/2` (tahan `nil`); helper id berikutnya.
+- `lib/ojs_landing_web/controllers/reviewer_controller.ex` — aksi `add_reviewer_file/2` &
+  `add_discussion/2`; helper `humanize_size/1` & `file_type_from_name/1` untuk file upload.
+- `lib/ojs_landing_web/router.ex` — route baru `post "/review/:id/file"` dan
+  `post "/review/:id/discussion"`.
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — panel Reviewer Files
+  menampilkan `reviewer_files`; panel Review Discussions menampilkan `discussions`; modal upload
+  & diskusi; search bar; tombol **Continue to Step #4**; view baru step 4 Completion; inline JS
+  (buka/tutup modal, filter pencarian, tutup saat klik overlay).
+- `lib/ojs_landing_web/controllers/reviewer_html.ex` — helper `reviewer_files/1` & `discussions/1`
+  (nil-safe).
+- `assets/css/app.css` — gaya `.rp-search-bar`, `.rp-discussion-*`, `.rp-modal-*`, `.rp-field-*`,
+  `.rp-file-meta`, `.rp-badge-count`, `.rp-btn-sm`.
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — tautan "Open production
+  record" diubah dari `.btn-view` ke `.editorial-view-link` agar teks tidak putih.
+
+### Status
+- `mix precommit` lulus: 147 test, tanpa warning.
+
+## Review `/review/:id`: sidebar kanan dihapus + Wizard bertahap (Request → Guidelines → Download & Review → Completion)
+
+### 1. Sidebar kanan dihapus
+- Pada `review.html.heex`, seluruh `<aside class="review-side-col">` (yang berisi panel **Submission**, **Review Files**, dan **Review History**) dihapus.
+- `.review-layout` di `assets/css/app.css` diubah dari grid 2 kolom (`minmax(0, 1fr) 320px`) menjadi `display: block` sehingga kolom konten melebar penuh.
+
+### 2. Wizard bertahap (step-by-step)
+Halaman review kini berjalan langkah demi langkah sesuai stepper:
+
+1. **Request** (`:action_required`) — tombol **Accept Review** / **Decline Review**.
+2. **Guidelines** — pedoman review + tombol **Continue to Download & Review**.
+3. **Download & Review** — tabel file submission + tombol **Continue to Completing the Review**.
+4. **Completion** — form review lengkap (Recommendation, kriteria, komentar).
+
+Sebelumnya, setelah Accept halaman langsung lompat ke form review (melewati Guidelines dan Download & Review).
+
+#### File yang diubah
+- `lib/ojs_landing/reviewer_assignment.ex` — field baru `wizard_step` pada struct; seed data tiap assignment diisi `wizard_step` (assignment `:action_required` → 1, lainnya → 4); `accept_assignment/1` kini menetapkan `wizard_step: 2`; fungsi baru `advance_review_step/1` (hanya saat `:in_progress` dengan step 2/3 → +1).
+- `lib/ojs_landing_web/controllers/reviewer_controller.ex` — aksi baru `review_step/2` (`POST /review/:id/step`) yang memanggil `advance_review_step/1`.
+- `lib/ojs_landing_web/router.ex` — route baru `post "/review/:id/step"`.
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — stepper dinamis ditampilkan untuk `:action_required` dan `:in_progress`; klausa `:in_progress` dengan `wizard_step in [2, 3]` untuk menampilkan panduan & daftar file.
+- `lib/ojs_landing_web/controllers/reviewer_html.ex` — helper `wizard_current_step/1` dan `wizard_step_class/2`.
+- `assets/css/app.css` — gaya `.rr-step.done` (centang hijau) dan `.rr-guideline-list`.
+- `test/ojs_landing_web/controllers/reviewer_controller_test.exs` — update test (pending & accept) + test baru alur step (Guidelines → Download → Completion, dan tolak advance tanpa accept).
+
+### Status
+- `mix test` lulus: 147 test, tanpa warning.
+- `mix precommit` lulus.
+
+## Review Request Page: tampilan `/review/:id` untuk status action_required
+
+Halaman `/review/:id` untuk assignment berstatus `:action_required` diubah dari panel sederhana
+menjadi **Review Request Page** bergaya OJS, dengan header + stepper khusus.
+
+### Fitur
+- Header di kiri menampilkan **"Review: {judul submission}"** beserta subtitle (Round · Due) —
+  hanya untuk status `:action_required`; status lain tetap memakai header & stage bar lama.
+- Stepper 4 langkah: **1. Request** (aktif) · **2. Guidelines** · **3. Download & Review** ·
+  **4. Completion**.
+- **Section 1 — Request for Review**: paragraf *"You have been selected as a potential reviewer
+  of the following submission..."* lalu meta list **Article Title**, **Abstract**, dan
+  **Review Type** (Round).
+- **Section 2 — Review Files**: kotak dengan header **Review Files** di kiri dan tombol
+  **Search** di kanan (sejajar); tabel berisi kolom **Files**, **Date**, dan **Type** (badge
+  tipe: pdf/csv/other), lalu tautan **View All Submission Details** di bawahnya.
+- **Section 3 — Review Schedule**: grid **Editor's Request** (kiri) / **Response Due Date**
+  (tengah) / **Review Due Date** (kanan), tautan **About Due Dates**, checkbox persetujuan
+  *"Yes, I agree to have my data collected and stored according to the privacy statement."*
+- Aksi kanan bawah: **Decline Review Request** dan **Accept Review, Continue to Step #2**
+  (POST ke `/review/:id/decline` dan `/review/:id/accept` seperti sebelumnya).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — header/stepper khusus
+  untuk `:action_required` + tiga section Review Request Page; blok status `:action_required`
+  lama diganti.
+- `assets/css/app.css` — section `.rr-*` (header, stepper, section, meta list, files table,
+  schedule grid, consent, actions).
+
+### Status
+- `mix assets.build` sukses (template & CSS dikompilasi ulang).
+
+## Reviewer Assignments: kolom Editorial Activity + aksi Respond to request + fix CSS
+
+Perbaikan tampilan dan isi tabel pada `/dashboard/reviewAssignments`.
+
+### Fitur
+- **Kolom Editorial Activity**: assignment berstatus `:action_required` kini menampilkan
+  **"Please accept or decline this request by {due_date}"** (gaya italic merah).
+- **Kolom Actions**: tombol **Review** diganti **"Respond to request"** untuk assignment
+  `:action_required`; status lain tetap "Review".
+- **Perbaikan CSS**:
+  - Judul artikel di kolom **SUBMISSIONS** tidak lagi besar/bold — `.submission-title` pada
+    konteks reviewer dipaksa `14px` / weight 400 / Noto Sans (menimpa global 30px Noto Serif).
+  - Kolom **ACTIONS** bukan lagi kotak biru — `.btn-view` pada konteks reviewer diubah menjadi
+    tautan teks biru polos (tanpa background/padding/border-radius/box-shadow).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/reviewer_html/review_assignments.html.heex` — kolom
+  Editorial Activity & label aksi disesuaikan dengan status.
+- `assets/css/app.css` — `.reviewer-main-content .submission-title`, `.reviewer-main-content
+  .btn-view`, dan `.reviewer-main-content .response-request`.
+
+### Status
+- `mix assets.build` sukses.
+
+## Editorial Dashboard: Assign Editor untuk semua stage + Predefined Message + Action Panel workflow_1
+
+Kumpulan perbaikan pada alur editorial dashboard dan workflow view.
+
+### Bug: "Assign Editor" tidak muncul untuk submission di stage awal tanpa editor
+- **Sebelum:** `editorial_actions/1` hanya menampilkan **Assign Editor** bila `row.stage ==
+  :submission and not row.has_editor`. Submission yang sudah di stage lain (mis. `initial_review`)
+  tapi belum punya editor jatuh ke cabang lain sehingga menampilkan **Assign Reviewers** padahal
+  belum ada editor yang menangani.
+- **Sesudah:** pengecekan diubah menjadi `not row.has_editor` saja (diutamakan, terlepas dari
+  stage). Karena proses review/keputusan editorial tidak bisa dimulai sebelum editor ditugaskan,
+  submission tanpa editor selalu menampilkan **Assign Editor** di kolom **Editorial Activity**.
+
+### Dropdown "Predefined Message" di modal Assign Participant
+- Modal **Assign Participant** (`editorial.html.heex`) kini punya dropdown **Predefined Message**
+  (`#ap-predefined-message`) antara teks hint dan label Message, berisi opsi:
+  - **Discussion (Submission)** — mengisi rich text editor dengan pesan pembahasan submission.
+  - **Assign Editor** — mengisi rich text editor dengan pesan penugasan editor.
+- Ditambahkan fungsi JS `applyPredefinedMessage/1` yang mengisi editor sesuai pilihan; dropdown
+  di-reset setiap kali modal dibuka.
+
+### Action Panel workflow_1: ketiga tombol tampil & berfungsi
+- Action Panel pada `workflowMenuKey=workflow_1` kini menampilkan dan menghubungkan ketiga aksi:
+  - **Send For Review** — form POST ke `/dashboard/editorial/:id/send-to-review`.
+  - **Accept and Skip Review** — sebelumnya hanya `<button type="button">` tanpa aksi (tidak
+    berfungsi); diubah menjadi form POST ke `/dashboard/editorial/:id/accept`
+    (`accept_submission/2`).
+  - **Decline Submission** — form POST ke `/dashboard/editorial/:id/decline` dengan konfirmasi.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html.ex` — `editorial_actions/1`: kondisi "Assign
+  Editor" menjadi `not row.has_editor`.
+- `lib/ojs_landing_web/controllers/editor_html/editorial.html.heex` — dropdown Predefined
+  Message + fungsi JS `applyPredefinedMessage/1` + reset saat modal dibuka.
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — Action Panel workflow_1
+  (Accept and Skip Review menjadi form POST, struktur form Decline diperbaiki).
+- `AGENTS.md` — dokumentasi urutan `editorial_actions/1` diperbarui (Assign Editor dicek
+  pertama, terlepas dari stage).
+
+### Status
+- `mix precommit` lulus: 145 test, tanpa warning.
+
+## Add Reviewer Panel (modal) dari tombol "Assign Reviewers" di Editorial Dashboard
+
+Pada `/dashboard/editorial?currentViewId=active`, tombol **Assign Reviewers** di kolom
+**Editorial Activity** tidak lagi berpindah ke halaman workflow, melainkan membuka **panel modal
+"Add Reviewer"** untuk menetapkan reviewer bagi submission.
+
+### Fitur
+- Header modal dengan judul **Add Reviewer** di kiri dan tombol **close** (×) di kanan.
+- Panel **Submission Author List**: menampilkan avatar inisial, nama author, dan judul submission.
+- Heading **Locate a Reviewer** dengan tombol aksi **Search** dan **Filters** di sebelah kanannya.
+- Daftar reviewer (tabel) berisi kolom **Reviewer** (nama + email), **Affiliation**, **Review
+  Count**, **Last Review**, dan **Status** (Available / Busy).
+- Pada baris reviewer, di sebelah kanan terdapat tombol **Select Reviewer** dan tombol dropdown
+  (⋯) untuk aksi tambahan.
+- Footer **Alternative Actions** dengan tombol **Create New Reviewer** dan **Enroll Existing User**.
+- "Select Reviewer" mengirim assignment ke `POST /dashboard/editorial/:id/assign-reviewer`
+  (dengan `reviewer_name`), lalu kembali ke dashboard view yang sama.
+- Daftar reviewer disusun dari pengguna berperan reviewer/editor, dilengkapi metrik reviewer
+  (jumlah review, last review, status) yang dihitung dari data `ReviewerAssignment`.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html.ex` — aksi `editorial_actions/1` untuk "Assign
+  Reviewers" kini memakai `modal: "assign-reviewers-<id>"`; `latest_reviewer/1` fallback ke
+  `reviewer_name` assignment.
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — `reviewer_json/1` + helper metrik
+  reviewer; assign `ap_submissions_json` (id/title/author); `assign_reviewer/2` menerima
+  `reviewer_name` dan redirect balik ke view dashboard.
+- `lib/ojs_landing_web/controllers/editor_html/editorial.html.heex` — modal Add Reviewer + form
+  POST tersembunyi + JS (render/filter reviewer, Select Reviewer, dropdown).
+- `lib/ojs_landing/reviewer_assignment.ex` — field baru `reviewer_name` pada assignment.
+- `assets/css/app.css` — gaya `.ar-*` (modal, author panel, tabel reviewer, status, footer
+  Alternative Actions).
+- `test` — `mix precommit` lulus.
+
+### Status
+- `mix precommit` lulus: 145 test, tanpa warning.
+
 ## Tab For the Editor: kolom kanan menjadi rich text editor "Comments For The Editor"
 
 Tab **For the Editor** (`/submission/wizard/:id?tab=editors`) pada halaman wizard controller:

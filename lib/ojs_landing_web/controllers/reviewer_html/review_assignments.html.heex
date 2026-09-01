@@ -203,10 +203,20 @@
                   </div>
                 </td>
 
-                <td class="col-editorial"></td>
+                <td class="col-editorial">
+                  <%= if assignment.status == :action_required do %>
+                    <span class="response-request">
+                      Please accept or decline this request by {assignment.due_date}
+                    </span>
+                  <% end %>
+                </td>
 
                 <td class="col-actions">
-                  <a href={"/review/#{assignment.id}"} class="btn-view">Review</a>
+                  <a href={"/review/#{assignment.id}"} class="btn-view">
+                    {if assignment.status == :action_required,
+                      do: "Respond to request",
+                      else: "Review"}
+                  </a>
                 </td>
               </tr>
             <% end %>

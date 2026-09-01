@@ -44,6 +44,42 @@
         <p class="submission-error" data-error-for="title" role="alert"></p>
       </div>
 
+      <div class="submission-field" id="section-field">
+        <label for="submission-section" class="submission-label">Section *</label>
+        <select id="submission-section" name="submission[section]" class="submission-select">
+          <option
+            value="Artikel Penelitian"
+            selected={assigns[:section] == "Artikel Penelitian" or is_nil(assigns[:section])}
+          >
+            Artikel Penelitian
+          </option>
+          <option value="Tinjauan Literatur" selected={assigns[:section] == "Tinjauan Literatur"}>
+            Tinjauan Literatur
+          </option>
+          <option value="Studi Kasus" selected={assigns[:section] == "Studi Kasus"}>
+            Studi Kasus
+          </option>
+          <option value="Laporan Teknis" selected={assigns[:section] == "Laporan Teknis"}>
+            Laporan Teknis
+          </option>
+          <option value="Forum" selected={assigns[:section] == "Forum"}>
+            Forum
+          </option>
+        </select>
+      </div>
+
+      <div class="submission-field" id="language-field">
+        <label for="submission-language" class="submission-label">Language *</label>
+        <select id="submission-language" name="submission[language]" class="submission-select">
+          <option value="id" selected={assigns[:language] == "id" or is_nil(assigns[:language])}>
+            Bahasa Indonesia
+          </option>
+          <option value="en" selected={assigns[:language] == "en"}>
+            English
+          </option>
+        </select>
+      </div>
+
       <fieldset class="submission-fieldset" id="checklist-fieldset">
         <legend class="submission-legend">Submission Checklist *</legend>
 
@@ -55,7 +91,9 @@
           <li>
             This submission meets the requirements outlined in the <a href="/informatika/about/submissions">Author Guidelines</a>.
           </li>
-          <li>This submission has not been previously published, nor is it a consideration.</li>
+          <li>
+            This submission has not been previously published, nor is it under consideration by another journal.
+          </li>
           <li>All references have been checked for accuracy and completeness.</li>
           <li>All tables and figures have been numbered and labeled.</li>
           <li>
@@ -64,7 +102,13 @@
         </ul>
 
         <label class="submission-consent">
-          <input type="checkbox" id="checklist-consent" name="submission[checklist]" value="1" />
+          <input
+            type="checkbox"
+            id="checklist-consent"
+            name="submission[checklist_agreed]"
+            value="1"
+            checked={assigns[:checklist_agreed] == true}
+          />
           <span>Yes, my submission meets all of these requirements.</span>
         </label>
         <p class="submission-error" data-error-for="checklist" role="alert"></p>
@@ -79,6 +123,7 @@
             id="privacy-consent"
             name="submission[privacy_consent]"
             value="1"
+            checked={assigns[:privacy_consent] == true}
           />
           <span>
             Yes, I agree to have my data collected and stored according to the <a href="/informatika/about/privacy">privacy statement</a>.
@@ -86,6 +131,17 @@
         </label>
         <p class="submission-error" data-error-for="privacy" role="alert"></p>
       </fieldset>
+
+      <div class="submission-field" id="comments-field">
+        <label for="submission-comments" class="submission-label">Comments to the Editor</label>
+        <textarea
+          id="submission-comments"
+          name="submission[comments_to_editor]"
+          class="submission-textarea"
+          rows="4"
+          placeholder="Optional comments or notes for the editor..."
+        >{assigns[:comments_to_editor] || ""}</textarea>
+      </div>
 
       <div class="submission-alert" id="submission-alert" role="alert" hidden>
         <strong>Your submission is incomplete.</strong>

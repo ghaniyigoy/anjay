@@ -32,15 +32,131 @@ defmodule OjsLandingWeb.ReviewerControllerTest do
       {:ok, conn: init_test_session(conn, current_user: "reviewer")}
     end
 
-    test "GET /review/1 renders the review workflow", %{conn: conn} do
+    test "GET /review/1 shows the review wizard Guidelines step", %{conn: conn} do
       conn = get(conn, "/review/1")
       html = html_response(conn, 200)
 
-      assert html =~ "Submission Review"
-      assert html =~ "Implementasi Machine Learning"
-      assert html =~ "Recommendation"
-      assert html =~ "comments_author"
+      assert html =~ "Review: Implementasi Machine Learning"
+      assert html =~ "Review Guidelines"
+      assert html =~ "Continue to Step #3"
+      refute html =~ "Request for Review"
+    end
+
+    test "GET /review/4 shows the Guidelines step after accepting", %{conn: conn} do
+      conn = get(conn, "/review/4")
+      html = html_response(conn, 200)
+
+      assert html =~ "Request for Review"
+      assert html =~ "Accept Review, Continue"
+      assert OjsLanding.ReviewerAssignment.get(4).status == :action_required
+
+      OjsLanding.ReviewerAssignment.accept_assignment(4)
+
+      conn = get(conn, "/review/4")
+      html = html_response(conn, 200)
+
+      assert html =~ "Review Guidelines"
+      assert html =~ "Continue to Step #3"
+      refute html =~ "Recommendation"
+    end
+
+    test "POST /review/:id/step advances through Guidelines and Download steps", %{conn: conn} do
+      conn =
+        post(conn, "/review/1/step", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token()
+        })
+
+      assert redirected_to(conn) == "/review/1"
+      assert OjsLanding.ReviewerAssignment.get(1).wizard_step == 3
+
+      conn = get(conn, "/review/1")
+      html = html_response(conn, 200)
+
       assert html =~ "Review Files"
+      assert html =~ "Submit Review"
+
+      conn =
+        post(conn, "/review/1/step", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token()
+        })
+
+      assert OjsLanding.ReviewerAssignment.get(1).wizard_step == 4
+
+      conn = get(conn, "/review/1")
+      html = html_response(conn, 200)
+
+      assert html =~ "Review Submitted"
+      assert html =~ "Review Discussions"
+      assert html =~ "comments_author"
+      refute html =~ "Recommendation"
+    end
+
+    test "POST /review/:id/go-back returns to the Request step from Guidelines", %{conn: conn} do
+      assert OjsLanding.ReviewerAssignment.get(1).wizard_step == 2
+
+      conn =
+        post(conn, "/review/1/go-back", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token()
+        })
+
+      assert redirected_to(conn) == "/review/1"
+      assert OjsLanding.ReviewerAssignment.get(1).wizard_step == 1
+
+      conn = get(conn, "/review/1")
+      html = html_response(conn, 200)
+
+      assert html =~ "Request for Review"
+      assert html =~ "Continue to Step #2"
+      refute html =~ "Review Guidelines"
+      assert length(Regex.scan(~r/class="rr-step active"/, html)) == 1
+    end
+
+    test "POST /review/:id/step from the Request step returns to Guidelines", %{conn: conn} do
+      OjsLanding.ReviewerAssignment.go_back_review_step(1)
+      assert OjsLanding.ReviewerAssignment.get(1).wizard_step == 1
+
+      conn =
+        post(conn, "/review/1/step", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token()
+        })
+
+      assert redirected_to(conn) == "/review/1"
+      assert OjsLanding.ReviewerAssignment.get(1).wizard_step == 2
+
+      conn = get(conn, "/review/1")
+      html = html_response(conn, 200)
+
+      assert html =~ "Review Guidelines"
+      assert html =~ "Go Back"
+    end
+
+    test "POST /review/:id/go-back returns to Guidelines from Download & Review", %{conn: conn} do
+      OjsLanding.ReviewerAssignment.advance_review_step(1)
+      assert OjsLanding.ReviewerAssignment.get(1).wizard_step == 3
+
+      conn =
+        post(conn, "/review/1/go-back", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token()
+        })
+
+      assert redirected_to(conn) == "/review/1"
+      assert OjsLanding.ReviewerAssignment.get(1).wizard_step == 2
+
+      conn = get(conn, "/review/1")
+      html = html_response(conn, 200)
+
+      assert html =~ "Review Guidelines"
+    end
+
+    test "POST /review/:id/step is rejected before the assignment is accepted", %{conn: conn} do
+      conn =
+        post(conn, "/review/4/step", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token()
+        })
+
+      assert redirected_to(conn) == "/review/4"
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "cannot be advanced"
+      assert OjsLanding.ReviewerAssignment.get(4).status == :action_required
     end
 
     test "GET /review/9999 redirects to assignments when not found", %{conn: conn} do
@@ -71,7 +187,9 @@ defmodule OjsLandingWeb.ReviewerControllerTest do
       assert length(assignment.review_history) == 1
     end
 
-    test "GET /review/1 shows the submitted review and the copyediting panel", %{conn: conn} do
+    test "GET /review/1 shows the submitted review without editor copyediting panels", %{
+      conn: conn
+    } do
       conn =
         post(conn, "/review/1", %{
           "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
@@ -86,9 +204,9 @@ defmodule OjsLandingWeb.ReviewerControllerTest do
 
       assert html =~ "Review Submitted"
       assert html =~ "Accept"
-      assert html =~ "Copyediting"
-      assert html =~ "Initial Copyedit"
-      assert html =~ "0/3"
+      assert html =~ "Back to My Assignments"
+      refute html =~ "Initial Copyedit"
+      refute html =~ "Complete the copyediting tasks"
       refute html =~ "Proceed to Production"
       refute html =~ "Submit Review"
     end
@@ -145,7 +263,7 @@ defmodule OjsLandingWeb.ReviewerControllerTest do
       assert assignment.status == :completed
     end
 
-    test "GET /review/1 shows the production panel with galleys and proofreading", %{conn: conn} do
+    test "GET /review/1 does not show the editor production panel", %{conn: conn} do
       OjsLanding.ReviewerAssignment.submit_review(1, %{"recommendation" => "Accept"})
 
       for task <- ["initial", "author", "final"] do
@@ -157,12 +275,13 @@ defmodule OjsLandingWeb.ReviewerControllerTest do
       conn = get(conn, "/review/1")
       html = html_response(conn, 200)
 
-      assert html =~ "Production"
-      assert html =~ "Galley Files"
-      assert html =~ "Add Galley"
-      assert html =~ "Proofreading"
-      assert html =~ "No galley files yet"
-      refute html =~ "Proceed to Production"
+      assert html =~ "Review Submitted"
+      assert html =~ "Back to My Assignments"
+      refute html =~ "Galley Files"
+      refute html =~ "Add Galley"
+      refute html =~ "Proofreading"
+      refute html =~ "No galley files yet"
+      refute html =~ "Publish Submission"
     end
 
     test "POST /review/:id/galley adds a galley file", %{conn: conn} do

@@ -1,0 +1,908 @@
+<div class="editor-dashboard-container workflow-page">
+  <!-- Sidebar -->
+  <aside class="editor-sidebar">
+    <div class="sidebar-section">
+      <a
+        href={"/dashboard/editorial?currentViewId=#{@current_view}"}
+        class="sidebar-header sidebar-header-link"
+        id="wf-back-link"
+      >
+        <svg
+          class="sidebar-icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span class="sidebar-title">Back to Submissions</span>
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-header">
+        <svg
+          class="sidebar-icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span class="sidebar-title">Workflow</span>
+      </div>
+
+      <ul class="sidebar-menu">
+        <%= for {key, label} <- @workflow_menus do %>
+          <% state = workflow_stage_state(key, @submission.stage || :submission) %>
+          <li class={[
+            if(@active_menu == key, do: "active"),
+            "wf-stage-#{state}"
+          ]}>
+            <a href={workflow_menu_path(@submission.id, @current_view, key)}>
+              <span class={["wf-stage-indicator", "wf-stage-dot-#{state}"]}></span>
+              {label}
+            </a>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-header">
+        <svg
+          class="sidebar-icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+
+          <polyline points="14 2 14 8 20 8"></polyline>
+
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span class="sidebar-title">Publication</span>
+      </div>
+
+      <ul class="sidebar-menu">
+        <%= for {key, label} <- @publication_menus do %>
+          <li class={if @active_menu == key, do: "active"}>
+            <a href={workflow_menu_path(@submission.id, @current_view, key)}>
+              {label}
+            </a>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-header">
+        <svg
+          class="sidebar-icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+
+          <circle cx="9" cy="7" r="4"></circle>
+
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span class="sidebar-title">Participants</span>
+      </div>
+
+      <ul class="wf-participants">
+        <%= for contributor <- @submission.contributors || [] do %>
+          <% info = contributor_display(contributor) %>
+          <li class="wf-participant">
+            <span class="wf-avatar">{contributor_initials(info.name)}</span>
+            <span class="wf-participant-info">
+              <strong>{info.name}</strong>
+              <small>Author{if info[:primary], do: " (Contact)"}</small>
+            </span>
+          </li>
+        <% end %>
+
+        <%= if @user do %>
+          <li class="wf-participant">
+            <span class="wf-avatar wf-avatar-editor">{String.first(
+              String.capitalize(@user.username || "E")
+            )}</span>
+            <span class="wf-participant-info">
+              <strong>{String.trim("#{@user.given_name} #{@user.family_name}")}</strong>
+              <small>Editor</small>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="editor-main-content">
+    <div class="wf-header">
+      <div class="wf-header-main">
+        <div class="wf-nav-row">
+          <%= if @prev_submission_id do %>
+            <a
+              href={workflow_menu_path(@prev_submission_id, @current_view, @active_menu)}
+              class="wf-nav-link"
+              title="Previous submission"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </a>
+          <% end %>
+          <h1 class="wf-title">{@submission.title || "(Untitled submission)"}</h1>
+          <%= if @next_submission_id do %>
+            <a
+              href={workflow_menu_path(@next_submission_id, @current_view, @active_menu)}
+              class="wf-nav-link"
+              title="Next submission"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </a>
+          <% end %>
+        </div>
+
+        <p class="wf-meta">
+          <span class="wf-meta-id">ID {@row.id}</span>
+          <span aria-hidden="true">·</span>
+          <span>{@row.author}</span>
+          <span aria-hidden="true">·</span>
+          <span>
+            Submitted {format_date(@submission.date_submitted || @submission.created_at)}
+          </span>
+        </p>
+      </div>
+
+      <div class="wf-header-side">
+        <span class={["wf-stage-pill"]}>
+          <span class="stage-dot" style={["background-color: ", stage_color(@row.stage)]}></span>
+          {stage_label(@row.stage)}
+        </span>
+
+        <span class={["wf-status-badge", workflow_status_class(@row.status)]}>
+          {workflow_status_label(@row.status)}
+        </span>
+      </div>
+    </div>
+
+    <%= cond do %>
+      <%!-- ==================== WORKFLOW_1: SUBMISSION ==================== --%>
+      <% @active_menu == "workflow_1" -> %>
+        <div class="wf-panel">
+          <div class="wf-two-col-layout">
+            <%!-- Left Column --%>
+            <div class="wf-col-main">
+              <section class="wf-card">
+                <div class="wf-card-header">
+                  <h2 class="wf-card-title">Submission Files</h2>
+                  <button type="button" class="wf-btn-link">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Upload
+                  </button>
+                </div>
+
+                <%= if @submission.files in [nil, []] do %>
+                  <div class="wf-empty">No files have been uploaded for this submission.</div>
+                <% else %>
+                  <table class="wf-table">
+                    <thead>
+                      <tr>
+                        <th class="wf-table-col-num">#</th>
+                        <th>File Name</th>
+                        <th>Date Uploaded</th>
+                        <th>Type</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      <%= for {file, idx} <- Enum.with_index(@submission.files, 1) do %>
+                        <tr>
+                          <td class="wf-table-col-num">{idx}</td>
+                          <td>{file[:filename]}</td>
+                          <td>{file[:date]}</td>
+                          <td>{file[:genre] || "Article Text"}</td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+
+                  <div class="wf-card-footer">
+                    <button type="button" class="wf-btn-outline">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                      Download All Files
+                    </button>
+                  </div>
+                <% end %>
+              </section>
+
+              <section class="wf-card">
+                <div class="wf-card-header">
+                  <h2 class="wf-card-title">Pre-Review Discussions</h2>
+                  <button type="button" class="wf-btn-link">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Discussion
+                  </button>
+                </div>
+
+                <div class="wf-empty">No discussions have been started yet.</div>
+
+                <%!-- <table class="wf-table">
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>From</th>
+                      <th>Last Reply</th>
+                      <th>Replies</th>
+                      <th>Closed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colspan="5" class="wf-empty">No discussions have been started yet.</td>
+                    </tr>
+                  </tbody>
+                </table> --%>
+              </section>
+            </div>
+
+            <%!-- Right Column --%>
+            <div class="wf-col-side">
+              <section class="wf-card">
+                <h2 class="wf-card-title">Action Panel</h2>
+                <div class="wf-action-panel">
+                  <form
+                    method="POST"
+                    action={"/dashboard/editorial/#{@submission.id}/send-to-review"}
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <input type="hidden" name="currentViewId" value={@current_view} />
+                    <button
+                      type="submit"
+                      class="wf-btn-action wf-btn-action-primary"
+                      id="btn-send-for-review"
+                    >
+                      Send For Review
+                    </button>
+                  </form>
+                  <form
+                    method="POST"
+                    action={"/dashboard/editorial/#{@submission.id}/accept"}
+                    id="accept-skip-review-form-workflow-1"
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <input type="hidden" name="currentViewId" value={@current_view} />
+                    <button
+                      type="submit"
+                      class="wf-btn-action wf-btn-action-secondary"
+                      id="btn-accept-skip-review"
+                    >
+                      Accept and Skip Review
+                    </button>
+                  </form>
+                  <form
+                    method="POST"
+                    action={"/dashboard/editorial/#{@submission.id}/decline"}
+                    id="decline-form-workflow-1"
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <input type="hidden" name="currentViewId" value={@current_view} />
+                    <button
+                      type="button"
+                      class="wf-btn-action wf-btn-action-danger"
+                      id="btn-decline-submission"
+                      onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
+                    >
+                      Decline Submission
+                    </button>
+                  </form>
+                </div>
+              </section>
+
+              <section class="wf-card">
+                <div class="wf-card-header">
+                  <h2 class="wf-card-title">Participants</h2>
+                  <button type="button" class="wf-btn-link">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="8.5" cy="7" r="4"></circle>
+                      <line x1="20" y1="8" x2="20" y2="14"></line>
+                      <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    Assign
+                  </button>
+                </div>
+
+                <ul class="wf-participants-list">
+                  <%= for contributor <- @submission.contributors || [] do %>
+                    <% info = contributor_display(contributor) %>
+                    <li class="wf-participant-item">
+                      <span class="wf-avatar-sm">{contributor_initials(info.name)}</span>
+                      <span class="wf-participant-detail">
+                        <strong>{info.name}</strong>
+                        <small>Author{if info[:primary], do: " (Contact)"}</small>
+                      </span>
+                    </li>
+                  <% end %>
+                </ul>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <%!-- ==================== WORKFLOW_3_1: EXTERNAL REVIEW ==================== --%>
+      <% @active_menu == "workflow_3_1" -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <div class="wf-card-head">
+              <h2 class="wf-card-title">Review Round 1</h2>
+              <span class={[
+                "wf-status-badge",
+                if(@review_assignments == [], do: "wf-status-info", else: "wf-status-ok")
+              ]}>
+                {if @review_assignments == [],
+                  do: "Not Started",
+                  else: "#{length(@review_assignments)} assignment(s)"}
+              </span>
+            </div>
+
+            <%= if @review_assignments == [] do %>
+              <div class="wf-empty">
+                No reviewers have been assigned yet. Assign reviewers to begin the external
+                review round.
+              </div>
+              <div class="wf-action-buttons" style="margin-top: 1rem;">
+                <form
+                  method="POST"
+                  action={"/dashboard/editorial/#{@submission.id}/assign-reviewer"}
+                  class="wf-inline-form"
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <input type="hidden" name="currentViewId" value={@current_view} />
+                  <input
+                    type="text"
+                    name="reviewer_name"
+                    placeholder="Reviewer name"
+                    class="wf-input-inline"
+                    required
+                  />
+                  <button type="submit" class="wf-btn-primary" id="btn-assign-reviewer">
+                    Assign Reviewer
+                  </button>
+                </form>
+              </div>
+            <% else %>
+              <table class="wf-table">
+                <thead>
+                  <tr>
+                    <th>Reviewer</th>
+                    <th>Round</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Recommendation</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <%= for assignment <- @review_assignments do %>
+                    <tr>
+                      <td>{latest_reviewer(assignment) || "Awaiting response"}</td>
+                      <td>{assignment.round || 1}</td>
+                      <td>{reviewer_status_label(assignment.status)}</td>
+                      <td>{format_date(assignment.due_date)}</td>
+                      <td>{reviewer_recommendation(assignment.recommendation)}</td>
+                      <td>
+                        <a href={"/review/#{assignment.id}"} class="editorial-view-link">Open</a>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% end %>
+
+            <%= if @row.status not in [:declined, :published, :scheduled] do %>
+              <div class="wf-action-buttons" style="margin-top: 1rem;">
+                <form
+                  method="POST"
+                  action={"/dashboard/editorial/#{@submission.id}/request-revisions"}
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <input type="hidden" name="currentViewId" value={@current_view} />
+                  <button type="submit" class="wf-btn-secondary" id="btn-request-revisions">
+                    Request Revisions
+                  </button>
+                </form>
+                <form
+                  method="POST"
+                  action={"/dashboard/editorial/#{@submission.id}/accept"}
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <input type="hidden" name="currentViewId" value={@current_view} />
+                  <button type="submit" class="wf-btn-primary" id="btn-accept-submission">
+                    Accept Submission
+                  </button>
+                </form>
+                <form
+                  method="POST"
+                  action={"/dashboard/editorial/#{@submission.id}/decline"}
+                  id="decline-form-review"
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <input type="hidden" name="currentViewId" value={@current_view} />
+                  <button
+                    type="button"
+                    class="wf-btn-danger"
+                    id="btn-decline-review"
+                    onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
+                  >
+                    Decline Submission
+                  </button>
+                </form>
+              </div>
+            <% end %>
+          </section>
+        </div>
+
+        <%!-- ==================== WORKFLOW_4: COPYEDITING ==================== --%>
+      <% @active_menu == "workflow_4" -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <h2 class="wf-card-title">Copyediting Tasks</h2>
+
+            <%= if @review_assignments == [] do %>
+              <div class="wf-empty">
+                Copyediting has not started. This stage becomes available once a review round
+                is completed.
+              </div>
+            <% else %>
+              <% assignment =
+                Enum.find(@review_assignments, &(&1.stage == :copyediting)) ||
+                  List.first(@review_assignments) %>
+              <ul class="wf-tasks">
+                <%= for task <- assignment.copyedit_tasks || [] do %>
+                  <li class={["wf-task", task.done && "wf-task-done"]}>
+                    <span class="wf-task-check">{if task.done, do: "✓", else: ""}</span>
+                    {task.label}
+                  </li>
+                <% end %>
+              </ul>
+
+              <a href={"/review/#{assignment.id}"} class="btn-view">Manage copyediting</a>
+            <% end %>
+          </section>
+        </div>
+
+        <%!-- ==================== WORKFLOW_5: PRODUCTION ==================== --%>
+      <% @active_menu == "workflow_5" -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <h2 class="wf-card-title">Production</h2>
+
+            <%= if @review_assignments == [] do %>
+              <div class="wf-empty">
+                Production has not started for this submission yet.
+              </div>
+            <% else %>
+              <% assignment =
+                Enum.find(@review_assignments, &(&1.stage == :production)) ||
+                  List.first(@review_assignments) %>
+              <h3 class="wf-subcard-title">Galleys</h3>
+
+              <%= if assignment.galley_files in [nil, []] do %>
+                <div class="wf-empty">No galley files have been prepared.</div>
+              <% else %>
+                <table class="wf-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Type</th>
+                      <th>Size</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <%= for galley <- assignment.galley_files do %>
+                      <tr>
+                        <td>{galley.name}</td>
+                        <td>{galley.type}</td>
+                        <td>{galley.size}</td>
+                        <td>{galley.date}</td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              <% end %>
+
+              <h3 class="wf-subcard-title">Proofreading</h3>
+              <ul class="wf-tasks">
+                <%= for task <- assignment.proofread_tasks || [] do %>
+                  <li class={["wf-task", task.done && "wf-task-done"]}>
+                    <span class="wf-task-check">{if task.done, do: "✓", else: ""}</span>
+                    {task.label}
+                  </li>
+                <% end %>
+              </ul>
+
+              <a href={"/review/#{assignment.id}"} class="editorial-view-link">Open production record</a>
+
+              <div class="wf-action-buttons" style="margin-top: 1rem;">
+                <form
+                  method="POST"
+                  action={"/dashboard/editorial/#{@submission.id}/accept"}
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <input type="hidden" name="currentViewId" value={@current_view} />
+                  <button type="submit" class="wf-btn-primary" id="btn-accept-production">
+                    Accept &amp; Schedule
+                  </button>
+                </form>
+                <form
+                  method="POST"
+                  action={"/dashboard/editorial/#{@submission.id}/decline"}
+                  id="decline-form-production"
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <input type="hidden" name="currentViewId" value={@current_view} />
+                  <button
+                    type="button"
+                    class="wf-btn-danger"
+                    id="btn-decline-production"
+                    onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
+                  >
+                    Decline Submission
+                  </button>
+                </form>
+              </div>
+            <% end %>
+          </section>
+        </div>
+
+        <%!-- ==================== PUBLICATION: TITLE & ABSTRACT ==================== --%>
+      <% @active_menu == "publication_titleAbstract" -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <h2 class="wf-card-title">Title &amp; Abstract</h2>
+
+            <.form
+              for={@pub_form}
+              id="pub-form-title-abstract"
+              action={workflow_action_path(@submission.id)}
+              class="wf-form"
+            >
+              <input type="hidden" name="currentViewId" value={@current_view} />
+              <input type="hidden" name="workflowMenuKey" value={@active_menu} />
+
+              <.input field={@pub_form[:title]} type="text" label="Title" />
+
+              <.input field={@pub_form[:subtitle]} type="text" label="Subtitle" />
+
+              <.input field={@pub_form[:abstract]} type="textarea" rows="8" label="Abstract" />
+
+              <div class="wf-form-actions">
+                <button type="submit" class="wf-btn-primary" id="btn-save-publication">
+                  Save
+                </button>
+              </div>
+            </.form>
+          </section>
+        </div>
+
+        <%!-- ==================== PUBLICATION: METADATA ==================== --%>
+      <% @active_menu == "publication_metadata" -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <h2 class="wf-card-title">Metadata</h2>
+
+            <.form
+              for={@pub_form}
+              id="pub-form-metadata"
+              action={workflow_action_path(@submission.id)}
+              class="wf-form"
+            >
+              <input type="hidden" name="currentViewId" value={@current_view} />
+              <input type="hidden" name="workflowMenuKey" value={@active_menu} />
+
+              <.input field={@pub_form[:keywords]} type="text" label="Keywords" />
+
+              <div class="wf-form-row">
+                <.input field={@pub_form[:language]} type="text" label="Language" />
+
+                <.input field={@pub_form[:section]} type="text" label="Section" />
+              </div>
+
+              <div class="wf-form-actions">
+                <button type="submit" class="wf-btn-primary" id="btn-save-metadata">
+                  Save
+                </button>
+              </div>
+            </.form>
+          </section>
+        </div>
+
+        <%!-- ==================== PUBLICATION: REFERENCES ==================== --%>
+      <% @active_menu == "publication_citations" -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <h2 class="wf-card-title">References</h2>
+
+            <p class="wf-hint">
+              List each reference on its own line. References are exported in the JATS
+              citation format.
+            </p>
+
+            <.form
+              for={@pub_form}
+              id="pub-form-citations"
+              action={workflow_action_path(@submission.id)}
+              class="wf-form"
+            >
+              <input type="hidden" name="currentViewId" value={@current_view} />
+              <input type="hidden" name="workflowMenuKey" value={@active_menu} />
+
+              <.input field={@pub_form[:references]} type="textarea" rows="10" label="References" />
+
+              <div class="wf-form-actions">
+                <button type="submit" class="wf-btn-primary" id="btn-save-citations">
+                  Save
+                </button>
+              </div>
+            </.form>
+          </section>
+        </div>
+
+        <%!-- ==================== PUBLICATION: JATS ==================== --%>
+      <% @active_menu == "publication_jats" -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <h2 class="wf-card-title">JATS XML</h2>
+
+            <p class="wf-hint">
+              JATS preview generated from the publication details of this submission
+              (JATS 1.2, Journal Archiving DTD).
+            </p>
+
+            <pre class="wf-code" phx-no-curly-interpolation><%= jats_xml(@submission) %></pre>
+          </section>
+        </div>
+
+        <%!-- ==================== PUBLICATION: GALLEYS ==================== --%>
+      <% @active_menu == "publication_galleys" -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <h2 class="wf-card-title">Galleys</h2>
+
+            <%= if @submission.files in [nil, []] do %>
+              <div class="wf-empty">
+                No galley formats available. Upload production-ready files during the
+                Production stage.
+              </div>
+            <% else %>
+              <table class="wf-table">
+                <thead>
+                  <tr>
+                    <th>Galley Label</th>
+                    <th>Genre</th>
+                    <th>Size</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <%= for file <- @submission.files do %>
+                    <tr>
+                      <td>{file[:filename]}</td>
+                      <td>{file[:genre] || "Article Text"}</td>
+                      <td>{file[:size]}</td>
+                      <td>{file[:date]}</td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% end %>
+          </section>
+        </div>
+
+        <%!-- ==================== PUBLICATION: ISSUE ==================== --%>
+      <% @active_menu == "publication_issue" -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <h2 class="wf-card-title">Issue</h2>
+
+            <p class="wf-hint">
+              This submission can be scheduled into one of the journal issues below once it
+              reaches the Production stage.
+            </p>
+
+            <table class="wf-table">
+              <thead>
+                <tr>
+                  <th>Issue</th>
+                  <th>Volume / Number</th>
+                  <th>Year</th>
+                  <th>Published</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <%= for issue <- @issues do %>
+                  <tr>
+                    <td>{issue.title}</td>
+                    <td>Vol. {issue.volume} No. {issue.number}</td>
+                    <td>{issue.year}</td>
+                    <td>{issue.published_date || "—"}</td>
+                    <td>
+                      <span class={[
+                        "wf-status-badge",
+                        if(issue.status == :published, do: "wf-status-ok", else: "wf-status-info")
+                      ]}>
+                        {String.capitalize(to_string(issue.status))}
+                      </span>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <%!-- ==================== PUBLICATION: LICENSE ==================== --%>
+      <% @active_menu == "publication_license" -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <h2 class="wf-card-title">License</h2>
+
+            <p class="wf-license-name">
+              Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+            </p>
+
+            <dl class="wf-grid">
+              <div class="wf-grid-item">
+                <dt>Copyright Holder</dt>
+                <dd>{@row.author}</dd>
+              </div>
+
+              <div class="wf-grid-item">
+                <dt>Publication License</dt>
+                <dd>CC BY-SA 4.0</dd>
+              </div>
+
+              <div class="wf-grid-item">
+                <dt>Commercial Use</dt>
+                <dd>Allowed</dd>
+              </div>
+
+              <div class="wf-grid-item">
+                <dt>Derivative Works</dt>
+                <dd>Allowed under same license</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+      <% true -> %>
+        <div class="wf-panel">
+          <section class="wf-card">
+            <div class="wf-empty">Select a menu item to manage this submission.</div>
+          </section>
+        </div>
+    <% end %>
+  </div>
+</div>

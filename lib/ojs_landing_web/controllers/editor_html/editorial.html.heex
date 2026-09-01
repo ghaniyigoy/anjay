@@ -472,10 +472,40 @@
 
                 <td class="col-days">{submission.days}</td>
 
-                <td class="col-editorial"></td>
+                <td class="col-editorial">
+                  <% action = editorial_actions(submission) %>
+                  <%= if action do %>
+                    <%= if Map.get(action, :modal) do %>
+                      <%= if String.starts_with?(action.modal, "assign-reviewers-") do %>
+                        <button
+                          type="button"
+                          class="btn-editorial-action"
+                          onclick={"openAddReviewerModal(#{submission.id})"}
+                        >{action.label}</button>
+                      <% else %>
+                        <button
+                          type="button"
+                          class="btn-editorial-action"
+                          onclick={"openAssignEditorModal(#{submission.id})"}
+                        >{action.label}</button>
+                      <% end %>
+                    <% else %>
+                      <a href={action.href} class="btn-editorial-action">{action.label}</a>
+                    <% end %>
+                  <% end %>
+                </td>
 
                 <td class="col-actions">
-                  <a href={"/submission/wizard/#{submission.id}?tab=review"} class="btn-view">View</a>
+                  <a
+                    href={
+                      workflow_menu_path(
+                        submission.id,
+                        @current_view,
+                        default_workflow_menu_for_stage(submission.stage)
+                      )
+                    }
+                    class="editorial-view-link"
+                  >View</a>
                 </td>
               </tr>
             <% end %>
@@ -503,4 +533,448 @@
       arrow.style.transform = 'rotate(-90deg)';
     }
   }
+</script>
+
+<%!-- Assign Participant Modal --%>
+<div id="assign-editor-overlay" class="ap-modal-overlay" style="display:none">
+  <div class="ap-modal">
+    <div class="ap-modal-header">
+      <h2 class="ap-modal-title">Assign Participant</h2>
+      <button type="button" class="ap-modal-close" onclick="closeAssignEditorModal()">&times;</button>
+    </div>
+
+    <div class="ap-modal-body">
+      <div class="ap-modal-layout">
+        <%!-- Left Panel: Locate a User --%>
+        <div class="ap-locate-panel">
+          <div class="ap-panel-heading">Locate a User</div>
+          <div class="ap-locate-row">
+            <div class="ap-filter-group">
+              <select id="ap-role-filter" class="ap-select" onchange="filterAssignEditorUsers()">
+                <option value="editor">Journal Editor</option>
+                <option value="all">All Roles</option>
+                <option value="reviewer">Reviewer</option>
+                <option value="author">Author</option>
+              </select>
+              <div class="ap-search-box">
+                <svg
+                  class="ap-search-icon"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                  type="text"
+                  id="ap-search-name"
+                  class="ap-search-input"
+                  placeholder="Search"
+                  oninput="filterAssignEditorUsers()"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <%!-- Right Panel: Search User By Name --%>
+        <div class="ap-search-panel">
+          <div class="ap-panel-heading">Search User By Name</div>
+          <div class="ap-users-table-wrapper">
+            <table class="ap-users-table" id="ap-users-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Assignments</th>
+                  <th>Affiliation</th>
+                  <th>Reviewing Interest</th>
+                </tr>
+              </thead>
+              <tbody id="ap-users-tbody"></tbody>
+            </table>
+            <div class="ap-no-results" id="ap-no-results" style="display:none">
+              No users found
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <%!-- Message Section --%>
+      <div class="ap-message-section">
+        <p class="ap-message-hint">
+          Choose a predefined message to use, or fill out the form below.
+        </p>
+        <label class="ap-message-label">Predefined Message</label>
+        <select
+          id="ap-predefined-message"
+          class="ap-select"
+          onchange="applyPredefinedMessage(this.value)"
+        >
+          <option value="">Choose a predefined message...</option>
+          <option value="discussion">Discussion (Submission)</option>
+          <option value="assign_editor">Assign Editor</option>
+        </select>
+        <label class="ap-message-label">Message</label>
+        <div class="ap-richtext-wrapper">
+          <div class="ap-richtext-toolbar">
+            <button type="button" class="ap-richtext-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+            <button type="button" class="ap-richtext-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+            <button type="button" class="ap-richtext-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+            <button
+              type="button"
+              class="ap-richtext-btn"
+              data-cmd="insertUnorderedList"
+              title="Bullet List"
+            >&#8226;</button>
+          </div>
+          <div class="ap-richtext-editor" id="ap-message-editor" contenteditable="true"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ap-modal-footer">
+      <button type="button" class="ap-btn-send" onclick="submitAssignEditor()">Send</button>
+      <button type="button" class="ap-btn-cancel" onclick="closeAssignEditorModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<%!-- Hidden form for POST submission --%>
+<form
+  id="assign-editor-form"
+  method="post"
+  action="/dashboard/editorial/assign-editor"
+  style="display:none"
+>
+  <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+  <input type="hidden" id="ap-form-submission-id" name="submission_id" value="" />
+  <input type="hidden" id="ap-form-role" name="role" value="editor" />
+  <input type="hidden" id="ap-form-user-id" name="user_id" value="" />
+  <input type="hidden" id="ap-form-username" name="username" value="" />
+  <input type="hidden" id="ap-form-message" name="message" value="" />
+</form>
+
+<script>
+  window.__apUsers = <%= raw(@ap_users_json || "[]") %>;
+  window.__apSelectedUserId = null;
+  window.__apCurrentSubmissionId = null;
+
+  function openAssignEditorModal(submissionId) {
+    window.__apCurrentSubmissionId = submissionId;
+    window.__apSelectedUserId = null;
+    document.getElementById('ap-form-submission-id').value = submissionId;
+    document.getElementById('ap-form-user-id').value = '';
+    document.getElementById('ap-form-username').value = '';
+    document.getElementById('ap-form-message').value = '';
+    document.getElementById('ap-message-editor').innerHTML = '';
+    document.getElementById('ap-predefined-message').value = '';
+    document.getElementById('ap-search-name').value = '';
+    document.getElementById('ap-role-filter').value = 'editor';
+    filterAssignEditorUsers();
+    document.getElementById('assign-editor-overlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAssignEditorModal() {
+    document.getElementById('assign-editor-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function applyPredefinedMessage(value) {
+    var editor = document.getElementById('ap-message-editor');
+    if (!value) { return; }
+    if (value === 'discussion') {
+      editor.innerHTML = '<p>Dear Editor,</p><p>I have submitted my manuscript for consideration. Please let me know if there is anything else you need.</p>';
+    } else if (value === 'assign_editor') {
+      editor.innerHTML = '<p>You have been assigned as the editor of record for this submission. Please proceed with the editorial workflow.</p>';
+    }
+  }
+
+  function filterAssignEditorUsers() {
+    var role = document.getElementById('ap-role-filter').value;
+    var query = document.getElementById('ap-search-name').value.toLowerCase();
+    var users = window.__apUsers || [];
+    var tbody = document.getElementById('ap-users-tbody');
+    var noResults = document.getElementById('ap-no-results');
+
+    var filtered = users.filter(function(u) {
+      var matchRole = (role === 'all') || (u.role === role);
+      var name = ((u.given_name || '') + ' ' + (u.family_name || '')).toLowerCase();
+      var matchQuery = !query || name.indexOf(query) !== -1 || (u.email || '').toLowerCase().indexOf(query) !== -1;
+      return matchRole && matchQuery;
+    });
+
+    tbody.innerHTML = '';
+    if (filtered.length === 0) {
+      noResults.style.display = 'block';
+    } else {
+      noResults.style.display = 'none';
+      filtered.forEach(function(u) {
+        var name = ((u.given_name || '') + ' ' + (u.family_name || '')).trim() || u.username;
+        var tr = document.createElement('tr');
+        tr.className = 'ap-user-row';
+        tr.setAttribute('data-user-id', u.id);
+        tr.setAttribute('data-username', u.username);
+        tr.onclick = function() { selectAssignEditorUser(u.id, u.username, name, tr); };
+        tr.innerHTML =
+          '<td><div style="font-weight:600;color:#222;line-height:1.3">' + escapeHtml(name) + '</div><div style="font-size:11px;color:#888;margin-top:2px">' + escapeHtml(u.email || '') + '</div></td>' +
+          '<td style="color:#888">0</td>' +
+          '<td style="color:#555">' + escapeHtml(u.affiliation || '—') + '</td>' +
+          '<td style="color:#888">—</td>';
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  function selectAssignEditorUser(userId, username, name, row) {
+    document.querySelectorAll('.ap-user-row').forEach(function(r) { r.classList.remove('ap-user-selected'); });
+    row.classList.add('ap-user-selected');
+    window.__apSelectedUserId = userId;
+    document.getElementById('ap-form-user-id').value = userId;
+    document.getElementById('ap-form-username').value = username;
+  }
+
+  function submitAssignEditor() {
+    if (!window.__apSelectedUserId) {
+      alert('Please select a user first.');
+      return;
+    }
+    var editor = document.getElementById('ap-message-editor');
+    document.getElementById('ap-form-message').value = editor.innerHTML;
+    document.getElementById('ap-form-role').value = document.getElementById('ap-role-filter').value;
+    document.getElementById('assign-editor-form').submit();
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  // Initialize richtext toolbar for the modal
+  document.querySelectorAll('.ap-richtext-toolbar .ap-richtext-btn').forEach(function(btn) {
+    btn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+    btn.addEventListener('click', function() {
+      var cmd = btn.getAttribute('data-cmd');
+      document.getElementById('ap-message-editor').focus();
+      document.execCommand(cmd, false, null);
+    });
+  });
+
+  // Close modal on overlay click
+  document.getElementById('assign-editor-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeAssignEditorModal();
+  });
+
+  // Close modal on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAssignEditorModal();
+  });
+</script>
+
+<%!-- Add Reviewer Modal --%>
+<div id="add-reviewer-overlay" class="ar-modal-overlay" style="display:none">
+  <div class="ar-modal">
+    <div class="ar-modal-header">
+      <h2 class="ar-modal-title">Add Reviewer</h2>
+      <button
+        type="button"
+        class="ar-modal-close"
+        onclick="closeAddReviewerModal()"
+        title="Close"
+      >&times;</button>
+    </div>
+
+    <div class="ar-modal-body">
+      <%!-- Submission Author List --%>
+      <div class="ar-author-panel">
+        <div class="ar-panel-heading">Submission Author List</div>
+        <div class="ar-author-entry">
+          <span class="ar-author-avatar" id="ar-author-avatar">AU</span>
+          <div class="ar-author-info">
+            <strong id="ar-author-name">—</strong>
+            <span id="ar-author-title" class="ar-author-title">—</span>
+          </div>
+        </div>
+      </div>
+
+      <%!-- Locate a Reviewer --%>
+      <div class="ar-locate-head">
+        <div class="ar-panel-heading ar-inline-heading">Locate a Reviewer</div>
+        <div class="ar-locate-actions">
+          <button type="button" class="ar-btn-secondary">
+            <svg
+              class="ar-icon"
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            Search
+          </button>
+          <button type="button" class="ar-btn-secondary">
+            <svg
+              class="ar-icon"
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3">
+              </path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6">
+              </path><path d="M9 8h6"></path><path d="M17 16h6"></path>
+            </svg>
+            Filters
+          </button>
+        </div>
+      </div>
+
+      <div class="ar-reviewer-table-wrapper">
+        <table class="ar-reviewer-table" id="ar-reviewer-table">
+          <thead>
+            <tr>
+              <th>Reviewer</th>
+              <th>Affiliation</th>
+              <th>Review Count</th>
+              <th>Last Review</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ar-reviewer-tbody"></tbody>
+        </table>
+        <div class="ar-no-results" id="ar-no-results" style="display:none">
+          No reviewers found
+        </div>
+      </div>
+    </div>
+
+    <%!-- Alternative Actions Footer --%>
+    <div class="ar-modal-footer">
+      <span class="ar-footer-label">Alternative Actions</span>
+      <button type="button" class="ar-btn-secondary">Create New Reviewer</button>
+      <button type="button" class="ar-btn-secondary">Enroll Existing User</button>
+    </div>
+  </div>
+</div>
+
+<%!-- Hidden form for reviewer assignment POST --%>
+<form
+  id="assign-reviewer-form"
+  method="post"
+  style="display:none"
+>
+  <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+  <input type="hidden" id="ar-form-current-view" name="currentViewId" value={@current_view} />
+  <input type="hidden" id="ar-form-reviewer-name" name="reviewer_name" value="" />
+</form>
+
+<script>
+  window.__arReviewers = <%= raw(@ap_users_json || "[]") %>;
+  window.__arSubmissions = <%= raw(@ap_submissions_json || "[]") %>;
+  window.__arCurrentSubmissionId = null;
+
+  function openAddReviewerModal(submissionId) {
+    window.__arCurrentSubmissionId = submissionId;
+    document.getElementById('assign-reviewer-form').action =
+      '/dashboard/editorial/' + submissionId + '/assign-reviewer';
+    document.getElementById('ar-form-reviewer-name').value = '';
+
+    var sub = (window.__arSubmissions || []).find(function(s) { return String(s.id) === String(submissionId); });
+    if (sub) {
+      document.getElementById('ar-author-name').textContent = sub.author || '—';
+      document.getElementById('ar-author-title').textContent = sub.title || '';
+      var initials = (sub.author || 'AU').split(/\s+/).map(function(w){ return w.charAt(0); }).join('').toUpperCase().slice(0,2);
+      document.getElementById('ar-author-avatar').textContent = initials || 'AU';
+    }
+
+    renderReviewers(window.__arReviewers || []);
+    document.getElementById('add-reviewer-overlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAddReviewerModal() {
+    document.getElementById('add-reviewer-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function renderReviewers(reviewers) {
+    var tbody = document.getElementById('ar-reviewer-tbody');
+    var noResults = document.getElementById('ar-no-results');
+    tbody.innerHTML = '';
+
+    // Only show users eligible as reviewers
+    var reviewersOnly = reviewers.filter(function(u) {
+      return !u.role || u.role === 'reviewer' || u.role === 'editor';
+    });
+
+    if (reviewersOnly.length === 0) {
+      noResults.style.display = 'block';
+      return;
+    }
+    noResults.style.display = 'none';
+
+    reviewersOnly.forEach(function(u) {
+      var name = ((u.given_name || '') + ' ' + (u.family_name || '')).trim() || u.username;
+      var statusClass = (u.status === 'Busy') ? 'ar-status-busy' : 'ar-status-ok';
+      var row = document.createElement('tr');
+      row.setAttribute('data-username', u.username);
+      row.innerHTML =
+        '<td><div class="ar-reviewer-name">' + escapeHtml(name) + '</div><div class="ar-reviewer-email">' + escapeHtml(u.email || '') + '</div></td>' +
+        '<td>' + escapeHtml(u.affiliation || '—') + '</td>' +
+        '<td>' + (u.review_count || 0) + '</td>' +
+        '<td>' + (u.last_review || '—') + '</td>' +
+        '<td><span class="ar-status ' + statusClass + '">' + escapeHtml(u.status || 'Available') + '</span></td>' +
+        '<td class="ar-actions-cell">' +
+          '<button type="button" class="ar-btn-select" onclick="selectReviewer(this)">Select Reviewer</button>' +
+          '<div class="ar-dropdown">' +
+            '<button type="button" class="ar-btn-dropdown" onclick="toggleReviewerDropdown(this)" title="More actions">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>' +
+            '</button>' +
+          '</div>' +
+        '</td>';
+      tbody.appendChild(row);
+    });
+  }
+
+  function selectReviewer(btn) {
+    var row = btn.closest('tr');
+    var username = row.getAttribute('data-username');
+    var nameEl = row.querySelector('.ar-reviewer-name');
+    var name = nameEl ? nameEl.textContent : username;
+    document.getElementById('ar-form-reviewer-name').value = name;
+    document.getElementById('assign-reviewer-form').submit();
+  }
+
+  function toggleReviewerDropdown(btn) {
+    var dd = btn.closest('.ar-dropdown');
+    var open = document.querySelector('.ar-dropdown.is-open');
+    if (open && open !== dd) open.classList.remove('is-open');
+    dd.classList.toggle('is-open');
+  }
+
+  document.getElementById('add-reviewer-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeAddReviewerModal();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAddReviewerModal();
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.ar-dropdown')) {
+      document.querySelectorAll('.ar-dropdown.is-open').forEach(function(d) { d.classList.remove('is-open'); });
+    }
+  });
 </script>

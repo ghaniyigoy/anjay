@@ -65,9 +65,15 @@ defmodule OjsLandingWeb.AuthorController do
         redirect_to_login(conn, "Silakan login terlebih dahulu untuk membuat submission.")
 
       user ->
-        title = get_in(params, ["submission", "title"]) || ""
+        sub_params = Map.get(params, "submission", %{})
+        title = sub_params["title"] || ""
+        section = sub_params["section"] || "Artikel Penelitian"
+        language = sub_params["language"] || "id"
+        checklist_agreed = sub_params["checklist_agreed"] in ["1", "true", "on"]
+        privacy_consent = sub_params["privacy_consent"] in ["1", "true", "on"]
+        comments_to_editor = sub_params["comments_to_editor"] || ""
 
-        if String.trim(title) == "" do
+        if String.trim(title) == "" || !checklist_agreed || !privacy_consent do
           conn
           |> put_root_layout(false)
           |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
@@ -77,11 +83,22 @@ defmodule OjsLandingWeb.AuthorController do
             views: @views,
             current_view: @default_view,
             title: title,
+            section: section,
+            language: language,
+            comments_to_editor: comments_to_editor,
             form_error:
               "Judul wajib diisi, Submission Checklist dan Privacy Consent harus dicentang."
           )
         else
           submission = Submission.create(user.username, title)
+
+          Submission.update(submission.id, %{
+            "section" => section,
+            "language" => language,
+            "checklist_agreed" => checklist_agreed,
+            "privacy_consent" => privacy_consent,
+            "comments_to_editor" => comments_to_editor
+          })
 
           conn
           |> put_flash(
@@ -145,6 +162,22 @@ defmodule OjsLandingWeb.AuthorController do
 
       true ->
         handle_generic_update(conn, id, submission_params, tab, Map.get(params, "action"))
+    end
+  end
+
+  def show(conn, %{"id" => id}) do
+    case {conn.assigns.current_user, Submission.get(id)} do
+      {nil, _} ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk melihat submission.")
+
+      {_, nil} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+
+      {_user, submission} ->
+        conn
+        |> redirect(to: submission_path(submission.id, "details"))
     end
   end
 
@@ -337,7 +370,7 @@ defmodule OjsLandingWeb.AuthorController do
 
             conn
             |> put_flash(:info, "Submission #{id} berhasil dikirim ke jurnal!")
-            |> redirect(to: submission_path(id, tab))
+            |> redirect(to: "/dashboard/mySubmissions")
 
           action == "continue" ->
             continue_from(conn, id, submission_params, tab)

@@ -12,6 +12,7 @@ defmodule OjsLandingWeb.ReviewerHTML do
   end
 
   def status_label(:action_required), do: "Action Required"
+  def status_label(:in_progress), do: "In Progress"
   def status_label(:completed), do: "Completed"
   def status_label(:declined), do: "Declined"
   def status_label(:published), do: "Published"
@@ -19,6 +20,7 @@ defmodule OjsLandingWeb.ReviewerHTML do
   def status_label(_), do: "Unknown"
 
   def status_color(:action_required), do: "#dc3545"
+  def status_color(:in_progress), do: "#f39c12"
   def status_color(:completed), do: "#27ae60"
   def status_color(:declined), do: "#e74c3c"
   def status_color(:published), do: "#3498db"
@@ -27,15 +29,17 @@ defmodule OjsLandingWeb.ReviewerHTML do
   def all_tasks_done?(tasks), do: Enum.all?(tasks, & &1.done)
   def done_task_count(tasks), do: Enum.count(tasks, & &1.done)
 
-  def stage_class(assignment, stage) do
-    case {assignment.stage, stage} do
-      {:review, :submission} -> "done"
-      {:review, :review} -> "active"
-      {:copyediting, s} when s in [:submission, :review] -> "done"
-      {:copyediting, :copyediting} -> "active"
-      {:production, s} when s in [:submission, :review, :copyediting] -> "done"
-      {:production, :production} -> "active"
-      _ -> ""
+  def wizard_current_step(%{status: :action_required}), do: 1
+  def wizard_current_step(%{status: :in_progress, wizard_step: s}) when s in [1, 2, 3, 4], do: s
+  def wizard_current_step(_), do: 1
+
+  def wizard_step_class(assignment, num) do
+    current = wizard_current_step(assignment)
+
+    cond do
+      num == current -> "active"
+      num < current -> "done"
+      true -> ""
     end
   end
 
@@ -51,4 +55,18 @@ defmodule OjsLandingWeb.ReviewerHTML do
   def file_type_class("CSV"), do: "csv"
   def file_type_class(type) when is_binary(type), do: "other"
   def file_type_class(_), do: "other"
+
+  def reviewer_files(nil), do: []
+  def reviewer_files(files), do: files
+
+  def last_reply_date(discussion) do
+    case discussion.replies do
+      nil -> "—"
+      [] -> "—"
+      replies -> replies |> List.last() |> Map.get(:date, "—")
+    end
+  end
+
+  def discussions(nil), do: []
+  def discussions(list), do: list
 end

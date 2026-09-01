@@ -42,9 +42,23 @@ defmodule OjsLandingWeb.Router do
     post "/review/:id/galley", ReviewerController, :add_galley
     post "/review/:id/proofread/:task", ReviewerController, :complete_proofread
     post "/review/:id/publish", ReviewerController, :publish
+    post "/review/:id/accept", ReviewerController, :accept_review
+    post "/review/:id/decline", ReviewerController, :decline_review
+    post "/review/:id/step", ReviewerController, :review_step
+    post "/review/:id/go-back", ReviewerController, :review_go_back
+    post "/review/:id/file", ReviewerController, :add_reviewer_file
+    post "/review/:id/discussion", ReviewerController, :add_discussion
 
     # Editor Dashboard Routes
     get "/dashboard/editorial", EditorController, :editorial
+    get "/dashboard/editorial/activity/:id", EditorController, :activity
+    post "/dashboard/editorial/:id/publication", EditorController, :save_publication
+    post "/dashboard/editorial/:id/send-to-review", EditorController, :send_to_review
+    post "/dashboard/editorial/:id/request-revisions", EditorController, :request_revisions
+    post "/dashboard/editorial/:id/accept", EditorController, :accept_submission
+    post "/dashboard/editorial/:id/decline", EditorController, :decline_submission
+    post "/dashboard/editorial/:id/assign-reviewer", EditorController, :assign_reviewer
+    post "/dashboard/editorial/assign-editor", EditorController, :assign_editor
 
     # Editor DOI Article Registration Routes
     get "/dashboard/doiArticles", DoiArticleController, :index
@@ -61,6 +75,7 @@ defmodule OjsLandingWeb.Router do
     get "/submission/wizard/:id", AuthorController, :edit_submission
     put "/submission/wizard/:id", AuthorController, :update_submission
     get "/submission/wizard/:id/saved", AuthorController, :saved_submission
+    get "/submission/:id", AuthorController, :show
 
     # Make a Submission: Details (OJS 3.5 wizard)
     get "/submission/:id/details", AuthorController, :details

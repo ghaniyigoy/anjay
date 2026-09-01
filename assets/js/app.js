@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ==========================================
 (function () {
   function initRichtextEditors() {
-    var editors = document.querySelectorAll('.ojs-richtext[data-target]');
+    var editors = document.querySelectorAll('.ojs-richtext[data-target], .rp-richtext[data-target]');
 
     Array.prototype.forEach.call(editors, function (editor) {
       if (editor.__richtextInit) return;
@@ -85,6 +85,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
       var toolbar = document.getElementById(targetId + '-toolbar');
       var buttons = toolbar ? toolbar.querySelectorAll('button[data-cmd]') : [];
+
+      var autosaveKey = editor.getAttribute('data-autosave');
+      var draftValue = autosaveKey
+        ? window.localStorage.getItem(autosaveKey)
+        : null;
+
+      if (autosaveKey && draftValue !== null) {
+        hidden.value = draftValue;
+      }
 
       editor.innerHTML = hidden.value || '';
 
@@ -106,6 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
       function sync() {
         hidden.value = editor.innerHTML;
+        if (autosaveKey) {
+          try {
+            window.localStorage.setItem(autosaveKey, editor.innerHTML);
+          } catch (e) {}
+        }
         Array.prototype.forEach.call(buttons, function (btn) {
           var cmd = btn.getAttribute('data-cmd');
           btn.classList.toggle('is-active', stateActive(cmd));
@@ -136,7 +150,16 @@ document.addEventListener('DOMContentLoaded', function() {
       document.addEventListener('selectionchange', sync);
 
       var form = hidden.form || hidden.closest('form');
-      if (form) form.addEventListener('submit', sync);
+      if (form) {
+        form.addEventListener('submit', function () {
+          sync();
+          if (autosaveKey) {
+            try {
+              window.localStorage.removeItem(autosaveKey);
+            } catch (e) {}
+          }
+        });
+      }
     });
   }
 
@@ -248,6 +271,15 @@ document.addEventListener('click', function (e) {
     if (input) input.click();
   }
 });
+
+// ==========================================
+// Confirm Action (workflow decline buttons)
+// ==========================================
+window.confirmAction = function(message, form) {
+  if (window.confirm(message)) {
+    form.submit();
+  }
+};
 
 // ==========================================
 // Phoenix LiveSocket

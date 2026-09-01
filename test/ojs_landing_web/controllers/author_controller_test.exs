@@ -478,7 +478,7 @@ defmodule OjsLandingWeb.AuthorControllerTest do
           "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
           "submission" => %{
             "title" => "Judul dari Halaman Make a Submission",
-            "checklist" => "1",
+            "checklist_agreed" => "1",
             "privacy_consent" => "1"
           }
         })

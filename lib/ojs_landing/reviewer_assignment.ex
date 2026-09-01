@@ -15,6 +15,7 @@ defmodule OjsLanding.ReviewerAssignment do
     :subtitle,
     :abstract,
     :author,
+    :reviewer_name,
     :journal,
     :section,
     :language,
@@ -34,7 +35,10 @@ defmodule OjsLanding.ReviewerAssignment do
     :galley_files,
     :proofread_tasks,
     :published_at,
-    :issue
+    :issue,
+    :wizard_step,
+    :reviewer_files,
+    :discussions
   ]
 
   def start_link(_opts) do
@@ -67,6 +71,46 @@ defmodule OjsLanding.ReviewerAssignment do
   """
   def reset do
     Agent.update(__MODULE__, fn _ -> seed() end)
+  end
+
+  @doc """
+  Create a new reviewer assignment for a submission.
+  """
+  def create(params) do
+    assignment = %__MODULE__{
+      id: next_id(),
+      title: params["title"] || "",
+      subtitle: params["subtitle"] || "",
+      abstract: params["abstract"] || "",
+      author: params["author"] || "",
+      reviewer_name: params["reviewer_name"] || "",
+      journal: params["journal"] || "",
+      section: params["section"] || "",
+      language: params["language"] || "",
+      keywords: params["keywords"] || "",
+      status: :action_required,
+      date_assigned: Date.utc_today(),
+      due_date: params["due_date"],
+      round: params["round"] || 1,
+      files: params["files"] || [],
+      review_history: [],
+      stage: :review,
+      submitted_at: nil,
+      recommendation: nil,
+      comments_author: nil,
+      comments_editor: nil,
+      copyedit_tasks: [],
+      galley_files: [],
+      proofread_tasks: [],
+      published_at: nil,
+      issue: nil,
+      wizard_step: 1,
+      reviewer_files: [],
+      discussions: []
+    }
+
+    Agent.update(__MODULE__, fn assignments -> [assignment | assignments] end)
+    {:ok, assignment}
   end
 
   @doc """
@@ -131,6 +175,121 @@ defmodule OjsLanding.ReviewerAssignment do
         end)
 
         {:ok, updated}
+    end
+  end
+
+  @doc """
+  Accept a review assignment that is in `:action_required` status.
+  Sets status to `:in_progress` so the reviewer can proceed.
+  """
+  def accept_assignment(id) do
+    id = normalize_id(id)
+
+    case get(id) do
+      nil ->
+        {:error, :not_found}
+
+      %{status: status} = assignment
+      when status in [:action_required] ->
+        updated = %{assignment | status: :in_progress, wizard_step: 2}
+
+        Agent.update(__MODULE__, fn assignments ->
+          Enum.map(assignments, fn a -> if a.id == id, do: updated, else: a end)
+        end)
+
+        {:ok, updated}
+
+      _assignment ->
+        {:error, :invalid_transition}
+    end
+  end
+
+  @doc """
+  Decline a review assignment that is in `:action_required` or `:in_progress` status.
+  Sets status to `:declined`.
+  """
+  def decline_assignment(id) do
+    id = normalize_id(id)
+
+    case get(id) do
+      nil ->
+        {:error, :not_found}
+
+      %{status: status} = assignment
+      when status in [:action_required, :in_progress] ->
+        updated = %{assignment | status: :declined}
+
+        Agent.update(__MODULE__, fn assignments ->
+          Enum.map(assignments, fn a -> if a.id == id, do: updated, else: a end)
+        end)
+
+        {:ok, updated}
+
+      _assignment ->
+        {:error, :invalid_transition}
+    end
+  end
+
+  @doc """
+  Advance a reviewer in the step-by-step wizard (Request -> Guidelines ->
+  Download & Review -> Completion). Only allowed while the assignment is
+  `:in_progress`. Returns `{:ok, assignment}` with the next step, or
+  `{:error, :invalid_transition}`.
+  """
+  def advance_review_step(id), do: advance_review_step(id, %{})
+
+  def advance_review_step(id, params) do
+    id = normalize_id(id)
+
+    case get(id) do
+      nil ->
+        {:error, :not_found}
+
+      %{status: :in_progress, wizard_step: step} = assignment
+      when step in [1, 2, 3] ->
+        updated = %{
+          assignment
+          | wizard_step: step + 1,
+            recommendation: Map.get(params, "recommendation", assignment.recommendation),
+            comments_author: Map.get(params, "comments_author", assignment.comments_author),
+            comments_editor: Map.get(params, "comments_editor", assignment.comments_editor)
+        }
+
+        Agent.update(__MODULE__, fn assignments ->
+          Enum.map(assignments, fn a -> if a.id == id, do: updated, else: a end)
+        end)
+
+        {:ok, updated}
+
+      _assignment ->
+        {:error, :invalid_transition}
+    end
+  end
+
+  @doc """
+  Move a reviewer back one step in the step-by-step wizard (Download & Review ->
+  Guidelines -> Request). Only allowed while the assignment is `:in_progress`.
+  Returns `{:ok, assignment}` or `{:error, :invalid_transition}`.
+  """
+  def go_back_review_step(id) do
+    id = normalize_id(id)
+
+    case get(id) do
+      nil ->
+        {:error, :not_found}
+
+      %{status: :in_progress, wizard_step: step} = assignment
+      when step in [2, 3, 4] ->
+        updated = %{assignment | wizard_step: max(step - 1, 1)}
+
+        Agent.update(__MODULE__, fn assignments ->
+          Enum.map(assignments, fn a -> if a.id == id, do: updated, else: a end)
+        end)
+
+        {:ok, updated}
+
+      _assignment ->
+        {:error, :invalid_transition}
     end
   end
 
@@ -206,6 +365,65 @@ defmodule OjsLanding.ReviewerAssignment do
   end
 
   @doc """
+  Add a reviewer-uploaded file to an assignment (Reviewer Files panel).
+  """
+  def add_reviewer_file(id, params) do
+    id = normalize_id(id)
+
+    case get(id) do
+      nil ->
+        {:error, :not_found}
+
+      assignment ->
+        file = %{
+          id: next_reviewer_file_id(assignment.reviewer_files),
+          name: params["name"] || "unnamed",
+          type: params["type"] || "File",
+          size: params["size"] || "—",
+          date: Date.to_string(Date.utc_today())
+        }
+
+        updated = %{assignment | reviewer_files: (assignment.reviewer_files || []) ++ [file]}
+
+        Agent.update(__MODULE__, fn assignments ->
+          Enum.map(assignments, fn a -> if a.id == id, do: updated, else: a end)
+        end)
+
+        {:ok, updated}
+    end
+  end
+
+  @doc """
+  Add a review discussion thread to an assignment (Review Discussions panel).
+  """
+  def add_discussion(id, params) do
+    id = normalize_id(id)
+
+    case get(id) do
+      nil ->
+        {:error, :not_found}
+
+      assignment ->
+        discussion = %{
+          id: next_discussion_id(assignment.discussions),
+          subject: params["subject"] || "Discussion",
+          message: params["message"] || "",
+          author: params["author"] || "You",
+          date: Date.to_string(Date.utc_today()),
+          replies: []
+        }
+
+        updated = %{assignment | discussions: (assignment.discussions || []) ++ [discussion]}
+
+        Agent.update(__MODULE__, fn assignments ->
+          Enum.map(assignments, fn a -> if a.id == id, do: updated, else: a end)
+        end)
+
+        {:ok, updated}
+    end
+  end
+
+  @doc """
   Publish a submission that is in the production stage.
   """
   def publish(id, params) do
@@ -241,6 +459,19 @@ defmodule OjsLanding.ReviewerAssignment do
     (files |> Enum.map(& &1.id) |> Enum.max(fn -> 0 end)) + 1
   end
 
+  defp next_reviewer_file_id(files) when files in [nil, []], do: 1
+
+  defp next_reviewer_file_id(files) do
+    (files |> Enum.map(& &1.id) |> Enum.max()) + 1
+  end
+
+  defp next_discussion_id([]), do: 1
+  defp next_discussion_id(nil), do: 1
+
+  defp next_discussion_id(discussions) do
+    (discussions |> Enum.map(& &1.id) |> Enum.max()) + 1
+  end
+
   defp copyedit_tasks(done_keys) when is_list(done_keys) do
     [
       %{key: "initial", label: "Initial Copyedit", done: "initial" in done_keys},
@@ -265,6 +496,15 @@ defmodule OjsLanding.ReviewerAssignment do
 
   defp normalize_id(id), do: id
 
+  defp next_id do
+    Agent.get(__MODULE__, fn assignments ->
+      case Enum.map(assignments, & &1.id) do
+        [] -> 1
+        ids -> Enum.max(ids) + 1
+      end
+    end)
+  end
+
   defp seed do
     [
       %__MODULE__{
@@ -278,19 +518,20 @@ defmodule OjsLanding.ReviewerAssignment do
         section: "Artikel Penelitian",
         language: "Bahasa Indonesia",
         keywords: "machine learning, analisis sentimen, naive bayes, SVM, random forest",
-        status: :action_required,
-        date_assigned: ~D[2024-01-15],
-        due_date: ~D[2024-02-15],
+        status: :in_progress,
+        date_assigned: ~D[2026-08-20],
+        due_date: ~D[2026-09-20],
         round: 1,
         stage: :review,
         files: [
-          %{name: "manuscript.pdf", type: "PDF", size: "1.4 MB", date: "2024-01-12"},
-          %{name: "appendix.pdf", type: "PDF", size: "820 KB", date: "2024-01-12"}
+          %{name: "manuscript.pdf", type: "PDF", size: "1.4 MB", date: "2026-08-12"},
+          %{name: "appendix.pdf", type: "PDF", size: "820 KB", date: "2026-08-12"}
         ],
         review_history: [],
         copyedit_tasks: copyedit_tasks([]),
         galley_files: [],
-        proofread_tasks: proofread_tasks([])
+        proofread_tasks: proofread_tasks([]),
+        wizard_step: 2
       },
       %__MODULE__{
         id: 2,
@@ -304,25 +545,26 @@ defmodule OjsLanding.ReviewerAssignment do
         language: "Bahasa Indonesia",
         keywords: "rekomendasi, collaborative filtering, matrix factorization",
         status: :completed,
-        date_assigned: ~D[2024-01-10],
-        due_date: ~D[2024-02-10],
+        date_assigned: ~D[2026-07-10],
+        due_date: ~D[2026-08-10],
         round: 1,
         stage: :copyediting,
         files: [
-          %{name: "manuscript.pdf", type: "PDF", size: "1.1 MB", date: "2024-01-05"},
-          %{name: "dataset.csv", type: "CSV", size: "2.3 MB", date: "2024-01-05"}
+          %{name: "manuscript.pdf", type: "PDF", size: "1.1 MB", date: "2026-07-05"},
+          %{name: "dataset.csv", type: "CSV", size: "2.3 MB", date: "2026-07-05"}
         ],
         review_history: [
           %{
             round: 1,
             reviewer: "Dr. Siti Nurhaliza",
             decision: "Minor Revisions",
-            date: "2024-02-08"
+            date: "2026-08-08"
           }
         ],
         copyedit_tasks: copyedit_tasks(["initial", "author"]),
         galley_files: [],
-        proofread_tasks: proofread_tasks([])
+        proofread_tasks: proofread_tasks([]),
+        wizard_step: 4
       },
       %__MODULE__{
         id: 3,
@@ -336,30 +578,107 @@ defmodule OjsLanding.ReviewerAssignment do
         language: "Bahasa Indonesia",
         keywords: "blockchain, keamanan data, proof-of-stake",
         status: :published,
-        date_assigned: ~D[2023-12-01],
-        due_date: ~D[2024-01-01],
+        date_assigned: ~D[2026-06-01],
+        due_date: ~D[2026-07-01],
         round: 2,
         stage: :production,
         files: [
-          %{name: "manuscript-final.pdf", type: "PDF", size: "980 KB", date: "2023-12-20"}
+          %{name: "manuscript-final.pdf", type: "PDF", size: "980 KB", date: "2026-12-20"}
         ],
         review_history: [
           %{
             round: 1,
             reviewer: "Dr. Bambang Wijaya",
             decision: "Major Revisions",
-            date: "2023-12-15"
+            date: "2026-12-15"
           },
-          %{round: 2, reviewer: "Budi Santoso", decision: "Accept", date: "2024-01-15"}
+          %{round: 2, reviewer: "Budi Santoso", decision: "Accept", date: "2026-01-15"}
         ],
         copyedit_tasks: copyedit_tasks(["initial", "author", "final"]),
         galley_files: [
-          %{id: 1, name: "galley-pdf.pdf", type: "PDF", size: "1.2 MB", date: "2024-01-20"},
-          %{id: 2, name: "galley-html.html", type: "HTML", size: "480 KB", date: "2024-01-22"}
+          %{id: 1, name: "galley-pdf.pdf", type: "PDF", size: "1.2 MB", date: "2026-01-20"},
+          %{id: 2, name: "galley-html.html", type: "HTML", size: "480 KB", date: "2026-01-22"}
         ],
         proofread_tasks: proofread_tasks(["author", "proofreader"]),
-        published_at: DateTime.new!(~D[2024-01-30], ~T[09:00:00]),
-        issue: "Vol. 1 No. 1"
+        published_at: DateTime.new!(~D[2026-01-30], ~T[09:00:00]),
+        issue: "Vol. 1 No. 1",
+        wizard_step: 4
+      },
+      %__MODULE__{
+        id: 4,
+        title: "Deteksi Berita Palsu pada Media Sosial Menggunakan Transformer",
+        subtitle: "Studi Komparasi BERT dan GPT terhadap Korpora Bahasa Indonesia",
+        abstract:
+          "Penelitian ini mengembangkan model klasifikasi berbasis arsitektur Transformer untuk mendeteksi berita palsu pada media sosial berbahasa Indonesia.",
+        author: "Ahmad Fauzi",
+        journal: "Jurnal Perang Dunia 1",
+        section: "Artikel Penelitian",
+        language: "Bahasa Indonesia",
+        keywords: "berita palsu, transformer, BERT, NLP",
+        status: :action_required,
+        date_assigned: ~D[2026-08-22],
+        due_date: ~D[2026-09-22],
+        round: 1,
+        stage: :review,
+        files: [
+          %{name: "manuscript.pdf", type: "PDF", size: "1.4 MB", date: "2026-08-11"},
+          %{name: "dataset-berita.csv", type: "CSV", size: "3.2 MB", date: "2026-08-10"}
+        ],
+        review_history: [],
+        copyedit_tasks: copyedit_tasks([]),
+        galley_files: [],
+        proofread_tasks: proofread_tasks([]),
+        wizard_step: 1
+      },
+      %__MODULE__{
+        id: 5,
+        title: "Optimasi Algoritma Genetika pada Penjadwalan Produksi",
+        subtitle: "Perbandingan dengan Metode Simulated Annealing",
+        abstract:
+          "Makalah ini mengevaluasi performa algoritma genetika yang dioptimasi untuk masalah penjadwalan produksi job-shop dibandingkan dengan simulated annealing.",
+        author: "Ahmad Fauzi",
+        journal: "Jurnal Perang Dunia 1",
+        section: "Artikel Penelitian",
+        language: "Bahasa Indonesia",
+        keywords: "algoritma genetika, simulated annealing, penjadwalan, optimasi",
+        status: :in_progress,
+        date_assigned: ~D[2026-08-15],
+        due_date: ~D[2026-09-15],
+        round: 1,
+        stage: :review,
+        files: [
+          %{name: "manuscript-rev2.pdf", type: "PDF", size: "980 KB", date: "2026-08-01"}
+        ],
+        review_history: [],
+        copyedit_tasks: copyedit_tasks([]),
+        galley_files: [],
+        proofread_tasks: proofread_tasks([]),
+        wizard_step: 4
+      },
+      %__MODULE__{
+        id: 6,
+        title: "Integrasi IoT untuk Monitoring Kualitas Udara Berbasis LoRa",
+        subtitle: "",
+        abstract:
+          "Makalah ini mengimplementasikan jaringan sensor IoT menggunakan LoRa untuk memantau kualitas udara secara real-time pada area kampus.",
+        author: "Ahmad Fauzi",
+        journal: "Jurnal Perang Dunia 1",
+        section: "Tinjauan Literatur",
+        language: "Bahasa Indonesia",
+        keywords: "IoT, LoRa, monitoring, kualitas udara",
+        status: :declined,
+        date_assigned: ~D[2026-07-20],
+        due_date: ~D[2026-08-20],
+        round: 1,
+        stage: :review,
+        files: [
+          %{name: "manuscript.pdf", type: "PDF", size: "1.1 MB", date: "2026-08-08"}
+        ],
+        review_history: [],
+        copyedit_tasks: copyedit_tasks([]),
+        galley_files: [],
+        proofread_tasks: proofread_tasks([]),
+        wizard_step: 4
       }
     ]
   end

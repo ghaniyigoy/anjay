@@ -29,10 +29,14 @@ defmodule OjsLanding.Submission do
     :references,
     :type,
     :status,
+    :stage,
     :files,
     :contributors,
     :editors,
     :editor_comments,
+    :comments_to_editor,
+    :checklist_agreed,
+    :privacy_consent,
     :review,
     :created_at,
     :date_submitted
@@ -95,10 +99,14 @@ defmodule OjsLanding.Submission do
       references: "",
       type: :article,
       status: :incomplete,
+      stage: :submission,
       files: [],
       contributors: [],
       editors: [],
       editor_comments: "",
+      comments_to_editor: "",
+      checklist_agreed: false,
+      privacy_consent: false,
       review: nil,
       created_at: DateTime.utc_now(),
       date_submitted: nil
@@ -130,8 +138,12 @@ defmodule OjsLanding.Submission do
         |> maybe_put(:language, params["language"])
         |> maybe_put(:references, params["references"])
         |> maybe_put_cleared(:editor_comments, params)
+        |> maybe_put_cleared(:comments_to_editor, params)
+        |> maybe_put_boolean(:checklist_agreed, params)
+        |> maybe_put_boolean(:privacy_consent, params)
         |> maybe_put_files(params)
         |> maybe_put_list(:contributors, params["contributors"])
+        |> maybe_put_stage(params)
         |> maybe_put_status(params)
 
       Agent.update(__MODULE__, fn subs ->
@@ -235,12 +247,13 @@ defmodule OjsLanding.Submission do
     else
       now = DateTime.utc_now()
       submitted = current.date_submitted || now
+      stage = stage_for_status(status)
 
       updated =
         if status == :active do
-          %{current | status: status, date_submitted: submitted}
+          %{current | status: status, stage: stage, date_submitted: submitted}
         else
-          %{current | status: status}
+          %{current | status: status, stage: stage}
         end
 
       Agent.update(__MODULE__, fn subs ->
@@ -270,6 +283,10 @@ defmodule OjsLanding.Submission do
           "1. Vaswani, A., et al. (2017). Attention is all you need. NeurIPS.\n2. Devlin, J., et al. (2019). BERT: Pre-training of deep bidirectional transformers. NAACL.\n3. Maas, A., et al. (2011). Learning word vectors for sentiment analysis. ACL.",
         type: :article,
         status: :active,
+        stage: :initial_review,
+        checklist_agreed: true,
+        privacy_consent: true,
+        comments_to_editor: "",
         files: [
           %{
             id: 1,
@@ -337,6 +354,10 @@ defmodule OjsLanding.Submission do
         language: "id",
         type: :article,
         status: :published,
+        stage: :production,
+        checklist_agreed: true,
+        privacy_consent: true,
+        comments_to_editor: "",
         files: [
           %{
             id: 1,
@@ -405,6 +426,10 @@ defmodule OjsLanding.Submission do
         language: "id",
         type: :article,
         status: :scheduled,
+        stage: :production,
+        checklist_agreed: true,
+        privacy_consent: true,
+        comments_to_editor: "",
         files: [
           %{
             id: 1,
@@ -453,6 +478,10 @@ defmodule OjsLanding.Submission do
         language: "id",
         type: :article,
         status: :revisions_submitted,
+        stage: :external_review,
+        checklist_agreed: true,
+        privacy_consent: true,
+        comments_to_editor: "",
         files: [
           %{
             id: 1,
@@ -498,6 +527,10 @@ defmodule OjsLanding.Submission do
         language: "id",
         type: :article,
         status: :revisions_requested,
+        stage: :external_review,
+        checklist_agreed: true,
+        privacy_consent: true,
+        comments_to_editor: "",
         files: [
           %{
             id: 1,
@@ -543,6 +576,10 @@ defmodule OjsLanding.Submission do
         language: "id",
         type: :article,
         status: :active,
+        stage: :initial_review,
+        checklist_agreed: true,
+        privacy_consent: true,
+        comments_to_editor: "",
         files: [
           %{
             id: 1,
@@ -588,6 +625,10 @@ defmodule OjsLanding.Submission do
         language: "id",
         type: :article,
         status: :declined,
+        stage: :external_review,
+        checklist_agreed: true,
+        privacy_consent: true,
+        comments_to_editor: "",
         files: [
           %{
             id: 1,
@@ -632,6 +673,10 @@ defmodule OjsLanding.Submission do
         language: "id",
         type: :article,
         status: :incomplete,
+        stage: :submission,
+        checklist_agreed: false,
+        privacy_consent: false,
+        comments_to_editor: "",
         files: [],
         contributors: [],
         editors: [],
@@ -739,9 +784,81 @@ defmodule OjsLanding.Submission do
 
   defp maybe_put_status(current, params) do
     cond do
-      params["submit_to_journal"] in ["1", "true"] -> %{current | status: :active}
-      params["save_status"] == "complete" -> %{current | status: :active}
-      true -> current
+      params["submit_to_journal"] in ["1", "true"] ->
+        %{current | status: :active, stage: :initial_review}
+
+      params["save_status"] == "complete" ->
+        %{current | status: :active, stage: :initial_review}
+
+      true ->
+        current
     end
   end
+
+  defp maybe_put_boolean(current, _key, nil), do: current
+
+  defp maybe_put_boolean(current, key, value) when value in [true, "1", "true", "on"],
+    do: Map.put(current, key, true)
+
+  defp maybe_put_boolean(current, key, _value), do: Map.put(current, key, false)
+
+  defp maybe_put_stage(current, params) do
+    case params["stage"] do
+      stage when is_binary(stage) and stage != "" ->
+        Map.put(current, :stage, String.to_existing_atom(stage))
+
+      _ ->
+        current
+    end
+  end
+
+  @doc """
+  Assign an editor to a submission. Adds the editor to the editors list.
+  """
+  def assign_editor(id, editor_info) do
+    id = normalize_id(id)
+    current = get(id)
+
+    if is_nil(current) do
+      {:error, :not_found}
+    else
+      editors = (current.editors || []) ++ [editor_info]
+      updated = %{current | editors: editors}
+
+      Agent.update(__MODULE__, fn subs ->
+        Enum.map(subs, fn s -> if s.id == id, do: updated, else: s end)
+      end)
+
+      {:ok, updated}
+    end
+  end
+
+  @doc """
+  Set the workflow stage for a submission.
+  """
+  def set_stage(id, stage) when is_atom(stage) do
+    id = normalize_id(id)
+    current = get(id)
+
+    if is_nil(current) do
+      {:error, :not_found}
+    else
+      updated = %{current | stage: stage}
+
+      Agent.update(__MODULE__, fn subs ->
+        Enum.map(subs, fn s -> if s.id == id, do: updated, else: s end)
+      end)
+
+      {:ok, updated}
+    end
+  end
+
+  defp stage_for_status(:active), do: :initial_review
+  defp stage_for_status(:revisions_requested), do: :external_review
+  defp stage_for_status(:revisions_submitted), do: :external_review
+  defp stage_for_status(:scheduled), do: :production
+  defp stage_for_status(:published), do: :production
+  defp stage_for_status(:declined), do: :external_review
+  defp stage_for_status(:incomplete), do: :submission
+  defp stage_for_status(_), do: :submission
 end

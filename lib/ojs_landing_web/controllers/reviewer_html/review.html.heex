@@ -6,7 +6,11 @@
 
   <div class="review-page-header">
     <div>
-      <h1 class="review-page-title">Submission Review</h1>
+      <h1 class="review-page-title">
+        {if @assignment.status in [:action_required, :in_progress],
+          do: "Review: " <> truncate_title(@assignment.title),
+          else: "Submission Review"}
+      </h1>
 
       <p class="review-page-subtitle">
         Round {@assignment.round} · Due {Date.to_string(@assignment.due_date)}
@@ -21,42 +25,1058 @@
     ]}>{status_label(@assignment.status)}</span>
   </div>
 
-  <div class="review-stage-bar">
-    <%= for {key, num, label, value} <- [
-      {:submission, 1, "Submission", "1. #{truncate_title(@assignment.title)}"},
-      {:review, 2, "Review", "Round #{@assignment.round}"},
-      {:copyediting, 3, "Copyediting", "—"},
-      {:production, 4, "Production", "—"}
+  <ol class="rr-stepper">
+    <%= for {num, label} <- [
+      {1, "Request"},
+      {2, "Guidelines"},
+      {3, "Download & Review"},
+      {4, "Completion"}
     ] do %>
-      <div class={["review-stage", stage_class(@assignment, key)]}>
-        <span class="review-stage-num">
-          <%= if stage_class(@assignment, key) == "done" do %>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-          <% else %>
-            {num}
-          <% end %>
-        </span>
-
-        <div class="review-stage-body">
-          <span class="review-stage-label">{label}</span>
-          <span class="review-stage-value">{value}</span>
-        </div>
-      </div>
+      <li class={["rr-step", wizard_step_class(@assignment, num)]}>
+        <span class="rr-step-num">{num}</span>
+        <span class="rr-step-label">{label}</span>
+      </li>
     <% end %>
-  </div>
+  </ol>
 
   <div class="review-layout">
     <div class="review-main-col">
       <%= cond do %>
+        <% @assignment.status == :action_required or (@assignment.status == :in_progress and @assignment.wizard_step == 1) -> %>
+          <div class="rr-container">
+            <section class="rr-section">
+              <h2 class="rr-section-title">Request for Review</h2>
+
+              <p class="rr-body">
+                You have been selected as a potential reviewer of the following submission. Below
+                is a summary of the submission. If you decide to review, your review comments will
+                be sent back to the editor and made available to the author. The editor has asked
+                you to review this submission.
+              </p>
+
+              <dl class="rr-meta-list">
+                <div class="rr-meta-item">
+                  <dt>Article Title</dt>
+                  <dd>{@assignment.title}</dd>
+                </div>
+
+                <div class="rr-meta-item">
+                  <dt>Abstract</dt>
+                  <dd>{@assignment.abstract}</dd>
+                </div>
+
+                <div class="rr-meta-item">
+                  <dt>Review Type</dt>
+                  <dd>Round {to_string(@assignment.round)}</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section class="rr-section">
+              <div class="rr-files-header">
+                <h2 class="rr-files-title">Review Files</h2>
+                <div class="rr-files-search">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  Search
+                </div>
+              </div>
+
+              <table class="rr-files-table">
+                <thead>
+                  <tr>
+                    <th class="rr-files-col-name">
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                        </path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                      </svg>
+                      Files
+                    </th>
+                    <th class="rr-files-col-date">Date</th>
+                    <th class="rr-files-col-type">Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <%= for file <- @assignment.files do %>
+                    <tr class="rr-file-row">
+                      <td class="rr-files-col-name">
+                        <a href="#" class="rr-file-link">{file.name}</a>
+                      </td>
+                      <td class="rr-files-col-date">{file.date}</td>
+                      <td class="rr-files-col-type">
+                        <span class={["rr-file-type", file_type_class(file.type)]}>
+                          {file.type}
+                        </span>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+
+              <a href="#" class="rr-view-all">View All Submission Details</a>
+            </section>
+
+            <section class="rr-section">
+              <h2 class="rr-section-title">Review Schedule</h2>
+
+              <div class="rr-schedule-grid">
+                <div class="rr-schedule-item">
+                  <span class="rr-schedule-label">Editor's Request</span>
+                  <span class="rr-schedule-value">
+                    {Date.to_string(@assignment.date_assigned)}
+                  </span>
+                </div>
+                <div class="rr-schedule-item">
+                  <span class="rr-schedule-label">Response Due Date</span>
+                  <span class="rr-schedule-value">
+                    {Date.to_string(@assignment.due_date)}
+                  </span>
+                </div>
+                <div class="rr-schedule-item">
+                  <span class="rr-schedule-label">Review Due Date</span>
+                  <span class="rr-schedule-value">
+                    {Date.to_string(@assignment.due_date)}
+                  </span>
+                </div>
+              </div>
+
+              <div class="rr-about-due">
+                <a href="#" class="rr-due-link">About Due Dates</a>
+              </div>
+
+              <div class="rr-consent">
+                <label class="rr-consent-label">
+                  <input type="checkbox" class="rr-consent-checkbox" />
+                  <span class="rr-consent-text">
+                    Yes, I agree to have my data collected and stored according to the
+                    privacy statement.
+                  </span>
+                </label>
+              </div>
+
+              <div class="rr-actions">
+                <form
+                  method="POST"
+                  action={"/review/#{@assignment.id}/decline"}
+                  id="decline-review-request"
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <button type="submit" class="btn-ojs-secondary" id="btn-decline-review">
+                    Decline Review Request
+                  </button>
+                </form>
+                <%= if @assignment.status == :in_progress do %>
+                  <form
+                    method="POST"
+                    action={"/review/#{@assignment.id}/step"}
+                    id="continue-review-request"
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <button
+                      type="submit"
+                      class="btn-ojs-primary"
+                      id="btn-continue-to-guidelines"
+                    >
+                      Continue to Step #2
+                    </button>
+                  </form>
+                <% else %>
+                  <form
+                    method="POST"
+                    action={"/review/#{@assignment.id}/accept"}
+                    id="accept-review-request"
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <button type="submit" class="btn-ojs-primary" id="btn-accept-review">
+                      Accept Review, Continue to Step #2
+                    </button>
+                  </form>
+                <% end %>
+              </div>
+            </section>
+          </div>
+        <% @assignment.status == :in_progress and @assignment.wizard_step in [2, 3] -> %>
+          <%= if @assignment.wizard_step == 2 do %>
+            <div class="rr-container">
+              <section class="rr-section">
+                <h2 class="rr-section-title">Review Guidelines</h2>
+
+                <p class="rr-body">
+                  Please read the review guidelines below before proceeding with your review.
+                  Your comments should be constructive, specific, and respectful. Focus on the
+                  substance of the manuscript and help the author improve their work.
+                </p>
+
+                <ul class="rr-guideline-list">
+                  <li>Evaluate the originality and contribution of the research.</li>
+                  <li>Assess the soundness of the methodology and analysis.</li>
+                  <li>Provide clear, specific, and actionable feedback.</li>
+                  <li>Keep your comments professional and constructive.</li>
+                  <li>Do not share the manuscript or its contents.</li>
+                </ul>
+
+                <div class="rr-consent">
+                  <label class="rr-consent-label">
+                    <input type="checkbox" class="rr-consent-checkbox" id="guidelines-consent" />
+                    <span class="rr-consent-text">
+                      I have read and agree to follow the review guidelines.
+                    </span>
+                  </label>
+                </div>
+              </section>
+
+              <div class="rr-actions">
+                <form
+                  method="POST"
+                  action={"/review/#{@assignment.id}/go-back"}
+                  id="go-back-guidelines"
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <button type="submit" class="btn-ojs-secondary" id="btn-go-back-guidelines">
+                    Go Back
+                  </button>
+                </form>
+                <form
+                  method="POST"
+                  action={"/review/#{@assignment.id}/step"}
+                  id="continue-guidelines"
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <button type="submit" class="btn-ojs-primary" id="btn-continue-guidelines">
+                    Continue to Step #3
+                  </button>
+                </form>
+              </div>
+            </div>
+          <% else %>
+            <div class="rp-container">
+              <%!-- Review Files Section --%>
+              <div class="rp-panel">
+                <div class="rp-panel-header">
+                  <h2 class="rp-panel-title">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    Review Files
+                  </h2>
+                  <button type="button" class="rp-btn-search" id="btn-search-review-files">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    Search
+                  </button>
+                </div>
+                <div class="rp-search-bar" id="search-review-files-bar" style="display:none">
+                  <input
+                    type="text"
+                    id="search-review-files-input"
+                    class="rp-search-input"
+                    placeholder="Search files by name or type…"
+                    data-target-table="review-files-table"
+                  />
+                </div>
+                <div class="rp-panel-body">
+                  <table class="rp-files-table" id="review-files-table">
+                    <thead>
+                      <tr>
+                        <th>File</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <%= for file <- @assignment.files do %>
+                        <tr
+                          data-name={String.downcase(file.name)}
+                          data-type={String.downcase(file.type)}
+                        >
+                          <td><a href="#" class="rp-file-link">{file.name}</a></td>
+                          <td class="rp-file-date">{file.date}</td>
+                          <td>
+                            <span class={["rp-file-badge", file_type_class(file.type)]}>
+                              {file.type}
+                            </span>
+                          </td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <%!-- Review Form Section --%>
+              <div class="rp-panel">
+                <div class="rp-panel-header">
+                  <h2 class="rp-panel-title">Review</h2>
+                </div>
+                <div class="rp-panel-body">
+                  <p class="rp-help-text">
+                    Enter (or paste) your review of this submission into the form below.
+                  </p>
+
+                  <form method="POST" action={"/review/#{@assignment.id}/step"} id="review-form">
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+
+                    <%!-- For Author and Editor --%>
+                    <div class="rp-field">
+                      <label class="rp-label">For Author and Editor</label>
+                      <div class="rp-richtext-wrapper">
+                        <div id="rp-comments-author-toolbar" class="rp-toolbar">
+                          <button
+                            type="button"
+                            data-cmd="bold"
+                            class="rp-toolbar-btn"
+                            title="Bold"
+                          ><b>B</b></button>
+                          <button
+                            type="button"
+                            data-cmd="italic"
+                            class="rp-toolbar-btn"
+                            title="Italic"
+                          ><i>I</i></button>
+                          <button
+                            type="button"
+                            data-cmd="underline"
+                            class="rp-toolbar-btn"
+                            title="Underline"
+                          ><u>U</u></button>
+                          <button
+                            type="button"
+                            data-cmd="insertUnorderedList"
+                            class="rp-toolbar-btn"
+                            title="Bullet List"
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <line x1="8" y1="6" x2="21" y2="6"></line>
+                              <line x1="8" y1="12" x2="21" y2="12"></line>
+                              <line x1="8" y1="18" x2="21" y2="18"></line>
+                              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                          </button>
+                        </div>
+                        <input
+                          type="hidden"
+                          name="comments_author"
+                          id="rp-comments-author"
+                          value=""
+                        />
+                        <div
+                          id="rp-comments-author-editor"
+                          class="rp-richtext"
+                          data-target="rp-comments-author"
+                          data-autosave={"review-draft-" <> Integer.to_string(@assignment.id) <> "-author"}
+                          contenteditable="true"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <%!-- For Editor --%>
+                    <div class="rp-field">
+                      <label class="rp-label">For Editor</label>
+                      <div class="rp-richtext-wrapper">
+                        <div id="rp-comments-editor-toolbar" class="rp-toolbar">
+                          <button
+                            type="button"
+                            data-cmd="bold"
+                            class="rp-toolbar-btn"
+                            title="Bold"
+                          ><b>B</b></button>
+                          <button
+                            type="button"
+                            data-cmd="italic"
+                            class="rp-toolbar-btn"
+                            title="Italic"
+                          ><i>I</i></button>
+                          <button
+                            type="button"
+                            data-cmd="underline"
+                            class="rp-toolbar-btn"
+                            title="Underline"
+                          ><u>U</u></button>
+                          <button
+                            type="button"
+                            data-cmd="insertUnorderedList"
+                            class="rp-toolbar-btn"
+                            title="Bullet List"
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <line x1="8" y1="6" x2="21" y2="6"></line>
+                              <line x1="8" y1="12" x2="21" y2="12"></line>
+                              <line x1="8" y1="18" x2="21" y2="18"></line>
+                              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                          </button>
+                        </div>
+                        <input
+                          type="hidden"
+                          name="comments_editor"
+                          id="rp-comments-editor"
+                          value=""
+                        />
+                        <div
+                          id="rp-comments-editor-editor"
+                          class="rp-richtext"
+                          data-target="rp-comments-editor"
+                          data-autosave={"review-draft-" <> Integer.to_string(@assignment.id) <> "-editor"}
+                          contenteditable="true"
+                        ></div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <%!-- Upload Section --%>
+              <div class="rp-panel">
+                <div class="rp-panel-header">
+                  <h2 class="rp-panel-title">Upload</h2>
+                </div>
+                <div class="rp-panel-body">
+                  <p class="rp-help-text">
+                    Upload any files you wish to share with the author or editor. Files you
+                    upload will appear in the Reviewer Files panel below.
+                  </p>
+                </div>
+              </div>
+
+              <%!-- Reviewer Files Section --%>
+              <div class="rp-panel">
+                <div class="rp-panel-header">
+                  <h2 class="rp-panel-title">Reviewer Files</h2>
+                  <div class="rp-header-actions">
+                    <button
+                      type="button"
+                      class="rp-btn-sm rp-btn-secondary"
+                      id="btn-search-reviewer-files"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      Search
+                    </button>
+                    <button
+                      type="button"
+                      class="rp-btn-sm rp-btn-primary"
+                      id="btn-upload-reviewer-file"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                      Upload File
+                    </button>
+                  </div>
+                </div>
+                <div class="rp-search-bar" id="search-reviewer-files-bar" style="display:none">
+                  <input
+                    type="text"
+                    id="search-reviewer-files-input"
+                    class="rp-search-input"
+                    placeholder="Search reviewer files…"
+                    data-target-table="reviewer-files-table"
+                  />
+                </div>
+                <div class="rp-panel-body rp-file-list" id="reviewer-files-list">
+                  <%= if reviewer_files(@assignment.reviewer_files) == [] do %>
+                    <div class="rp-empty-state" id="reviewer-files-empty">
+                      <p>No reviewer files uploaded yet.</p>
+                    </div>
+                  <% else %>
+                    <table class="rp-files-table rp-files-table-sm" id="reviewer-files-table">
+                      <thead>
+                        <tr>
+                          <th>File</th>
+                          <th>Date</th>
+                          <th>Type</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <%= for file <- reviewer_files(@assignment.reviewer_files) do %>
+                          <tr
+                            data-name={String.downcase(file.name)}
+                            data-type={String.downcase(file.type)}
+                          >
+                            <td>
+                              <a href="#" class="rp-file-link">{file.name}</a>
+                              <div class="rp-file-meta">{file.size}</div>
+                            </td>
+                            <td class="rp-file-date">{file.date}</td>
+                            <td>
+                              <span class={["rp-file-badge", file_type_class(file.type)]}>
+                                {file.type}
+                              </span>
+                            </td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  <% end %>
+                </div>
+              </div>
+
+              <%!-- Review Discussions Section --%>
+              <div class="rp-panel">
+                <div class="rp-panel-header">
+                  <h2 class="rp-panel-title">
+                    Review Discussions
+                    <span class="rp-badge-count" id="discussion-count">
+                      {length(discussions(@assignment.discussions))}
+                    </span>
+                  </h2>
+                  <button type="button" class="rp-btn-sm rp-btn-primary" id="btn-add-discussion">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Discussion
+                  </button>
+                </div>
+                <div class="rp-panel-body">
+                  <%= if discussions(@assignment.discussions) == [] do %>
+                    <div class="rp-empty-state">
+                      <p>No discussions yet.</p>
+                    </div>
+                  <% else %>
+                    <div class="rp-discussion-list">
+                      <%= for d <- discussions(@assignment.discussions) do %>
+                        <div class="rp-discussion">
+                          <div class="rp-discussion-head">
+                            <span class="rp-discussion-subject">{d.subject}</span>
+                            <span class="rp-discussion-meta">
+                              {d.author} &middot; {d.date}
+                            </span>
+                          </div>
+                          <p class="rp-discussion-message">{d.message}</p>
+                          <%= if d.replies in [nil, []] do %>
+                            <span class="rp-discussion-no-replies">No replies yet</span>
+                          <% else %>
+                            <div class="rp-discussion-replies">
+                              <%= for r <- d.replies do %>
+                                <div class="rp-discussion-reply">
+                                  <span class="rp-discussion-reply-author">{r.author}</span>
+                                  <span class="rp-discussion-reply-date">{r.date}</span>
+                                  <p class="rp-discussion-reply-message">{r.message}</p>
+                                </div>
+                              <% end %>
+                            </div>
+                          <% end %>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+
+              <%!-- Upload File Modal --%>
+              <div id="upload-reviewer-file-overlay" class="rp-modal-overlay" style="display:none">
+                <div class="rp-modal">
+                  <div class="rp-modal-header">
+                    <h2 class="rp-modal-title">Upload Reviewer File</h2>
+                    <button
+                      type="button"
+                      class="rp-modal-close"
+                      onclick="closeUploadFileModal()"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                  <form
+                    method="POST"
+                    action={"/review/#{@assignment.id}/file"}
+                    enctype="multipart/form-data"
+                    id="upload-reviewer-file-form"
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <div class="rp-modal-body">
+                      <label class="rp-field-label" for="upload-file-input">File</label>
+                      <input
+                        type="file"
+                        name="upload"
+                        id="upload-file-input"
+                        class="rp-file-input"
+                        required
+                      />
+                      <div class="rp-field-row">
+                        <div class="rp-field">
+                          <label class="rp-field-label" for="upload-file-type">Type</label>
+                          <select name="type" id="upload-file-type" class="rp-select">
+                            <option value="PDF">PDF</option>
+                            <option value="Word">Word</option>
+                            <option value="Excel">Excel</option>
+                            <option value="Image">Image</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="rp-modal-footer">
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn-secondary"
+                        onclick="closeUploadFileModal()"
+                      >
+                        Cancel
+                      </button>
+                      <button type="submit" class="rp-btn rp-btn-primary" id="btn-upload-confirm">
+                        Upload
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <%!-- Add Discussion Modal --%>
+              <div id="add-discussion-overlay" class="rp-modal-overlay" style="display:none">
+                <div class="rp-modal">
+                  <div class="rp-modal-header">
+                    <h2 class="rp-modal-title">Add Discussion</h2>
+                    <button
+                      type="button"
+                      class="rp-modal-close"
+                      onclick="closeDiscussionModal()"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                  <form
+                    method="POST"
+                    action={"/review/#{@assignment.id}/discussion"}
+                    id="add-discussion-form"
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <div class="rp-modal-body">
+                      <label class="rp-field-label" for="discussion-subject">Subject</label>
+                      <input
+                        type="text"
+                        name="subject"
+                        id="discussion-subject"
+                        class="rp-text-input"
+                        placeholder="Brief subject line"
+                        required
+                      />
+                      <label class="rp-field-label" for="discussion-message">Message</label>
+                      <textarea
+                        name="message"
+                        id="discussion-message"
+                        class="rp-textarea"
+                        rows="5"
+                        placeholder="Write your message…"
+                        required
+                      ></textarea>
+                    </div>
+                    <div class="rp-modal-footer">
+                      <button
+                        type="button"
+                        class="rp-btn rp-btn-secondary"
+                        onclick="closeDiscussionModal()"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        class="rp-btn rp-btn-primary"
+                        id="btn-discussion-submit"
+                      >
+                        Add Discussion
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <%!-- Recommendation + Actions --%>
+              <div class="rp-panel">
+                <div class="rp-panel-header">
+                  <h2 class="rp-panel-title">Recommendation</h2>
+                </div>
+                <div class="rp-panel-body">
+                  <select
+                    name="recommendation"
+                    form="review-form"
+                    class="rp-select"
+                    id="rp-recommendation"
+                  >
+                    <option value="" disabled selected>Choose one</option>
+                    <option value="Accept Submission">Accept Submission</option>
+                    <option value="Revisions Required">Revisions Required</option>
+                    <option value="Resubmit for Review">Resubmit for Review</option>
+                    <option value="Resubmit Elsewhere">Resubmit Elsewhere</option>
+                    <option value="Decline Submission">Decline Submission</option>
+                    <option value="See Comments">See Comments</option>
+                  </select>
+                </div>
+                <div class="rp-panel-footer">
+                  <div class="rp-actions">
+                    <form
+                      method="POST"
+                      action={"/review/#{@assignment.id}/go-back"}
+                      id="rp-go-back-form"
+                    >
+                      <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value={Plug.CSRFProtection.get_csrf_token()}
+                      />
+                      <button type="submit" class="rp-btn rp-btn-secondary" id="rp-btn-go-back">
+                        Go back
+                      </button>
+                    </form>
+                    <div class="rp-actions-right">
+                      <button type="button" class="rp-btn rp-btn-secondary" id="rp-btn-save-later">
+                        Save For Later
+                      </button>
+                      <button
+                        type="submit"
+                        form="review-form"
+                        class="rp-btn rp-btn-primary"
+                        id="rp-btn-submit-review"
+                      >
+                        Submit Review
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        <% @assignment.status == :in_progress and @assignment.wizard_step == 4 -> %>
+          <div class="review-panel">
+            <h2 class="review-panel-title">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Review Submitted
+            </h2>
+
+            <div class="review-submitted-summary">
+              <p class="review-help">
+                You have finished reviewing this submission. Click the button below to submit
+                your completed review to the editor. You can still go back to review the
+                manuscript or edit your comments at any time.
+              </p>
+
+              <dl class="review-meta-list">
+                <%= if @assignment.comments_author not in [nil, ""] do %>
+                  <div class="review-meta-item">
+                    <dt>Comments to the Author</dt>
+                    <dd>{@assignment.comments_author}</dd>
+                  </div>
+                <% end %>
+
+                <%= if @assignment.comments_editor not in [nil, ""] do %>
+                  <div class="review-meta-item">
+                    <dt>Comments to the Editor</dt>
+                    <dd>{@assignment.comments_editor}</dd>
+                  </div>
+                <% end %>
+              </dl>
+
+              <div class="review-form-actions">
+                <form
+                  method="POST"
+                  action={"/review/#{@assignment.id}/go-back"}
+                  id="completion-go-back"
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <button type="submit" class="btn-ojs-secondary" id="btn-completion-go-back">
+                    Go Back to Review
+                  </button>
+                </form>
+                <form method="POST" action={"/review/#{@assignment.id}"} id="completion-submit">
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <input
+                    type="hidden"
+                    name="recommendation"
+                    value={@assignment.recommendation || "See Comments"}
+                  />
+                  <input
+                    type="hidden"
+                    name="comments_author"
+                    value={@assignment.comments_author || ""}
+                  />
+                  <input
+                    type="hidden"
+                    name="comments_editor"
+                    value={@assignment.comments_editor || ""}
+                  />
+                  <button type="submit" class="btn-ojs-primary" id="btn-completion-submit-review">
+                    Submit Review
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <div class="review-discussions-panel">
+              <div class="review-discussions-header">
+                <h3>Review Discussions</h3>
+                <button type="button" class="rp-btn-sm rp-btn-primary" id="btn-add-discussion">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add discussion
+                </button>
+              </div>
+
+              <%= if discussions(@assignment.discussions) == [] do %>
+                <div class="review-discussions-empty">
+                  <p>No discussions have been started yet.</p>
+                </div>
+              <% else %>
+                <div class="review-discussions-list">
+                  <table class="rp-files-table review-discussions-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>From</th>
+                        <th>Last Reply</th>
+                        <th>Replies</th>
+                        <th>Closed</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <%= for d <- discussions(@assignment.discussions) do %>
+                        <tr>
+                          <td><a href="#" class="rp-file-link">{d.subject}</a></td>
+                          <td>{d.author}</td>
+                          <td class="rp-file-date">{last_reply_date(d)}</td>
+                          <td>{length(d.replies || [])}</td>
+                          <td>
+                            <span class="review-discussion-closed-state">
+                              <input type="checkbox" class="review-discussion-closed" disabled />
+                            </span>
+                          </td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              <% end %>
+            </div>
+
+            <%!-- Add Discussion Modal --%>
+            <div id="add-discussion-overlay" class="rp-modal-overlay" style="display:none">
+              <div class="rp-modal">
+                <div class="rp-modal-header">
+                  <h2 class="rp-modal-title">Add Discussion</h2>
+                  <button
+                    type="button"
+                    class="rp-modal-close"
+                    onclick="closeDiscussionModal()"
+                  >
+                    &times;
+                  </button>
+                </div>
+                <form
+                  method="POST"
+                  action={"/review/#{@assignment.id}/discussion"}
+                  id="add-discussion-form"
+                >
+                  <input
+                    type="hidden"
+                    name="_csrf_token"
+                    value={Plug.CSRFProtection.get_csrf_token()}
+                  />
+                  <div class="rp-modal-body">
+                    <label class="rp-field-label" for="discussion-subject">Subject</label>
+                    <input
+                      type="text"
+                      name="subject"
+                      id="discussion-subject"
+                      class="rp-text-input"
+                      placeholder="Brief subject line"
+                      required
+                    />
+                    <label class="rp-field-label" for="discussion-message">Message</label>
+                    <textarea
+                      name="message"
+                      id="discussion-message"
+                      class="rp-textarea"
+                      rows="5"
+                      placeholder="Write your message…"
+                      required
+                    ></textarea>
+                  </div>
+                  <div class="rp-modal-footer">
+                    <button
+                      type="button"
+                      class="rp-btn rp-btn-secondary"
+                      onclick="closeDiscussionModal()"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      class="rp-btn rp-btn-primary"
+                      id="btn-discussion-submit"
+                    >
+                      Add Discussion
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        <% @assignment.status == :declined -> %>
+          <div class="review-panel">
+            <h2 class="review-panel-title">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+              Review Declined
+            </h2>
+
+            <div class="review-submitted-summary">
+              <p class="review-help">
+                You have declined this review assignment. The editor will find another reviewer
+                for this submission.
+              </p>
+
+              <div class="review-form-actions">
+                <a href="/dashboard/reviewAssignments" class="btn-ojs-primary">
+                  Back to My Assignments
+                </a>
+              </div>
+            </div>
+          </div>
         <% @assignment.status == :published -> %>
           <div class="review-panel">
             <h2 class="review-panel-title">
@@ -164,297 +1184,6 @@
               </div>
             </div>
           </div>
-
-          <%= if @assignment.stage == :copyediting do %>
-            <div class="review-panel">
-              <h2 class="review-panel-title">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                </svg>
-                Copyediting
-                <span class="task-progress">
-                  {done_task_count(@assignment.copyedit_tasks)}/{length(
-                    @assignment.copyedit_tasks
-                  )}
-                </span>
-              </h2>
-
-              <div class="review-submitted-summary">
-                <p class="review-help">
-                  Complete the copyediting tasks below to prepare the manuscript for production.
-                </p>
-
-                <ul class="task-list">
-                  <%= for task <- @assignment.copyedit_tasks do %>
-                    <li class={["task-item", if(task.done, do: "done")]}>
-                      <form
-                        method="POST"
-                        action={"/review/#{@assignment.id}/copyedit/#{task.key}"}
-                      >
-                        <input
-                          type="hidden"
-                          name="_csrf_token"
-                          value={Plug.CSRFProtection.get_csrf_token()}
-                        />
-                        <button
-                          type="submit"
-                          class="task-check"
-                          aria-label="Complete {task.label}"
-                        >
-                          <%= if task.done do %>
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="3"
-                            >
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          <% else %>
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                            >
-                              <circle cx="12" cy="12" r="9"></circle>
-                            </svg>
-                          <% end %>
-                        </button>
-                      </form>
-                      <span class="task-label">{task.label}</span>
-                      <span class={["task-status", if(task.done, do: "done")]}>
-                        {if task.done, do: "Complete", else: "Pending"}
-                      </span>
-                    </li>
-                  <% end %>
-                </ul>
-
-                <%= if all_tasks_done?(@assignment.copyedit_tasks) do %>
-                  <div class="panel-success-note">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                    All copyediting tasks are complete. This submission is ready for production.
-                  </div>
-
-                  <div class="review-form-actions">
-                    <form
-                      method="POST"
-                      action={"/review/#{@assignment.id}/advance"}
-                      id="advance-to-production"
-                    >
-                      <input
-                        type="hidden"
-                        name="_csrf_token"
-                        value={Plug.CSRFProtection.get_csrf_token()}
-                      />
-                      <button type="submit" class="btn-ojs-primary">Proceed to Production</button>
-                    </form>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-
-          <%= if @assignment.stage == :production do %>
-            <div class="review-panel">
-              <h2 class="review-panel-title">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
-                  </path>
-                </svg>
-                Production
-              </h2>
-
-              <div class="review-submitted-summary">
-                <p class="review-help">
-                  Prepare the galley files and complete the proofreading tasks before publishing.
-                </p>
-
-                <h3 class="review-block-subtitle">Galley Files</h3>
-
-                <ul class="review-files">
-                  <%= for galley <- @assignment.galley_files do %>
-                    <li class="review-file">
-                      <span class={["review-file-type", file_type_class(galley.type)]}>
-                        {galley.type}
-                      </span>
-
-                      <span class="review-file-body">
-                        <span class="review-file-name">{galley.name}</span>
-                        <span class="review-file-meta">{galley.size} · {galley.date}</span>
-                      </span>
-
-                      <a href="#" class="review-file-download" title="Download {galley.name}">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                        >
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-
-                          <polyline points="7 10 12 15 17 10"></polyline>
-
-                          <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                      </a>
-                    </li>
-                  <% end %>
-                </ul>
-
-                <%= if length(@assignment.galley_files) == 0 do %>
-                  <p class="review-empty">No galley files yet. Add one below.</p>
-                <% end %>
-
-                <form
-                  method="POST"
-                  action={"/review/#{@assignment.id}/galley"}
-                  class="galley-form"
-                  id="add-galley-form"
-                >
-                  <input
-                    type="hidden"
-                    name="_csrf_token"
-                    value={Plug.CSRFProtection.get_csrf_token()}
-                  />
-                  <input
-                    type="text"
-                    name="name"
-                    class="review-input"
-                    placeholder="e.g. galley.pdf"
-                    required
-                  />
-                  <select name="type" class="review-select">
-                    <option>PDF</option>
-                    <option>HTML</option>
-                    <option>XML</option>
-                  </select>
-                  <button type="submit" class="btn-ojs-primary">Add Galley</button>
-                </form>
-
-                <h3 class="review-block-subtitle">Proofreading</h3>
-
-                <ul class="task-list">
-                  <%= for task <- @assignment.proofread_tasks do %>
-                    <li class={["task-item", if(task.done, do: "done")]}>
-                      <form
-                        method="POST"
-                        action={"/review/#{@assignment.id}/proofread/#{task.key}"}
-                      >
-                        <input
-                          type="hidden"
-                          name="_csrf_token"
-                          value={Plug.CSRFProtection.get_csrf_token()}
-                        />
-                        <button
-                          type="submit"
-                          class="task-check"
-                          aria-label="Complete {task.label}"
-                        >
-                          <%= if task.done do %>
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="3"
-                            >
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          <% else %>
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                            >
-                              <circle cx="12" cy="12" r="9"></circle>
-                            </svg>
-                          <% end %>
-                        </button>
-                      </form>
-                      <span class="task-label">{task.label}</span>
-                      <span class={["task-status", if(task.done, do: "done")]}>
-                        {if task.done, do: "Complete", else: "Pending"}
-                      </span>
-                    </li>
-                  <% end %>
-                </ul>
-
-                <%= if all_tasks_done?(@assignment.proofread_tasks) do %>
-                  <div class="panel-success-note">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                    All proofreading tasks are complete. Ready to publish.
-                  </div>
-
-                  <div class="review-form-actions">
-                    <form
-                      method="POST"
-                      action={"/review/#{@assignment.id}/publish"}
-                      class="publish-form"
-                      id="publish-form"
-                    >
-                      <input
-                        type="hidden"
-                        name="_csrf_token"
-                        value={Plug.CSRFProtection.get_csrf_token()}
-                      />
-                      <input
-                        type="text"
-                        name="issue"
-                        class="review-input"
-                        placeholder="Issue (e.g. Vol. 1 No. 1)"
-                      />
-                      <button type="submit" class="btn-ojs-primary">Publish Submission</button>
-                    </form>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
         <% true -> %>
           <div class="review-panel">
             <h2 class="review-panel-title">
@@ -578,123 +1307,106 @@
           </div>
       <% end %>
     </div>
-
-    <aside class="review-side-col">
-      <div class="review-panel review-side-panel">
-        <h2 class="review-panel-title">Submission</h2>
-
-        <dl class="review-meta-list">
-          <div class="review-meta-item">
-            <dt>Title</dt>
-
-            <dd>{@assignment.title}</dd>
-          </div>
-
-          <div class="review-meta-item">
-            <dt>Author</dt>
-
-            <dd>{@assignment.author}</dd>
-          </div>
-
-          <div class="review-meta-item">
-            <dt>Journal</dt>
-
-            <dd>{@assignment.journal}</dd>
-          </div>
-
-          <div class="review-meta-item">
-            <dt>Section</dt>
-
-            <dd>{@assignment.section}</dd>
-          </div>
-
-          <div class="review-meta-item">
-            <dt>Language</dt>
-
-            <dd>{@assignment.language}</dd>
-          </div>
-
-          <div class="review-meta-item">
-            <dt>Keywords</dt>
-
-            <dd>{@assignment.keywords}</dd>
-          </div>
-
-          <div class="review-meta-item">
-            <dt>Assigned</dt>
-
-            <dd>{Date.to_string(@assignment.date_assigned)}</dd>
-          </div>
-
-          <div class="review-meta-item">
-            <dt>Due</dt>
-
-            <dd>{Date.to_string(@assignment.due_date)}</dd>
-          </div>
-        </dl>
-
-        <h3 class="review-block-subtitle">Abstract</h3>
-
-        <p class="review-abstract">{@assignment.abstract}</p>
-      </div>
-
-      <div class="review-panel review-side-panel">
-        <h2 class="review-panel-title">Review Files</h2>
-
-        <ul class="review-files">
-          <%= for file <- @assignment.files do %>
-            <li class="review-file">
-              <span class={["review-file-type", file_type_class(file.type)]}>
-                {file.type}
-              </span>
-
-              <span class="review-file-body">
-                <span class="review-file-name">{file.name}</span>
-                <span class="review-file-meta">
-                  {file.size} · {file.date}
-                </span>
-              </span>
-
-              <a href="#" class="review-file-download" title="Download {file.name}">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-
-                  <polyline points="7 10 12 15 17 10"></polyline>
-
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-              </a>
-            </li>
-          <% end %>
-        </ul>
-      </div>
-
-      <div class="review-panel review-side-panel">
-        <h2 class="review-panel-title">Review History</h2>
-
-        <%= if length(@assignment.review_history) == 0 do %>
-          <p class="review-empty">No previous reviews for this submission.</p>
-        <% else %>
-          <ul class="review-history">
-            <%= for item <- @assignment.review_history do %>
-              <li class="review-history-item">
-                <span class="review-history-round">Round {item.round}</span>
-                <span class="review-history-decision">{item.decision}</span>
-                <span class="review-history-meta">
-                  {item.reviewer} · {item.date}
-                </span>
-              </li>
-            <% end %>
-          </ul>
-        <% end %>
-      </div>
-    </aside>
   </div>
 </div>
+
+<script>
+  function openUploadFileModal() {
+    var overlay = document.getElementById('upload-reviewer-file-overlay');
+    if (overlay) {
+      overlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeUploadFileModal() {
+    var overlay = document.getElementById('upload-reviewer-file-overlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  function openDiscussionModal() {
+    var overlay = document.getElementById('add-discussion-overlay');
+    if (overlay) {
+      overlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeDiscussionModal() {
+    var overlay = document.getElementById('add-discussion-overlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  function bindModalOverlayClose(overlayId, closeFn) {
+    var overlay = document.getElementById(overlayId);
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeFn();
+      });
+    }
+  }
+
+  function bindToolbarFieldSearch(btnId, barId, inputId, tableId) {
+    var btn = document.getElementById(btnId);
+    var bar = document.getElementById(barId);
+    var input = document.getElementById(inputId);
+    var table = document.getElementById(tableId);
+    if (!btn || !bar || !input || !table) return;
+
+    btn.addEventListener('click', function () {
+      var hidden = bar.style.display === 'none' || bar.style.display === '';
+      bar.style.display = hidden ? 'block' : 'none';
+      if (hidden) input.focus();
+    });
+
+    input.addEventListener('input', function () {
+      var q = input.value.trim().toLowerCase();
+      var rows = table.querySelectorAll('tbody tr');
+      for (var i = 0; i < rows.length; i++) {
+        var name = (rows[i].getAttribute('data-name') || '').toLowerCase();
+        var type = (rows[i].getAttribute('data-type') || '').toLowerCase();
+        rows[i].style.display = (name.indexOf(q) > -1 || type.indexOf(q) > -1) ? '' : 'none';
+      }
+    });
+  }
+
+  function initReviewerFilesExtras() {
+    var uploadBtns = [
+      document.getElementById('btn-upload-reviewer-file')
+    ];
+    uploadBtns.forEach(function (btn) {
+      if (btn) btn.addEventListener('click', openUploadFileModal);
+    });
+
+    var addBtn = document.getElementById('btn-add-discussion');
+    if (addBtn) addBtn.addEventListener('click', openDiscussionModal);
+
+    bindToolbarFieldSearch(
+      'btn-search-reviewer-files',
+      'search-reviewer-files-bar',
+      'search-reviewer-files-input',
+      'reviewer-files-table'
+    );
+    bindToolbarFieldSearch(
+      'btn-search-review-files',
+      'search-review-files-bar',
+      'search-review-files-input',
+      'review-files-table'
+    );
+
+    bindModalOverlayClose('upload-reviewer-file-overlay', closeUploadFileModal);
+    bindModalOverlayClose('add-discussion-overlay', closeDiscussionModal);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initReviewerFilesExtras);
+  } else {
+    initReviewerFilesExtras();
+  }
+</script>

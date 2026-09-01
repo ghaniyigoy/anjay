@@ -1,77 +1,445 @@
 defmodule OjsLandingWeb.EditorController do
   use OjsLandingWeb, :controller
 
+  alias OjsLanding.Submission
+
+  # OJS 3.5-style workflow menu keys (?workflowMenuKey=...)
+  @default_menu "workflow_1"
+
+  @workflow_menus [
+    {"workflow_1", "Submission"},
+    {"workflow_3_1", "External Review"},
+    {"workflow_4", "Copyediting"},
+    {"workflow_5", "Production"}
+  ]
+
+  @publication_menus [
+    {"publication_titleAbstract", "Title & Abstract"},
+    {"publication_metadata", "Metadata"},
+    {"publication_citations", "References"},
+    {"publication_jats", "JATS"},
+    {"publication_galleys", "Galleys"},
+    {"publication_issue", "Issue"},
+    {"publication_license", "License"}
+  ]
+
+  # ============================================
+  # EDITORIAL DASHBOARD (OJS 3.5-style routing)
+  #
+  # /dashboard/editorial?workflowSubmissionId=1&currentViewId=assigned-to-me&workflowMenuKey=workflow_1
+  # opens the workflow view of a single submission at the given menu key.
+  # ============================================
+
+  def editorial(conn, %{"workflowSubmissionId" => wf_id} = params) do
+    user = conn.assigns.current_user
+
+    case {user, Submission.get(wf_id)} do
+      {nil, _} ->
+        conn
+        |> put_flash(:error, "Silakan login terlebih dahulu untuk mengakses halaman ini.")
+        |> redirect(to: "/login")
+
+      {_, nil} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/editorial")
+
+      {user, submission} ->
+        assignments = review_assignments_for(submission)
+        all_subs = get_editorial_submissions()
+        sub_ids = Enum.map(all_subs, & &1.id)
+        current_idx = Enum.find_index(sub_ids, &(&1 == submission.id))
+
+        prev_id = if current_idx, do: Enum.at(sub_ids, current_idx + 1)
+        next_id = if current_idx, do: Enum.at(sub_ids, current_idx - 1)
+
+        conn
+        |> put_root_layout(false)
+        |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+        |> render(:workflow,
+          submission: submission,
+          row: to_editorial_row(submission),
+          active_menu: normalize_menu(params["workflowMenuKey"]),
+          workflow_menus: @workflow_menus,
+          publication_menus: @publication_menus,
+          review_assignments: assignments,
+          issues: OjsLanding.Issue.all(),
+          current_view: params["currentViewId"] || "assigned-to-me",
+          prev_submission_id: prev_id,
+          next_submission_id: next_id,
+          pub_form:
+            Phoenix.Component.to_form(
+              %{
+                "title" => submission.title || "",
+                "subtitle" => submission.subtitle || "",
+                "abstract" => submission.abstract || "",
+                "keywords" => submission.keywords || "",
+                "language" => submission.language || "",
+                "section" => submission.section || "",
+                "references" => submission.references || ""
+              },
+              as: :publication
+            ),
+          user: user
+        )
+    end
+  end
+
   def editorial(conn, %{"currentViewId" => view_id} = _params) do
     user = conn.assigns.current_user
 
-    # Filter submissions berdasarkan view_id
-    all_submissions = get_editorial_submissions()
+    if is_nil(user) do
+      conn
+      |> put_flash(:error, "Silakan login terlebih dahulu untuk mengakses halaman ini.")
+      |> redirect(to: "/login")
+    else
+      all_submissions = get_editorial_submissions()
 
-    filtered_submissions =
-      case view_id do
-        "assigned-to-me" ->
-          Enum.filter(all_submissions, fn s -> s.assigned_to == user.username end)
+      filtered_submissions =
+        case view_id do
+          "assigned-to-me" ->
+            Enum.filter(all_submissions, fn s -> s.assigned_to == user.username end)
 
-        "active" ->
-          Enum.filter(all_submissions, fn s -> s.status in [:active, :under_review] end)
+          "active" ->
+            Enum.filter(all_submissions, fn s -> s.status in [:active, :under_review] end)
 
-        "needs-editor" ->
-          Enum.filter(all_submissions, fn s -> s.stage == :needs_editor end)
+          "needs-editor" ->
+            Enum.filter(all_submissions, fn s -> s.stage == :needs_editor end)
 
-        "initial-review" ->
-          Enum.filter(all_submissions, fn s -> s.stage == :initial_review end)
+          "initial-review" ->
+            Enum.filter(all_submissions, fn s -> s.stage == :initial_review end)
 
-        "needs-reviews" ->
-          Enum.filter(all_submissions, fn s -> s.stage == :needs_reviews end)
+          "needs-reviews" ->
+            Enum.filter(all_submissions, fn s -> s.stage == :needs_reviews end)
 
-        "awaiting-reviews" ->
-          Enum.filter(all_submissions, fn s -> s.stage == :awaiting_reviews end)
+          "awaiting-reviews" ->
+            Enum.filter(all_submissions, fn s -> s.stage == :awaiting_reviews end)
 
-        "reviews-submitted" ->
-          Enum.filter(all_submissions, fn s -> s.stage == :reviews_submitted end)
+          "reviews-submitted" ->
+            Enum.filter(all_submissions, fn s -> s.stage == :reviews_submitted end)
 
-        "reviews-overdue" ->
-          Enum.filter(all_submissions, fn s -> s.reviews_overdue end)
+          "reviews-overdue" ->
+            Enum.filter(all_submissions, fn s -> s.reviews_overdue end)
 
-        "revisions-submitted" ->
-          Enum.filter(all_submissions, fn s -> s.stage == :revisions_submitted end)
+          "revisions-submitted" ->
+            Enum.filter(all_submissions, fn s -> s.stage == :revisions_submitted end)
 
-        "external-review" ->
-          Enum.filter(all_submissions, fn s -> s.stage == :external_review end)
+          "external-review" ->
+            Enum.filter(all_submissions, fn s -> s.stage == :external_review end)
 
-        "copyediting" ->
-          Enum.filter(all_submissions, fn s -> s.stage == :copyediting end)
+          "copyediting" ->
+            Enum.filter(all_submissions, fn s -> s.stage == :copyediting end)
 
-        "production" ->
-          Enum.filter(all_submissions, fn s -> s.stage == :production end)
+          "production" ->
+            Enum.filter(all_submissions, fn s -> s.stage == :production end)
 
-        "scheduled" ->
-          Enum.filter(all_submissions, fn s -> s.status == :scheduled end)
+          "scheduled" ->
+            Enum.filter(all_submissions, fn s -> s.status == :scheduled end)
 
-        "published" ->
-          Enum.filter(all_submissions, fn s -> s.status == :published end)
+          "published" ->
+            Enum.filter(all_submissions, fn s -> s.status == :published end)
 
-        "declined" ->
-          Enum.filter(all_submissions, fn s -> s.status == :declined end)
+          "declined" ->
+            Enum.filter(all_submissions, fn s -> s.status == :declined end)
 
-        _ ->
-          all_submissions
-      end
+          _ ->
+            all_submissions
+        end
 
-    conn
-    |> put_root_layout(false)
-    |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
-    |> render(:editorial,
-      submissions: filtered_submissions,
-      all_submissions: all_submissions,
-      current_view: view_id || "assigned-to-me",
-      user: user
-    )
+      conn
+      |> put_root_layout(false)
+      |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+      |> render(:editorial,
+        submissions: filtered_submissions,
+        all_submissions: all_submissions,
+        current_view: view_id || "assigned-to-me",
+        user: user,
+        ap_users_json:
+          OjsLanding.User.all()
+          |> Enum.map(fn u -> reviewer_json(u) end)
+          |> Jason.encode!(),
+        ap_submissions_json:
+          filtered_submissions
+          |> Enum.map(fn row ->
+            %{
+              "id" => row.id,
+              "title" => row.title,
+              "author" => row.author
+            }
+          end)
+          |> Jason.encode!()
+      )
+    end
   end
 
   def editorial(conn, _params) do
     editorial(conn, %{"currentViewId" => "assigned-to-me"})
   end
+
+  # Editorial activity log for a single submission (derived from store data).
+  def activity(conn, %{"id" => id} = params) do
+    user = conn.assigns.current_user
+
+    case {user, Submission.get(id)} do
+      {nil, _} ->
+        conn
+        |> put_flash(:error, "Silakan login terlebih dahulu untuk mengakses halaman ini.")
+        |> redirect(to: "/login")
+
+      {_, nil} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/editorial")
+
+      {user, submission} ->
+        assignments = review_assignments_for(submission)
+
+        conn
+        |> put_root_layout(false)
+        |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+        |> render(:activity,
+          submission: submission,
+          row: to_editorial_row(submission),
+          events: OjsLandingWeb.EditorHTML.activity_events(submission, assignments),
+          current_view: params["currentViewId"] || "active",
+          workflow_menu:
+            OjsLandingWeb.EditorHTML.default_workflow_menu_for_stage(
+              submission.stage || :submission
+            ),
+          user: user
+        )
+    end
+  end
+
+  # Save publication fields (Title & Abstract / Metadata / References tabs)
+  def save_publication(conn, %{"id" => id, "publication" => publication_params} = params) do
+    if is_nil(conn.assigns.current_user) do
+      conn
+      |> put_flash(:error, "Silakan login terlebih dahulu untuk mengakses halaman ini.")
+      |> redirect(to: "/login")
+    else
+      menu = normalize_menu(params["workflowMenuKey"])
+      view = params["currentViewId"] || "assigned-to-me"
+
+      case Submission.update(id, publication_params) do
+        {:ok, submission} ->
+          conn
+          |> put_flash(:info, "Publication details updated.")
+          |> redirect(to: OjsLandingWeb.EditorHTML.workflow_menu_path(submission.id, view, menu))
+
+        {:error, :not_found} ->
+          conn
+          |> put_flash(:error, "Submission tidak ditemukan.")
+          |> redirect(to: "/dashboard/editorial")
+      end
+    end
+  end
+
+  # ============================================
+  # EDITOR WORKFLOW ACTIONS
+  # ============================================
+
+  def send_to_review(conn, %{"id" => id} = params) do
+    case guard_editor(conn) do
+      :redirected ->
+        conn
+
+      :ok ->
+        view = params["currentViewId"] || "assigned-to-me"
+
+        with {:ok, submission} <- Submission.set_status(id, :active),
+             {:ok, submission} <- Submission.set_stage(submission.id, :external_review) do
+          conn
+          |> put_flash(:info, "Submission #{id} sent to external review.")
+          |> redirect(
+            to: OjsLandingWeb.EditorHTML.workflow_menu_path(submission.id, view, "workflow_3_1")
+          )
+        else
+          {:error, :not_found} ->
+            conn
+            |> put_flash(:error, "Submission tidak ditemukan.")
+            |> redirect(to: "/dashboard/editorial")
+        end
+    end
+  end
+
+  def request_revisions(conn, %{"id" => id} = params) do
+    case guard_editor(conn) do
+      :redirected ->
+        conn
+
+      :ok ->
+        view = params["currentViewId"] || "assigned-to-me"
+
+        with {:ok, submission} <- Submission.set_status(id, :revisions_requested),
+             {:ok, submission} <- Submission.set_stage(submission.id, :external_review) do
+          conn
+          |> put_flash(:info, "Revisions requested for submission #{id}.")
+          |> redirect(
+            to: OjsLandingWeb.EditorHTML.workflow_menu_path(submission.id, view, "workflow_3_1")
+          )
+        else
+          {:error, :not_found} ->
+            conn
+            |> put_flash(:error, "Submission tidak ditemukan.")
+            |> redirect(to: "/dashboard/editorial")
+        end
+    end
+  end
+
+  def accept_submission(conn, %{"id" => id} = params) do
+    case guard_editor(conn) do
+      :redirected ->
+        conn
+
+      :ok ->
+        view = params["currentViewId"] || "assigned-to-me"
+
+        with {:ok, submission} <- Submission.set_status(id, :scheduled),
+             {:ok, submission} <- Submission.set_stage(submission.id, :production) do
+          conn
+          |> put_flash(:info, "Submission #{id} accepted and scheduled for publication.")
+          |> redirect(
+            to: OjsLandingWeb.EditorHTML.workflow_menu_path(submission.id, view, "workflow_5")
+          )
+        else
+          {:error, :not_found} ->
+            conn
+            |> put_flash(:error, "Submission tidak ditemukan.")
+            |> redirect(to: "/dashboard/editorial")
+        end
+    end
+  end
+
+  def decline_submission(conn, %{"id" => id} = params) do
+    case guard_editor(conn) do
+      :redirected ->
+        conn
+
+      :ok ->
+        view = params["currentViewId"] || "assigned-to-me"
+
+        case Submission.set_status(id, :declined) do
+          {:ok, _submission} ->
+            conn
+            |> put_flash(:info, "Submission #{id} has been declined.")
+            |> redirect(to: "/dashboard/editorial?currentViewId=#{view}")
+
+          {:error, :not_found} ->
+            conn
+            |> put_flash(:error, "Submission tidak ditemukan.")
+            |> redirect(to: "/dashboard/editorial")
+        end
+    end
+  end
+
+  def assign_reviewer(conn, %{"id" => id, "reviewer_name" => reviewer_name} = params) do
+    case guard_editor(conn) do
+      :redirected ->
+        conn
+
+      :ok ->
+        view = params["currentViewId"] || "assigned-to-me"
+
+        case Submission.get(id) do
+          nil ->
+            conn
+            |> put_flash(:error, "Submission tidak ditemukan.")
+            |> redirect(to: "/dashboard/editorial")
+
+          submission ->
+            OjsLanding.ReviewerAssignment.create(%{
+              "title" => submission.title,
+              "subtitle" => submission.subtitle || "",
+              "abstract" => submission.abstract || "",
+              "author" => author_name(submission),
+              "reviewer_name" => reviewer_name,
+              "section" => submission.section || "",
+              "language" => submission.language || "",
+              "keywords" => submission.keywords || "",
+              "due_date" => Date.add(Date.utc_today(), 14) |> Date.to_string(),
+              "round" => 1,
+              "files" => submission.files || []
+            })
+
+            conn
+            |> put_flash(:info, "Reviewer #{reviewer_name} assigned to submission #{id}.")
+            |> redirect(to: "/dashboard/editorial?currentViewId=#{view}")
+        end
+    end
+  end
+
+  def assign_editor(
+        conn,
+        %{"submission_id" => id, "user_id" => user_id, "username" => username} = params
+      ) do
+    case guard_editor(conn) do
+      :redirected ->
+        conn
+
+      :ok ->
+        view = params["currentViewId"] || "active"
+
+        case Submission.get(id) do
+          nil ->
+            conn
+            |> put_flash(:error, "Submission tidak ditemukan.")
+            |> redirect(to: "/dashboard/editorial")
+
+          _submission ->
+            user = OjsLanding.User.find_by_username(username)
+
+            editor_info = %{
+              "id" => user_id,
+              "username" => username,
+              "name" =>
+                if(user,
+                  do: String.trim("#{user.given_name} #{user.family_name}"),
+                  else: username
+                ),
+              "email" => if(user, do: user.email, else: ""),
+              "role" => params["role"] || "editor"
+            }
+
+            case Submission.assign_editor(id, editor_info) do
+              {:ok, _submission} ->
+                conn
+                |> put_flash(:info, "Editor #{username} assigned to submission #{id}.")
+                |> redirect(to: "/dashboard/editorial?currentViewId=#{view}")
+
+              {:error, :not_found} ->
+                conn
+                |> put_flash(:error, "Submission tidak ditemukan.")
+                |> redirect(to: "/dashboard/editorial")
+            end
+        end
+    end
+  end
+
+  defp guard_editor(conn) do
+    if is_nil(conn.assigns.current_user) do
+      conn
+      |> put_flash(:error, "Silakan login terlebih dahulu untuk mengakses halaman ini.")
+      |> redirect(to: "/login")
+
+      :redirected
+    else
+      :ok
+    end
+  end
+
+  defp normalize_menu(menu) do
+    valid = Enum.map(@workflow_menus ++ @publication_menus, &elem(&1, 0))
+    if menu in valid, do: menu, else: @default_menu
+  end
+
+  # Review assignments linked to a submission by matching title.
+  defp review_assignments_for(%Submission{title: title})
+       when is_binary(title) and title != "" do
+    Enum.filter(OjsLanding.ReviewerAssignment.all(), &(&1.title == title))
+  end
+
+  defp review_assignments_for(_submission), do: []
 
   # Data submission asli dari store Submission (hasil submit author)
   defp get_editorial_submissions do
@@ -81,20 +449,66 @@ defmodule OjsLandingWeb.EditorController do
   end
 
   defp to_editorial_row(submission) do
+    assignments = review_assignments_for(submission)
+
     %{
       id: submission.id,
       title: title_or_placeholder(submission.title),
       author: author_name(submission),
       assigned_to: "editor",
       status: submission.status,
-      stage: stage_for_status(submission.status),
+      stage: submission.stage || :submission,
       days: days_since(Map.get(submission, :created_at)),
-      reviews_overdue: false
+      reviews_overdue: false,
+      has_editor: has_editor?(submission),
+      has_reviewers: has_reviewers?(assignments),
+      needs_submission_complete: needs_submission_complete?(submission)
     }
   end
 
   defp title_or_placeholder(title) when title in [nil, ""], do: "(Tanpa judul)"
   defp title_or_placeholder(title), do: title
+
+  # Build reviewer JSON payload for the "Add Reviewer" modal. Derives reviewer
+  # metrics (review count, last review, current status) from the assignment store.
+  defp reviewer_json(user) do
+    assignments = reviewer_assignments_for_user(user)
+
+    %{
+      "id" => user.id,
+      "username" => user.username,
+      "email" => user.email,
+      "given_name" => user.given_name,
+      "family_name" => user.family_name,
+      "affiliation" => user.affiliation,
+      "role" => user.role,
+      "review_count" => Enum.count(assignments, &(&1.status in [:completed, :published])),
+      "last_review" => last_review_date(assignments),
+      "status" => reviewer_user_status(assignments)
+    }
+  end
+
+  defp reviewer_assignments_for_user(user) do
+    Enum.filter(OjsLanding.ReviewerAssignment.all(), fn a ->
+      String.contains?(a.author || "", String.trim("#{user.given_name} #{user.family_name}")) or
+        String.contains?(String.trim("#{user.given_name} #{user.family_name}"), a.author || "")
+    end)
+  end
+
+  defp last_review_date(assignments) do
+    assignments
+    |> Enum.filter(&(&1.date_assigned != nil))
+    |> Enum.map(& &1.date_assigned)
+    |> Enum.max(fn -> nil end)
+  end
+
+  defp reviewer_user_status(assignments) do
+    cond do
+      Enum.any?(assignments, &(&1.status in [:action_required, :in_progress])) -> "Busy"
+      Enum.any?(assignments, &(&1.status == :completed)) -> "Available"
+      true -> "Available"
+    end
+  end
 
   # Nama author diambil dari contributors submission (primary contact lebih dulu),
   # lalu fallback ke nama akun.
@@ -133,13 +547,21 @@ defmodule OjsLandingWeb.EditorController do
     end
   end
 
-  defp stage_for_status(:active), do: :initial_review
-  defp stage_for_status(:revisions_requested), do: :external_review
-  defp stage_for_status(:revisions_submitted), do: :revisions_submitted
-  defp stage_for_status(:scheduled), do: :production
-  defp stage_for_status(:published), do: :production
-  defp stage_for_status(:declined), do: :external_review
-  defp stage_for_status(_), do: :initial_review
+  defp has_editor?(submission) do
+    editors = Map.get(submission, :editors) || []
+    editors != []
+  end
+
+  defp has_reviewers?(assignments) do
+    Enum.any?(assignments, fn a ->
+      a.status in [:action_required, :in_progress, :completed]
+    end)
+  end
+
+  defp needs_submission_complete?(submission) do
+    submission.status == :incomplete or
+      (submission.stage in [:submission, nil] and submission.date_submitted == nil)
+  end
 
   defp days_since(nil), do: 0
 

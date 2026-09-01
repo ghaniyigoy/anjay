@@ -1,0 +1,86 @@
+<div class="editor-dashboard-container workflow-page">
+  <!-- Main Content -->
+  <div class="editor-main-content">
+    <div class="wf-header">
+      <div class="wf-header-main">
+        <a
+          href={"/dashboard/editorial?currentViewId=#{@current_view}"}
+          class="wf-back-link"
+          id="activity-back-link"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to submissions
+        </a>
+
+        <h1 class="wf-title">{@submission.title || "(Untitled submission)"}</h1>
+
+        <p class="wf-meta">
+          <span class="wf-meta-id">ID {@row.id}</span>
+          <span aria-hidden="true">·</span>
+          <span>{@row.author}</span>
+          <span aria-hidden="true">·</span>
+          <span>Editorial Activity</span>
+        </p>
+      </div>
+
+      <div class="wf-header-side">
+        <span class={["wf-stage-pill"]}>
+          <span class="stage-dot" style={["background-color: ", stage_color(@row.stage)]}></span>
+          {stage_label(@row.stage)}
+        </span>
+
+        <span class={["wf-status-badge", workflow_status_class(@row.status)]}>
+          {workflow_status_label(@row.status)}
+        </span>
+
+        <a
+          href={workflow_menu_path(@submission.id, @current_view, @workflow_menu)}
+          class="btn-activity btn-activity-open"
+          id="open-workflow-link"
+        >
+          Open Workflow
+        </a>
+      </div>
+    </div>
+
+    <section class="wf-card">
+      <h2 class="wf-card-title">Activity Log</h2>
+
+      <%= if @events == [] do %>
+        <div class="wf-empty">No editorial activity recorded for this submission yet.</div>
+      <% else %>
+        <ol class="wf-timeline" id="editorial-activity-log">
+          <%= for event <- @events do %>
+            <li class={["wf-timeline-item", "wf-kind-#{event.kind}"]}>
+              <span class="wf-timeline-dot"></span>
+
+              <div class="wf-timeline-body">
+                <p class="wf-timeline-title">
+                  {event.title}
+                  <span class="wf-kind-badge">{activity_kind_label(event.kind)}</span>
+                </p>
+
+                <%= if event.detail do %>
+                  <p class="wf-timeline-detail">{event.detail}</p>
+                <% end %>
+              </div>
+
+              <time class="wf-timeline-date">{format_date(event.date)}</time>
+            </li>
+          <% end %>
+        </ol>
+      <% end %>
+    </section>
+  </div>
+</div>

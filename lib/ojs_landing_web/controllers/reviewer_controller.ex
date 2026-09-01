@@ -246,6 +246,179 @@ defmodule OjsLandingWeb.ReviewerController do
     end
   end
 
+  def accept_review(conn, %{"id" => id}) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
+      conn
+    else
+      case OjsLanding.ReviewerAssignment.accept_assignment(id) do
+        {:ok, _assignment} ->
+          conn
+          |> put_flash(:info, "Review assignment accepted. You may now proceed with the review.")
+          |> redirect(to: "/review/#{id}")
+
+        {:error, :not_found} ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        {:error, :invalid_transition} ->
+          conn
+          |> put_flash(:error, "This assignment cannot be accepted in its current state.")
+          |> redirect(to: "/review/#{id}")
+      end
+    end
+  end
+
+  def decline_review(conn, %{"id" => id}) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
+      conn
+    else
+      case OjsLanding.ReviewerAssignment.decline_assignment(id) do
+        {:ok, _assignment} ->
+          conn
+          |> put_flash(:info, "Review assignment declined.")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        {:error, :not_found} ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        {:error, :invalid_transition} ->
+          conn
+          |> put_flash(:error, "This assignment cannot be declined in its current state.")
+          |> redirect(to: "/review/#{id}")
+      end
+    end
+  end
+
+  def review_step(conn, %{"id" => id} = params) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
+      conn
+    else
+      case OjsLanding.ReviewerAssignment.advance_review_step(id, params) do
+        {:error, :not_found} ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        {:error, :invalid_transition} ->
+          conn
+          |> put_flash(:error, "This review wizard cannot be advanced in its current state.")
+          |> redirect(to: "/review/#{id}")
+
+        {:ok, _assignment} ->
+          conn
+          |> redirect(to: "/review/#{id}")
+      end
+    end
+  end
+
+  def review_go_back(conn, %{"id" => id}) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
+      conn
+    else
+      case OjsLanding.ReviewerAssignment.go_back_review_step(id) do
+        {:error, :not_found} ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        {:error, :invalid_transition} ->
+          conn
+          |> put_flash(:error, "Cannot go back in the current review state.")
+          |> redirect(to: "/review/#{id}")
+
+        {:ok, _assignment} ->
+          conn
+          |> redirect(to: "/review/#{id}")
+      end
+    end
+  end
+
+  def add_reviewer_file(conn, %{"id" => id} = params) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
+      conn
+    else
+      upload = params["upload"]
+
+      {name, size} =
+        case upload do
+          %Plug.Upload{filename: filename} ->
+            {filename, humanize_size(upload)}
+
+          _ ->
+            {params["name"] || "untitled", params["size"] || "—"}
+        end
+
+      params = %{
+        "name" => name,
+        "type" => params["type"] || file_type_from_name(name),
+        "size" => size
+      }
+
+      case OjsLanding.ReviewerAssignment.add_reviewer_file(id, params) do
+        {:error, :not_found} ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        {:ok, _assignment} ->
+          conn
+          |> put_flash(:info, "Reviewer file uploaded.")
+          |> redirect(to: "/review/#{id}")
+      end
+    end
+  end
+
+  def add_discussion(conn, %{"id" => id} = params) do
+    conn = login_guard(conn)
+
+    if conn.state == :sent do
+      conn
+    else
+      reviewer =
+        case conn.assigns.current_user do
+          %OjsLanding.User{given_name: given, family_name: family} ->
+            String.trim("#{given} #{family}")
+
+          name when is_binary(name) ->
+            name
+
+          _ ->
+            "You"
+        end
+
+      params = %{
+        "subject" => params["subject"] || "Discussion",
+        "message" => params["message"] || "",
+        "author" => reviewer
+      }
+
+      case OjsLanding.ReviewerAssignment.add_discussion(id, params) do
+        {:error, :not_found} ->
+          conn
+          |> put_flash(:error, "Review assignment not found")
+          |> redirect(to: "/dashboard/reviewAssignments")
+
+        {:ok, _assignment} ->
+          conn
+          |> put_flash(:info, "Discussion added.")
+          |> redirect(to: "/review/#{id}")
+      end
+    end
+  end
+
   defp login_guard(conn) do
     if is_nil(conn.assigns.current_user) do
       conn
@@ -258,6 +431,41 @@ defmodule OjsLandingWeb.ReviewerController do
 
   defp get_review_assignment(id) do
     OjsLanding.ReviewerAssignment.get(id)
+  end
+
+  defp humanize_size(%Plug.Upload{path: path}) do
+    case File.stat(path) do
+      {:ok, %{size: bytes}} -> format_bytes(bytes)
+      _ -> "—"
+    end
+  end
+
+  defp humanize_size(_), do: "—"
+
+  defp format_bytes(bytes) when bytes >= 1_048_576 do
+    format_float(bytes / 1_048_576) <> " MB"
+  end
+
+  defp format_bytes(bytes) when bytes >= 1024 do
+    format_float(bytes / 1024) <> " KB"
+  end
+
+  defp format_bytes(bytes), do: "#{bytes} B"
+
+  defp format_float(num) do
+    rounded = Float.round(num, 1)
+    if rounded == trunc(rounded), do: Integer.to_string(trunc(rounded)), else: "#{rounded}"
+  end
+
+  defp file_type_from_name(name) do
+    cond do
+      String.ends_with?(name, [".pdf"]) -> "PDF"
+      String.ends_with?(name, [".csv"]) -> "CSV"
+      String.ends_with?(name, [".doc", ".docx"]) -> "Word"
+      String.ends_with?(name, [".xls", ".xlsx"]) -> "Excel"
+      String.ends_with?(name, [".png", ".jpg", ".jpeg", ".gif"]) -> "Image"
+      true -> "Other"
+    end
   end
 
   defp review_criteria do
