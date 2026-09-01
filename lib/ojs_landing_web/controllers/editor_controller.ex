@@ -73,6 +73,27 @@ defmodule OjsLandingWeb.EditorController do
     editorial(conn, %{"currentViewId" => "assigned-to-me"})
   end
 
+  def submission_detail(conn, %{"id" => id}) do
+    user = conn.assigns.current_user
+
+    submission = Enum.find(get_submission_details(), fn s -> s.id == String.to_integer(id) end)
+
+    if submission do
+      conn
+      |> put_root_layout(false)
+      |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+      |> render(:submission_detail,
+        submission: submission,
+        user: user,
+        all_submissions: get_editorial_submissions()
+      )
+    else
+      conn
+      |> put_flash(:error, "Submission not found.")
+      |> redirect(to: "/dashboard/editorial?currentViewId=assigned-to-me")
+    end
+  end
+
   # Dummy data untuk testing
   defp get_editorial_submissions do
     [
@@ -95,6 +116,76 @@ defmodule OjsLandingWeb.EditorController do
         stage: :awaiting_reviews,
         days: 12,
         reviews_overdue: true
+      }
+    ]
+  end
+
+  # Rich dummy detail data for the submission detail page (no database yet)
+  defp get_submission_details do
+    [
+      %{
+        id: 1,
+        title: "Implementasi Machine Learning untuk Analisis Sentimen",
+        author: "Ahmad Fauzi",
+        assigned_to: "editor",
+        status: :active,
+        stage: :initial_review,
+        stage_label: "Initial Review",
+        days: 5,
+        reviews_overdue: false,
+        language: "English",
+        files: [
+          %{
+            name: "manuscript.docx",
+            uploaded: "2026-09-01",
+            type: "Main Submission File",
+            size: "2.4 MB"
+          }
+        ],
+        discussions: [
+          %{
+            name: "Editor",
+            from: "Ahmad Fauzi",
+            previous_reply: "Thank you for the ...",
+            replies: 1,
+            closed: false
+          }
+        ],
+        participants: [
+          %{name: "Prof. Budi Santoso", role: "Editor"}
+        ]
+      },
+      %{
+        id: 2,
+        title: "Sistem Rekomendasi Menggunakan Collaborative Filtering",
+        author: "Siti Nurhaliza",
+        assigned_to: "editor",
+        status: :under_review,
+        stage: :awaiting_reviews,
+        stage_label: "Awaiting Reviews",
+        days: 12,
+        reviews_overdue: true,
+        language: "English",
+        files: [
+          %{
+            name: "manuscript.docx",
+            uploaded: "2026-08-28",
+            type: "Main Submission File",
+            size: "1.9 MB"
+          }
+        ],
+        discussions: [
+          %{
+            name: "Review Round 1",
+            from: "Rev. Dr. Siti Nurhaliza",
+            previous_reply: "The methodology is ...",
+            replies: 2,
+            closed: false
+          }
+        ],
+        participants: [
+          %{name: "Prof. Budi Santoso", role: "Editor"}
+        ]
       }
     ]
   end

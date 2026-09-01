@@ -1,0 +1,255 @@
+<div class="submission-detail-page">
+  <%!-- Submission header / top bar --%>
+  <div class="submission-header">
+    <div class="submission-header-main">
+      <div class="submission-header-row">
+        <a
+          href="/dashboard/editorial?currentViewId=assigned-to-me"
+          class="submission-back-btn"
+        >
+          <span class="submission-back-icon">&#8592;</span> Back
+        </a>
+
+        <span class="submission-id">Submission {@submission.id}</span>
+
+        <span class="submission-stage-indicator">
+          <span class="submission-stage-dot"></span>
+          {@submission.stage_label}
+        </span>
+      </div>
+
+      <h1 class="submission-title">{@submission.author}</h1>
+
+      <div class="submission-authors">{@submission.title}</div>
+    </div>
+
+    <div class="submission-header-actions">
+      <a href="#" class="submission-header-btn">Activity Log</a>
+      <a href="#" class="submission-header-btn">Library</a>
+    </div>
+  </div>
+
+  <%!-- Body: sidebar + main + right panel --%>
+  <div class="submission-detail-body">
+    <%!-- Left sidebar --%>
+    <aside class="submission-sidebar">
+      <div class="submission-nav-section is-open">
+        <button
+          type="button"
+          class="submission-nav-toggle"
+          onclick="toggleSubmissionNav(this)"
+          aria-expanded="true"
+        >
+          <span class="submission-nav-toggle-label">Workflow</span>
+          <span class="submission-nav-arrow">&#9662;</span>
+        </button>
+
+        <ul class="submission-nav-list">
+          <li class="active">
+            <a href="#">Submission</a>
+          </li>
+          <li>
+            <a href="#">Review</a>
+          </li>
+          <li>
+            <a href="#">Copyediting</a>
+          </li>
+          <li>
+            <a href="#">Production</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="submission-nav-section">
+        <button
+          type="button"
+          class="submission-nav-toggle"
+          onclick="toggleSubmissionNav(this)"
+          aria-expanded="false"
+        >
+          <span class="submission-nav-toggle-label">Publication</span>
+          <span class="submission-nav-arrow">&#9656;</span>
+        </button>
+
+        <ul class="submission-nav-list">
+          <li class="submission-nav-item">
+            <a href="#">Title &amp; Abstract</a>
+          </li>
+          <li class="submission-nav-item">
+            <a href="#">Contributors</a>
+          </li>
+          <li class="submission-nav-item">
+            <a href="#">Metadata</a>
+          </li>
+          <li class="submission-nav-item">
+            <a href="#">References</a>
+          </li>
+          <li class="submission-nav-item">
+            <a href="#">JATS XML</a>
+          </li>
+          <li class="submission-nav-item">
+            <a href="#">Galley</a>
+          </li>
+          <li class="submission-nav-item">
+            <a href="#">Permissions &amp; Disclosure</a>
+          </li>
+          <li class="submission-nav-item">
+            <a href="#">Issue</a>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <%!-- Main content --%>
+    <div class="submission-main-content">
+      <div class="submission-stage-panel">
+        <div class="submission-stage-heading">
+          <h2>Submission</h2>
+          <span class="submission-workflow-label">Workflow</span>
+        </div>
+
+        <div class="submission-stage-info">
+          <strong>Current Manuscript Language:</strong> {@submission.language}
+        </div>
+
+        <%!-- Submission Files --%>
+        <div class="submission-section">
+          <div class="submission-section-header">
+            <h3>Submission Files</h3>
+            <div class="submission-section-actions">
+              <a href="#" class="submission-btn">Upload</a>
+              <a href="#" class="submission-btn">Download All Files</a>
+            </div>
+          </div>
+
+          <div class="submission-files-table">
+            <table>
+              <thead>
+                <tr>
+                  <th class="submission-file-name">FILE NAME</th>
+                  <th>UPLOADED</th>
+                  <th>TYPE</th>
+                  <th class="submission-file-size">SIZE</th>
+                  <th class="submission-file-actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <%= for file <- @submission.files do %>
+                  <tr>
+                    <td class="submission-file-name">
+                      <a href="#" class="submission-file-link">{file.name}</a>
+                    </td>
+                    <td>{file.uploaded}</td>
+                    <td>{file.type}</td>
+                    <td class="submission-file-size">{file.size}</td>
+                    <td class="submission-file-actions">
+                      <a href="#" class="submission-link-btn">Download</a>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <%!-- Pre-Review Discussions --%>
+        <div class="submission-section">
+          <div class="submission-section-header">
+            <h3>Pre-Review Discussions</h3>
+            <div class="submission-section-actions">
+              <a href="#" class="submission-btn">Add discussion</a>
+            </div>
+          </div>
+
+          <div class="submission-discussions-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>NAME</th>
+                  <th>FROM</th>
+                  <th>PREVIOUS REPLY</th>
+                  <th>REPLIES</th>
+                  <th>CLOSED</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%= for discussion <- @submission.discussions do %>
+                  <tr>
+                    <td class="submission-discussion-name">
+                      <a href="#">{discussion.name}</a>
+                    </td>
+                    <td>{discussion.from}</td>
+                    <td class="submission-discussion-preview">
+                      {discussion.previous_reply}
+                    </td>
+                    <td>{discussion.replies}</td>
+                    <td>
+                      <%= if discussion.closed do %>
+                        Closed
+                      <% else %>
+                        Open
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%!-- Right action panel --%>
+    <aside class="submission-action-panel">
+      <div class="submission-actions">
+        <a href="#" class="submission-action-btn">Send to Review</a>
+        <a href="#" class="submission-action-btn">Accept and Skip Review</a>
+        <a href="#" class="submission-action-btn submission-action-danger">
+          Decline Submission
+        </a>
+      </div>
+
+      <div class="submission-participants">
+        <div class="submission-participants-header">
+          <h3>Participants</h3>
+          <a href="#" class="submission-link-btn">Assign</a>
+        </div>
+
+        <ul class="submission-participants-list">
+          <%= for participant <- @submission.participants do %>
+            <li class="submission-participant">
+              <div class="submission-participant-avatar">
+                {String.first(participant.name)}
+              </div>
+              <div class="submission-participant-info">
+                <div class="submission-participant-name">{participant.name}</div>
+                <div class="submission-participant-role">{participant.role}</div>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  function toggleSubmissionNav(button) {
+    var section = button.parentElement;
+    var list = section.querySelector('.submission-nav-list');
+    var arrow = section.querySelector('.submission-nav-arrow');
+    var isOpen = section.classList.contains('is-open');
+
+    if (isOpen) {
+      section.classList.remove('is-open');
+      list.style.display = 'none';
+      arrow.innerHTML = '&#9656;';
+      button.setAttribute('aria-expanded', 'false');
+    } else {
+      section.classList.add('is-open');
+      list.style.display = 'block';
+      arrow.innerHTML = '&#9662;';
+      button.setAttribute('aria-expanded', 'true');
+    }
+  }
+</script>

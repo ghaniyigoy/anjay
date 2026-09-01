@@ -41,6 +41,9 @@ defmodule OjsLandingWeb.Router do
     # Editor Dashboard Routes
     get "/dashboard/editorial", EditorController, :editorial
 
+    # Editor Submission Detail Routes (OJS-style workflow detail)
+    get "/dashboard/editorial/submissions/:id", EditorController, :submission_detail
+
     # Editor DOI Article Registration Routes
     get "/dashboard/doiArticles", DoiArticleController, :index
 
