@@ -2,6 +2,89 @@
 
 Catatan perubahan terbaru pada aplikasi.
 
+## My Submissions: tombol "View" membuka workflow read-only untuk author
+
+Tombol **View** pada `/dashboard/mySubmissions` sebelumnya membuka **editor workflow page**
+(`/dashboard/editorial?workflowSubmissionId=...`) yang menampilkan panel editor (Action Panel,
+Participants, tombol keputusan editorial). Kini author diarahkan ke halaman workflow **read-only**
+khusus author di `/submission/:id/workflow` — tampilan serupa, tetapi tanpa akses mengedit dan
+tanpa panel editor.
+
+### Kolom STAGE & EDITORIAL ACTIVITY untuk submission belum selesai
+- Kolom **STAGE** menampilkan **"Incomplete"** (dengan dot merah) untuk submission berstatus
+  `:incomplete` (selain itu "Submission").
+- Kolom **EDITORIAL ACTIVITY** menampilkan tautan **"Complete Submission"** yang mengarah ke wizard
+  (`/submission/wizard/:id?tab=details`) untuk submission `:incomplete`.
+- Kolom **ACTIONS** untuk submission `:incomplete` kini **kosong** (tombol **Continue** dihapus,
+  karena "Complete Submission" sudah menjadi aksinya). Untuk submission lain tetap menampilkan
+  **View**.
+
+### Fitur workflow read-only author (`/submission/:id/workflow`)
+- Route + action baru `AuthorController.author_workflow/2` merender template `workflow` editor
+  dengan `mode: :author`.
+- **Back to Submissions** mengarah ke `/dashboard/mySubmissions` (bukan editorial dashboard).
+- Menu **Workflow** & **Publication** menggunakan URL author (`/submission/:id/workflow`).
+- **Sembunyikan** untuk author:
+  - Panel **Participants** (sidebar) dan panel **Action Panel** (workflow_1).
+  - Tombol keputusan editorial: Send For Review / Accept & Skip Review / Decline (workflow_1),
+    Request Revisions / Accept / Decline (workflow_3_1), Accept & Schedule / Decline (workflow_5).
+  - Tautan "Manage copyediting" (workflow_4) dan "Open production record" (workflow_5).
+- Form publikasi (Title & Abstract, Metadata, References) dirender **read-only** (`disabled`/
+  `readonly`) tanpa tombol Save — author hanya melihat, tidak bisa mengedit.
+- Navigasi Previous/Next submission tidak ditampilkan untuk author.
+- Status readonly juga disajikan lewat message "Editorial decisions are managed by the journal's
+  editors" pada stage review.
+
+### File yang diubah
+- `lib/ojs_landing_web/router.ex` — route baru `get "/submission/:id/workflow"`.
+- `lib/ojs_landing_web/controllers/author_controller.ex` — action `author_workflow/2` (render
+  `EditorHTML.workflow` dengan `mode: :author`, `put_view` + `render/3`); helpers
+  `author_review_assignments/1`, `author_to_row/1`, `normalize_menu/1`, `title_or_placeholder/1`,
+  `days_since/1`; menu `@workflow_menus`, `@publication_menus`, `@default_menu`.
+- `lib/ojs_landing_web/controllers/author_html.ex` — `submission_workflow_path/2` kini menunjuk
+  `/submission/:id/workflow?workflowMenuKey=...` (bukan editorial dashboard).
+- `lib/ojs_landing_web/controllers/author_html/my_submissions.html.heex` — STAGE "Incomplete",
+  EDITORIAL ACTIVITY "Complete Submission", ACTIONS kosong untuk `:incomplete`.
+- `lib/ojs_landing_web/controllers/editor_html.ex` — helper `wf_menu_href/4` (URL author vs
+  editor).
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — kondisi `@mode == :author`
+  untuk back-link, menu, sembunyikan panel editor & tombol keputusan, form publikasi readonly.
+
+### Status
+- `mix compile --warnings-as-errors` bersih.
+- `mix precommit` lulus: 151 test, tanpa warning.
+
+## Save for Later: halaman konfirmasi "Saved for Later"
+
+Mengklik **Save for Later** pada wizard submission (`/submission/wizard/:id?tab=...`) atau
+halaman `/submission/:id/details` tidak lagi langsung mengarahkan ke My Submissions, melainkan
+menampilkan **halaman konfirmasi** di `/submission/wizard/:id/saved`.
+
+### Fitur
+- Halaman konfirmasi menampilkan judul **Saved for Later** di tengah dan sebuah kotak berisi
+  teks *"Your submission details have been saved in our system. You can return to complete your
+  submission at any time by following the link below."*.
+- Di dalam kotak terdapat tautan berisi **nama author — judul submission** (tanpa username).
+  Mengkliknya akan kembali ke wizard pada **langkah pertama yang belum selesai**
+  (`?tab=first_incomplete_tab`), sehingga author dapat melanjutkan progres submission-nya.
+- Tidak ada ikon centang hijau maupun tombol aksi tambahan pada halaman konfirmasi.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/author_controller.ex` — `handle_generic_update/5` dan
+  `save_details/2` kini redirect ke `/submission/wizard/:id/saved` saat save for later
+  (`action=save` atau `save_status=draft`, sebelumnya redirect ke My Submissions);
+  `saved_submission/2` dirender sebagai halaman (bukan sekadar redirect flash);
+  helper baru `author_display_name/2` (nama tanpa username) dan `first_incomplete_tab/1`.
+- `lib/ojs_landing_web/controllers/author_html/saved_submission.html.heex` (baru) — template
+  halaman konfirmasi.
+- `assets/css/app.css` — gaya `.ojs-saved-*` (card terpusat, kotak teks, tautan resume).
+- `test/ojs_landing_web/controllers/author_controller_test.exs` — test disesuaikan: save for
+  later mengarah ke `/submission/wizard/:id/saved`; test halaman konfirmasi dirender.
+
+### Status
+- `mix precommit` lulus: 151 test, tanpa warning.
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
 ## Halaman "Make a Submission" (`/submission/new`): field Section, Language, dan Comments to the Editor dihapus
 
 Field **Section \***, **Language \***, dan **Comments to the Editor** dihapus dari form
@@ -23,24 +106,27 @@ model.
 
 ## My Submissions: tombol "View" menghubungkan ke editor workflow page
 
+> **Diperbarui:** Perilaku ini kini digantikan oleh halaman workflow **read-only author**
+> (`/submission/:id/workflow`) — lihat entri *"My Submissions: tombol "View" membuka workflow
+> read-only untuk author"* di bagian atas. Pemetaan menu per stage di bawah tetap relevan.
+
 Tombol **View** pada `/dashboard/mySubmissions` tidak lagi membuka wizard submission
-(`/submission/wizard/:id?tab=...`), melainkan membuka **editor workflow page**
-(`/dashboard/editorial?workflowSubmissionId=<id>&currentViewId=...&workflowMenuKey=...`)
-sesuai stage submission — konsisten dengan tombol View di editorial dashboard.
+(`/submission/wizard/:id?tab=...`), melainkan membuka workflow page sesuai stage submission.
 
 - Stage `initial_review`/belum review → `workflow_1` (Submission).
 - Stage review (`external_review`, `needs_reviews`, `awaiting_reviews`, `reviews_submitted`,
   `revisions_submitted`) → `workflow_3_1` (External Review).
 - Stage `copyediting` → `workflow_4`.
 - Stage `production` → `workflow_5`.
-- Submission status `:incomplete` tetap menampilkan tombol **Continue** yang membuka wizard
-  detail (`?tab=details`).
+- Submission status `:incomplete` tidak menampilkan tombol View di kolom Actions (kolom kosong);
+  aksinya adalah "Complete Submission" di kolom EDITORIAL ACTIVITY.
 
 ### File yang diubah
 - `lib/ojs_landing_web/controllers/author_html.ex` — helper `submission_workflow_path/2` (URL
   workflow + `workflow_menu_for_stage/1` meniru `default_workflow_menu_for_stage` editor).
 - `lib/ojs_landing_web/controllers/author_html/my_submissions.html.heex` — link View memakai
-  `submission_workflow_path/2`.
+  `submission_workflow_path/2`; STAGE "Incomplete", "Complete Submission", Actions kosong untuk
+  `:incomplete`.
 
 ### Status
 - `mix compile` sukses; route workflow mengembalikan HTTP 200 untuk submission yang aktif.

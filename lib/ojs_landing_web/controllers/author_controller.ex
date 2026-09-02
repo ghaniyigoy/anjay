@@ -3,9 +3,29 @@ defmodule OjsLandingWeb.AuthorController do
 
   alias OjsLanding.Submission
   alias OjsLandingWeb.AuthorHTML
+  alias OjsLandingWeb.EditorHTML
 
   # Submission wizard tabs, driven by the ?tab= query parameter
   @tabs ["details", "files", "contributors", "editors", "review"]
+
+  @workflow_menus [
+    {"workflow_1", "Submission"},
+    {"workflow_3_1", "External Review"},
+    {"workflow_4", "Copyediting"},
+    {"workflow_5", "Production"}
+  ]
+
+  @publication_menus [
+    {"publication_titleAbstract", "Title & Abstract"},
+    {"publication_metadata", "Metadata"},
+    {"publication_citations", "References"},
+    {"publication_jats", "JATS"},
+    {"publication_galleys", "Galleys"},
+    {"publication_issue", "Issue"},
+    {"publication_license", "License"}
+  ]
+
+  @default_menu "workflow_1"
 
   # OJS-style dashboard views for authors (currentViewId => label + status filter)
   @views [
@@ -182,9 +202,106 @@ defmodule OjsLandingWeb.AuthorController do
   end
 
   def saved_submission(conn, %{"id" => id}) do
-    conn
-    |> put_flash(:info, "Submission #{id} disimpan untuk nanti.")
-    |> redirect(to: "/dashboard/mySubmissions?currentViewId=incomplete-submissions")
+    user = conn.assigns.current_user
+
+    case {user, Submission.get(id)} do
+      {nil, _} ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk melihat submission.")
+
+      {_, nil} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+
+      {user, submission} ->
+        conn
+        |> put_root_layout(false)
+        |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+        |> render(:saved_submission,
+          submission: submission,
+          user: user,
+          author_name: author_display_name(submission, user),
+          all_submissions: Submission.get_by_author(user.username),
+          views: @views,
+          current_view: @default_view,
+          resume_tab: first_incomplete_tab(submission)
+        )
+    end
+  end
+
+  def author_workflow(conn, %{"id" => id} = params) do
+    user = conn.assigns.current_user
+
+    case {user, Submission.get(id)} do
+      {nil, _} ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk melihat submission.")
+
+      {_, nil} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+
+      {user, submission} ->
+        assignments = author_review_assignments(submission)
+        row = author_to_row(submission)
+
+        conn
+        |> put_root_layout(false)
+        |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+        |> put_view(EditorHTML)
+        |> render(:workflow,
+          submission: submission,
+          row: row,
+          active_menu: normalize_menu(params["workflowMenuKey"]),
+          workflow_menus: @workflow_menus,
+          publication_menus: @publication_menus,
+          review_assignments: assignments,
+          issues: OjsLanding.Issue.all(),
+          current_view: "active",
+          prev_submission_id: nil,
+          next_submission_id: nil,
+          pub_form:
+            Phoenix.Component.to_form(
+              %{
+                "title" => submission.title || "",
+                "subtitle" => submission.subtitle || "",
+                "abstract" => submission.abstract || "",
+                "keywords" => submission.keywords || "",
+                "language" => submission.language || "",
+                "section" => submission.section || "",
+                "references" => submission.references || ""
+              },
+              as: :publication
+            ),
+          user: user,
+          mode: :author
+        )
+    end
+  end
+
+  defp author_display_name(_submission, user) do
+    name =
+      [user.given_name, user.family_name]
+      |> Enum.reject(&(&1 in [nil, ""]))
+      |> Enum.join(" ")
+
+    if name == "", do: user.username, else: name
+  end
+
+  defp first_incomplete_tab(submission) do
+    Enum.find(@tabs, fn tab -> !wizard_tab_done?(tab, submission) end) || "review"
+  end
+
+  defp wizard_tab_done?("details", submission),
+    do: is_binary(submission.title) and submission.title != ""
+
+  defp wizard_tab_done?("files", submission), do: length(submission.files || []) > 0
+  defp wizard_tab_done?("contributors", submission), do: length(submission.contributors || []) > 0
+  defp wizard_tab_done?("editors", submission), do: length(submission.editors || []) > 0
+
+  defp wizard_tab_done?("review", submission) do
+    wizard_tab_done?("details", submission) and wizard_tab_done?("files", submission) and
+      wizard_tab_done?("contributors", submission)
   end
 
   # ============================================
@@ -238,7 +355,7 @@ defmodule OjsLandingWeb.AuthorController do
         else
           conn
           |> put_flash(:info, "Submission #{id} disimpan untuk nanti.")
-          |> redirect(to: "/dashboard/mySubmissions?currentViewId=incomplete-submissions")
+          |> redirect(to: "/submission/wizard/#{id}/saved")
         end
     end
   end
@@ -375,6 +492,9 @@ defmodule OjsLandingWeb.AuthorController do
           action == "continue" ->
             continue_from(conn, id, submission_params, tab)
 
+          action == "save" || submission_params["save_status"] == "draft" ->
+            redirect(conn, to: "/submission/wizard/#{id}/saved")
+
           true ->
             conn
             |> put_flash(:info, "Submission #{id} berhasil disimpan.")
@@ -421,4 +541,47 @@ defmodule OjsLandingWeb.AuthorController do
   defp next_tab(tab), do: tab
 
   defp submission_path(id, tab), do: "/submission/wizard/#{id}?tab=#{tab}"
+
+  # --- Author read-only workflow helpers ------------------------------------
+
+  defp normalize_menu(menu) do
+    valid = Enum.map(@workflow_menus ++ @publication_menus, &elem(&1, 0))
+    if menu in valid, do: menu, else: @default_menu
+  end
+
+  defp author_review_assignments(%Submission{title: title})
+       when is_binary(title) and title != "" do
+    Enum.filter(OjsLanding.ReviewerAssignment.all(), &(&1.title == title))
+  end
+
+  defp author_review_assignments(_submission), do: []
+
+  defp author_to_row(submission) do
+    user = OjsLanding.User.find_by_username(submission.author_username)
+
+    %{
+      id: submission.id,
+      title: title_or_placeholder(submission.title),
+      author: author_display_name(submission, user),
+      assigned_to: "author",
+      status: submission.status,
+      stage: submission.stage || :submission,
+      days: days_since(Map.get(submission, :created_at)),
+      reviews_overdue: false,
+      has_editor: (Map.get(submission, :editors) || []) != [],
+      has_reviewers: false,
+      needs_submission_complete: false
+    }
+  end
+
+  defp title_or_placeholder(title) when title in [nil, ""], do: "(Tanpa judul)"
+  defp title_or_placeholder(title), do: title
+
+  defp days_since(nil), do: 0
+
+  defp days_since(%DateTime{} = datetime) do
+    max(0, Date.diff(Date.utc_today(), DateTime.to_date(datetime)))
+  end
+
+  defp days_since(_), do: 0
 end

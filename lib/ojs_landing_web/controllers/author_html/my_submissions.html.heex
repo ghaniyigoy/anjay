@@ -137,19 +137,25 @@
 
                 <td class="col-stage">
                   <span class="stage-indicator">
-                    <span class="stage-dot stage-submission"></span> Submission
+                    <%= if submission.status == :incomplete do %>
+                      <span class="stage-dot stage-submission"></span> Incomplete
+                    <% else %>
+                      <span class="stage-dot stage-submission"></span> Submission
+                    <% end %>
                   </span>
                 </td>
 
-                <td class="col-editorial"></td>
-
-                <td class="col-actions">
+                <td class="col-editorial">
                   <%= if submission.status == :incomplete do %>
                     <a
                       href={"/submission/wizard/#{submission.id}?tab=details"}
-                      class="btn-view btn-continue"
-                    >Continue</a>
-                  <% else %>
+                      class="editorial-action-link"
+                    >Complete Submission</a>
+                  <% end %>
+                </td>
+
+                <td class="col-actions">
+                  <%= if submission.status != :incomplete do %>
                     <a
                       href={submission_workflow_path(submission, @current_view)}
                       class="btn-view"

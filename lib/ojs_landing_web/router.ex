@@ -75,6 +75,7 @@ defmodule OjsLandingWeb.Router do
     get "/submission/wizard/:id", AuthorController, :edit_submission
     put "/submission/wizard/:id", AuthorController, :update_submission
     get "/submission/wizard/:id/saved", AuthorController, :saved_submission
+    get "/submission/:id/workflow", AuthorController, :author_workflow
     get "/submission/:id", AuthorController, :show
 
     # Make a Submission: Details (OJS 3.5 wizard)

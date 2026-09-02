@@ -92,6 +92,14 @@ defmodule OjsLandingWeb.EditorHTML do
     "/dashboard/editorial/#{submission_id}/publication"
   end
 
+  def wf_menu_href(:author, submission_id, _view_id, menu_key) do
+    "/submission/#{submission_id}/workflow?workflowMenuKey=#{menu_key}"
+  end
+
+  def wf_menu_href(_mode, submission_id, view_id, menu_key) do
+    workflow_menu_path(submission_id, view_id, menu_key)
+  end
+
   # Menu key terdekat dengan stage submission saat ini (dipakai tombol View).
   def default_workflow_menu_for_stage(:copyediting), do: "workflow_4"
   def default_workflow_menu_for_stage(:production), do: "workflow_5"

@@ -12064,6 +12064,10 @@ tr.is-open .doi-row-actions {
   font-size: 13px !important;
 }
 
+.author-main-content .submissions-table .btn-view {
+  color: #fff !important;
+}
+
 .author-main-content .submissions-table .submission-title {
   font-size: 12px !important;
 }
@@ -14718,5 +14722,74 @@ tr.is-open .doi-row-actions {
   .ar-modal-footer {
     border-radius: 0;
   }
+}
+
+/* --- Saved for Later confirmation (Author wizard) --- */
+.ojs-saved-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0 72px;
+}
+
+.ojs-saved-card {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border: 1px solid var(--ojs-border);
+  border-radius: 2px;
+  padding: 40px 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ojs-saved-title {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--ojs-text);
+  margin: 0 0 20px;
+}
+
+.ojs-saved-box {
+  width: 100%;
+  background: #f7f9fb;
+  border: 1px solid var(--ojs-border);
+  border-radius: 2px;
+  padding: 20px 22px;
+  margin-bottom: 26px;
+}
+
+.ojs-saved-text {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ojs-text-light);
+  margin: 0 0 14px;
+}
+
+.ojs-saved-link {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  text-decoration: none;
+  color: var(--ojs-bg-base);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ojs-saved-link:hover {
+  text-decoration: underline;
+}
+
+.ojs-saved-dash {
+  color: var(--ojs-text-light);
+  font-weight: 400;
+}
+
+.ojs-saved-title-text {
+  color: var(--ojs-text);
+  font-weight: 600;
 }
 

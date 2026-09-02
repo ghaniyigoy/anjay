@@ -3,7 +3,11 @@
   <aside class="editor-sidebar">
     <div class="sidebar-section">
       <a
-        href={"/dashboard/editorial?currentViewId=#{@current_view}"}
+        href={
+          if @mode == :author,
+            do: "/dashboard/mySubmissions",
+            else: "/dashboard/editorial?currentViewId=#{@current_view}"
+        }
         class="sidebar-header sidebar-header-link"
         id="wf-back-link"
       >
@@ -49,7 +53,7 @@
             if(@active_menu == key, do: "active"),
             "wf-stage-#{state}"
           ]}>
-            <a href={workflow_menu_path(@submission.id, @current_view, key)}>
+            <a href={wf_menu_href(@mode, @submission.id, @current_view, key)}>
               <span class={["wf-stage-indicator", "wf-stage-dot-#{state}"]}></span>
               {label}
             </a>
@@ -83,7 +87,7 @@
       <ul class="sidebar-menu">
         <%= for {key, label} <- @publication_menus do %>
           <li class={if @active_menu == key, do: "active"}>
-            <a href={workflow_menu_path(@submission.id, @current_view, key)}>
+            <a href={wf_menu_href(@mode, @submission.id, @current_view, key)}>
               {label}
             </a>
           </li>
@@ -91,53 +95,55 @@
       </ul>
     </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-header">
-        <svg
-          class="sidebar-icon"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <%= if @mode != :author do %>
+      <div class="sidebar-section">
+        <div class="sidebar-header">
+          <svg
+            class="sidebar-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
 
-          <circle cx="9" cy="7" r="4"></circle>
+            <circle cx="9" cy="7" r="4"></circle>
 
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
 
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-        </svg>
-        <span class="sidebar-title">Participants</span>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span class="sidebar-title">Participants</span>
+        </div>
+
+        <ul class="wf-participants">
+          <%= for contributor <- @submission.contributors || [] do %>
+            <% info = contributor_display(contributor) %>
+            <li class="wf-participant">
+              <span class="wf-avatar">{contributor_initials(info.name)}</span>
+              <span class="wf-participant-info">
+                <strong>{info.name}</strong>
+                <small>Author{if info[:primary], do: " (Contact)"}</small>
+              </span>
+            </li>
+          <% end %>
+
+          <%= if @user do %>
+            <li class="wf-participant">
+              <span class="wf-avatar wf-avatar-editor">{String.first(
+                String.capitalize(@user.username || "E")
+              )}</span>
+              <span class="wf-participant-info">
+                <strong>{String.trim("#{@user.given_name} #{@user.family_name}")}</strong>
+                <small>Editor</small>
+              </span>
+            </li>
+          <% end %>
+        </ul>
       </div>
-
-      <ul class="wf-participants">
-        <%= for contributor <- @submission.contributors || [] do %>
-          <% info = contributor_display(contributor) %>
-          <li class="wf-participant">
-            <span class="wf-avatar">{contributor_initials(info.name)}</span>
-            <span class="wf-participant-info">
-              <strong>{info.name}</strong>
-              <small>Author{if info[:primary], do: " (Contact)"}</small>
-            </span>
-          </li>
-        <% end %>
-
-        <%= if @user do %>
-          <li class="wf-participant">
-            <span class="wf-avatar wf-avatar-editor">{String.first(
-              String.capitalize(@user.username || "E")
-            )}</span>
-            <span class="wf-participant-info">
-              <strong>{String.trim("#{@user.given_name} #{@user.family_name}")}</strong>
-              <small>Editor</small>
-            </span>
-          </li>
-        <% end %>
-      </ul>
-    </div>
+    <% end %>
   </aside>
 
   <!-- Main Content -->
@@ -320,105 +326,107 @@
             </div>
 
             <%!-- Right Column --%>
-            <div class="wf-col-side">
-              <section class="wf-card">
-                <h2 class="wf-card-title">Action Panel</h2>
-                <div class="wf-action-panel">
-                  <form
-                    method="POST"
-                    action={"/dashboard/editorial/#{@submission.id}/send-to-review"}
-                  >
-                    <input
-                      type="hidden"
-                      name="_csrf_token"
-                      value={Plug.CSRFProtection.get_csrf_token()}
-                    />
-                    <input type="hidden" name="currentViewId" value={@current_view} />
-                    <button
-                      type="submit"
-                      class="wf-btn-action wf-btn-action-primary"
-                      id="btn-send-for-review"
+            <%= if @mode != :author do %>
+              <div class="wf-col-side">
+                <section class="wf-card">
+                  <h2 class="wf-card-title">Action Panel</h2>
+                  <div class="wf-action-panel">
+                    <form
+                      method="POST"
+                      action={"/dashboard/editorial/#{@submission.id}/send-to-review"}
                     >
-                      Send For Review
-                    </button>
-                  </form>
-                  <form
-                    method="POST"
-                    action={"/dashboard/editorial/#{@submission.id}/accept"}
-                    id="accept-skip-review-form-workflow-1"
-                  >
-                    <input
-                      type="hidden"
-                      name="_csrf_token"
-                      value={Plug.CSRFProtection.get_csrf_token()}
-                    />
-                    <input type="hidden" name="currentViewId" value={@current_view} />
-                    <button
-                      type="submit"
-                      class="wf-btn-action wf-btn-action-secondary"
-                      id="btn-accept-skip-review"
+                      <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value={Plug.CSRFProtection.get_csrf_token()}
+                      />
+                      <input type="hidden" name="currentViewId" value={@current_view} />
+                      <button
+                        type="submit"
+                        class="wf-btn-action wf-btn-action-primary"
+                        id="btn-send-for-review"
+                      >
+                        Send For Review
+                      </button>
+                    </form>
+                    <form
+                      method="POST"
+                      action={"/dashboard/editorial/#{@submission.id}/accept"}
+                      id="accept-skip-review-form-workflow-1"
                     >
-                      Accept and Skip Review
-                    </button>
-                  </form>
-                  <form
-                    method="POST"
-                    action={"/dashboard/editorial/#{@submission.id}/decline"}
-                    id="decline-form-workflow-1"
-                  >
-                    <input
-                      type="hidden"
-                      name="_csrf_token"
-                      value={Plug.CSRFProtection.get_csrf_token()}
-                    />
-                    <input type="hidden" name="currentViewId" value={@current_view} />
-                    <button
-                      type="button"
-                      class="wf-btn-action wf-btn-action-danger"
-                      id="btn-decline-submission"
-                      onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
+                      <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value={Plug.CSRFProtection.get_csrf_token()}
+                      />
+                      <input type="hidden" name="currentViewId" value={@current_view} />
+                      <button
+                        type="submit"
+                        class="wf-btn-action wf-btn-action-secondary"
+                        id="btn-accept-skip-review"
+                      >
+                        Accept and Skip Review
+                      </button>
+                    </form>
+                    <form
+                      method="POST"
+                      action={"/dashboard/editorial/#{@submission.id}/decline"}
+                      id="decline-form-workflow-1"
                     >
-                      Decline Submission
-                    </button>
-                  </form>
-                </div>
-              </section>
+                      <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value={Plug.CSRFProtection.get_csrf_token()}
+                      />
+                      <input type="hidden" name="currentViewId" value={@current_view} />
+                      <button
+                        type="button"
+                        class="wf-btn-action wf-btn-action-danger"
+                        id="btn-decline-submission"
+                        onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
+                      >
+                        Decline Submission
+                      </button>
+                    </form>
+                  </div>
+                </section>
 
-              <section class="wf-card">
-                <div class="wf-card-header">
-                  <h2 class="wf-card-title">Participants</h2>
-                  <button type="button" class="wf-btn-link">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="8.5" cy="7" r="4"></circle>
-                      <line x1="20" y1="8" x2="20" y2="14"></line>
-                      <line x1="23" y1="11" x2="17" y2="11"></line>
-                    </svg>
-                    Assign
-                  </button>
-                </div>
+                <section class="wf-card">
+                  <div class="wf-card-header">
+                    <h2 class="wf-card-title">Participants</h2>
+                    <button type="button" class="wf-btn-link">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                      </svg>
+                      Assign
+                    </button>
+                  </div>
 
-                <ul class="wf-participants-list">
-                  <%= for contributor <- @submission.contributors || [] do %>
-                    <% info = contributor_display(contributor) %>
-                    <li class="wf-participant-item">
-                      <span class="wf-avatar-sm">{contributor_initials(info.name)}</span>
-                      <span class="wf-participant-detail">
-                        <strong>{info.name}</strong>
-                        <small>Author{if info[:primary], do: " (Contact)"}</small>
-                      </span>
-                    </li>
-                  <% end %>
-                </ul>
-              </section>
-            </div>
+                  <ul class="wf-participants-list">
+                    <%= for contributor <- @submission.contributors || [] do %>
+                      <% info = contributor_display(contributor) %>
+                      <li class="wf-participant-item">
+                        <span class="wf-avatar-sm">{contributor_initials(info.name)}</span>
+                        <span class="wf-participant-detail">
+                          <strong>{info.name}</strong>
+                          <small>Author{if info[:primary], do: " (Contact)"}</small>
+                        </span>
+                      </li>
+                    <% end %>
+                  </ul>
+                </section>
+              </div>
+            <% end %>
           </div>
         </div>
 
@@ -497,57 +505,64 @@
               </table>
             <% end %>
 
-            <%= if @row.status not in [:declined, :published, :scheduled] do %>
-              <div class="wf-action-buttons" style="margin-top: 1rem;">
-                <form
-                  method="POST"
-                  action={"/dashboard/editorial/#{@submission.id}/request-revisions"}
-                >
-                  <input
-                    type="hidden"
-                    name="_csrf_token"
-                    value={Plug.CSRFProtection.get_csrf_token()}
-                  />
-                  <input type="hidden" name="currentViewId" value={@current_view} />
-                  <button type="submit" class="wf-btn-secondary" id="btn-request-revisions">
-                    Request Revisions
-                  </button>
-                </form>
-                <form
-                  method="POST"
-                  action={"/dashboard/editorial/#{@submission.id}/accept"}
-                >
-                  <input
-                    type="hidden"
-                    name="_csrf_token"
-                    value={Plug.CSRFProtection.get_csrf_token()}
-                  />
-                  <input type="hidden" name="currentViewId" value={@current_view} />
-                  <button type="submit" class="wf-btn-primary" id="btn-accept-submission">
-                    Accept Submission
-                  </button>
-                </form>
-                <form
-                  method="POST"
-                  action={"/dashboard/editorial/#{@submission.id}/decline"}
-                  id="decline-form-review"
-                >
-                  <input
-                    type="hidden"
-                    name="_csrf_token"
-                    value={Plug.CSRFProtection.get_csrf_token()}
-                  />
-                  <input type="hidden" name="currentViewId" value={@current_view} />
-                  <button
-                    type="button"
-                    class="wf-btn-danger"
-                    id="btn-decline-review"
-                    onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
-                  >
-                    Decline Submission
-                  </button>
-                </form>
+            <%= if @mode == :author do %>
+              <div class="wf-empty" style="margin-top: 1rem;">
+                You can view the review progress of this submission. Editorial decisions are
+                managed by the journal's editors.
               </div>
+            <% else %>
+              <%= if @row.status not in [:declined, :published, :scheduled] do %>
+                <div class="wf-action-buttons" style="margin-top: 1rem;">
+                  <form
+                    method="POST"
+                    action={"/dashboard/editorial/#{@submission.id}/request-revisions"}
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <input type="hidden" name="currentViewId" value={@current_view} />
+                    <button type="submit" class="wf-btn-secondary" id="btn-request-revisions">
+                      Request Revisions
+                    </button>
+                  </form>
+                  <form
+                    method="POST"
+                    action={"/dashboard/editorial/#{@submission.id}/accept"}
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <input type="hidden" name="currentViewId" value={@current_view} />
+                    <button type="submit" class="wf-btn-primary" id="btn-accept-submission">
+                      Accept Submission
+                    </button>
+                  </form>
+                  <form
+                    method="POST"
+                    action={"/dashboard/editorial/#{@submission.id}/decline"}
+                    id="decline-form-review"
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <input type="hidden" name="currentViewId" value={@current_view} />
+                    <button
+                      type="button"
+                      class="wf-btn-danger"
+                      id="btn-decline-review"
+                      onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
+                    >
+                      Decline Submission
+                    </button>
+                  </form>
+                </div>
+              <% end %>
             <% end %>
           </section>
         </div>
@@ -576,7 +591,9 @@
                 <% end %>
               </ul>
 
-              <a href={"/review/#{assignment.id}"} class="btn-view">Manage copyediting</a>
+              <%= if @mode != :author do %>
+                <a href={"/review/#{assignment.id}"} class="btn-view">Manage copyediting</a>
+              <% end %>
             <% end %>
           </section>
         </div>
@@ -633,43 +650,47 @@
                 <% end %>
               </ul>
 
-              <a href={"/review/#{assignment.id}"} class="editorial-view-link">Open production record</a>
+              <%= if @mode != :author do %>
+                <a href={"/review/#{assignment.id}"} class="editorial-view-link">Open production record</a>
+              <% end %>
 
               <div class="wf-action-buttons" style="margin-top: 1rem;">
-                <form
-                  method="POST"
-                  action={"/dashboard/editorial/#{@submission.id}/accept"}
-                >
-                  <input
-                    type="hidden"
-                    name="_csrf_token"
-                    value={Plug.CSRFProtection.get_csrf_token()}
-                  />
-                  <input type="hidden" name="currentViewId" value={@current_view} />
-                  <button type="submit" class="wf-btn-primary" id="btn-accept-production">
-                    Accept &amp; Schedule
-                  </button>
-                </form>
-                <form
-                  method="POST"
-                  action={"/dashboard/editorial/#{@submission.id}/decline"}
-                  id="decline-form-production"
-                >
-                  <input
-                    type="hidden"
-                    name="_csrf_token"
-                    value={Plug.CSRFProtection.get_csrf_token()}
-                  />
-                  <input type="hidden" name="currentViewId" value={@current_view} />
-                  <button
-                    type="button"
-                    class="wf-btn-danger"
-                    id="btn-decline-production"
-                    onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
+                <%= if @mode != :author do %>
+                  <form
+                    method="POST"
+                    action={"/dashboard/editorial/#{@submission.id}/accept"}
                   >
-                    Decline Submission
-                  </button>
-                </form>
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <input type="hidden" name="currentViewId" value={@current_view} />
+                    <button type="submit" class="wf-btn-primary" id="btn-accept-production">
+                      Accept &amp; Schedule
+                    </button>
+                  </form>
+                  <form
+                    method="POST"
+                    action={"/dashboard/editorial/#{@submission.id}/decline"}
+                    id="decline-form-production"
+                  >
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <input type="hidden" name="currentViewId" value={@current_view} />
+                    <button
+                      type="button"
+                      class="wf-btn-danger"
+                      id="btn-decline-production"
+                      onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
+                    >
+                      Decline Submission
+                    </button>
+                  </form>
+                <% end %>
               </div>
             <% end %>
           </section>
@@ -690,17 +711,38 @@
               <input type="hidden" name="currentViewId" value={@current_view} />
               <input type="hidden" name="workflowMenuKey" value={@active_menu} />
 
-              <.input field={@pub_form[:title]} type="text" label="Title" />
+              <.input
+                field={@pub_form[:title]}
+                type="text"
+                label="Title"
+                disabled={@mode == :author}
+                readonly={@mode == :author}
+              />
 
-              <.input field={@pub_form[:subtitle]} type="text" label="Subtitle" />
+              <.input
+                field={@pub_form[:subtitle]}
+                type="text"
+                label="Subtitle"
+                disabled={@mode == :author}
+                readonly={@mode == :author}
+              />
 
-              <.input field={@pub_form[:abstract]} type="textarea" rows="8" label="Abstract" />
+              <.input
+                field={@pub_form[:abstract]}
+                type="textarea"
+                rows="8"
+                label="Abstract"
+                disabled={@mode == :author}
+                readonly={@mode == :author}
+              />
 
-              <div class="wf-form-actions">
-                <button type="submit" class="wf-btn-primary" id="btn-save-publication">
-                  Save
-                </button>
-              </div>
+              <%= if @mode != :author do %>
+                <div class="wf-form-actions">
+                  <button type="submit" class="wf-btn-primary" id="btn-save-publication">
+                    Save
+                  </button>
+                </div>
+              <% end %>
             </.form>
           </section>
         </div>
@@ -720,19 +762,39 @@
               <input type="hidden" name="currentViewId" value={@current_view} />
               <input type="hidden" name="workflowMenuKey" value={@active_menu} />
 
-              <.input field={@pub_form[:keywords]} type="text" label="Keywords" />
+              <.input
+                field={@pub_form[:keywords]}
+                type="text"
+                label="Keywords"
+                disabled={@mode == :author}
+                readonly={@mode == :author}
+              />
 
               <div class="wf-form-row">
-                <.input field={@pub_form[:language]} type="text" label="Language" />
+                <.input
+                  field={@pub_form[:language]}
+                  type="text"
+                  label="Language"
+                  disabled={@mode == :author}
+                  readonly={@mode == :author}
+                />
 
-                <.input field={@pub_form[:section]} type="text" label="Section" />
+                <.input
+                  field={@pub_form[:section]}
+                  type="text"
+                  label="Section"
+                  disabled={@mode == :author}
+                  readonly={@mode == :author}
+                />
               </div>
 
-              <div class="wf-form-actions">
-                <button type="submit" class="wf-btn-primary" id="btn-save-metadata">
-                  Save
-                </button>
-              </div>
+              <%= if @mode != :author do %>
+                <div class="wf-form-actions">
+                  <button type="submit" class="wf-btn-primary" id="btn-save-metadata">
+                    Save
+                  </button>
+                </div>
+              <% end %>
             </.form>
           </section>
         </div>
@@ -757,13 +819,22 @@
               <input type="hidden" name="currentViewId" value={@current_view} />
               <input type="hidden" name="workflowMenuKey" value={@active_menu} />
 
-              <.input field={@pub_form[:references]} type="textarea" rows="10" label="References" />
+              <.input
+                field={@pub_form[:references]}
+                type="textarea"
+                rows="10"
+                label="References"
+                disabled={@mode == :author}
+                readonly={@mode == :author}
+              />
 
-              <div class="wf-form-actions">
-                <button type="submit" class="wf-btn-primary" id="btn-save-citations">
-                  Save
-                </button>
-              </div>
+              <%= if @mode != :author do %>
+                <div class="wf-form-actions">
+                  <button type="submit" class="wf-btn-primary" id="btn-save-citations">
+                    Save
+                  </button>
+                </div>
+              <% end %>
             </.form>
           </section>
         </div>

@@ -62,11 +62,9 @@ defmodule OjsLandingWeb.AuthorHTML do
 
   # --- Editor workflow view link (stage-aware) -----------------------------
 
-  def submission_workflow_path(submission, view_id) do
+  def submission_workflow_path(submission, _view_id) do
     menu = workflow_menu_for_stage(submission.stage)
-
-    "/dashboard/editorial?workflowSubmissionId=#{submission.id}" <>
-      "&currentViewId=#{view_id}&workflowMenuKey=#{menu}"
+    "/submission/#{submission.id}/workflow?workflowMenuKey=#{menu}"
   end
 
   defp workflow_menu_for_stage(:copyediting), do: "workflow_4"

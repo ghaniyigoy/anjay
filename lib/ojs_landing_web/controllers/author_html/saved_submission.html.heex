@@ -1,0 +1,33 @@
+<div class="ojs-details-container">
+  <%!-- Breadcrumb (OJS PKP) --%>
+  <nav class="ojs-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/dashboard/mySubmissions">My Submissions</a></li>
+      <li aria-current="page">Saved for Later</li>
+    </ol>
+  </nav>
+
+  <div class="ojs-saved-wrap">
+    <div class="ojs-saved-card">
+      <h1 class="ojs-saved-title">Saved for Later</h1>
+
+      <div class="ojs-saved-box">
+        <p class="ojs-saved-text">
+          Your submission details have been saved in our system. You can return to complete your
+          submission at any time by following the link below.
+        </p>
+
+        <a
+          href={"/submission/wizard/#{@submission.id}?tab=#{@resume_tab}"}
+          class="ojs-saved-link"
+          id="btn-resume-link"
+        >
+          <span class="ojs-saved-name">{@author_name}</span>
+          <span class="ojs-saved-dash">—</span>
+          <span class="ojs-saved-title-text">{@submission.title}</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

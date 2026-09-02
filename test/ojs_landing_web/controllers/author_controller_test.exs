@@ -565,7 +565,7 @@ defmodule OjsLandingWeb.AuthorControllerTest do
       assert updated.references == "1. Author. (2026). Title."
     end
 
-    test "POST /submission/:id/details saves for later and returns to my submissions", %{
+    test "POST /submission/:id/details saves for later and shows saved confirmation", %{
       conn: conn
     } do
       submission = Submission.create("author1")
@@ -577,10 +577,19 @@ defmodule OjsLandingWeb.AuthorControllerTest do
           "submission" => %{"title" => "Judul Simpan Nanti", "abstract" => "Abstrak singkat."}
         })
 
-      assert redirected_to(conn) ==
-               "/dashboard/mySubmissions?currentViewId=incomplete-submissions"
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}/saved"
 
       assert Submission.get(submission.id).title == "Judul Simpan Nanti"
+    end
+
+    test "GET /submission/wizard/:id/saved renders the saved confirmation page", %{conn: conn} do
+      submission = Submission.create("author1", "Judul Simpan Nanti")
+
+      conn = get(conn, "/submission/wizard/#{submission.id}/saved")
+
+      assert html_response(conn, 200) =~ "Saved for Later"
+      assert html_response(conn, 200) =~ "submission details have been saved"
+      assert html_response(conn, 200) =~ "/submission/wizard/#{submission.id}?tab=files"
     end
 
     test "POST /submission/:id/details re-renders with errors when required fields are blank",
