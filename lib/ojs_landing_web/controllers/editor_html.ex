@@ -114,6 +114,16 @@ defmodule OjsLandingWeb.EditorHTML do
     "/dashboard/editorial/submissions/#{submission_id}/#{section}"
   end
 
+  # Static list of issues offered by the "Schedule For Publication" modal.
+  def schedule_issues do
+    [
+      {"Select an issue...", ""},
+      {"Vol. 1, No. 1 (2026) - Forthcoming", "1"},
+      {"Vol. 1, No. 2 (2026) - Forthcoming", "2"},
+      {"Vol. 2, No. 1 (2026) - Forthcoming", "3"}
+    ]
+  end
+
   attr :submission, :map, required: true
   attr :active_section, :string, default: "submission"
   slot :inner_block, required: true
@@ -146,8 +156,20 @@ defmodule OjsLandingWeb.EditorHTML do
         </div>
 
         <div class="submission-header-actions">
-          <a href="#" class="submission-header-btn">Activity Log</a>
-          <a href="#" class="submission-header-btn">Library</a>
+          <button
+            type="button"
+            class="submission-header-btn"
+            onclick="openModal('activityModal')"
+          >
+            Activity Log
+          </button>
+          <button
+            type="button"
+            class="submission-header-btn"
+            onclick="openModal('libraryModal')"
+          >
+            Library
+          </button>
         </div>
       </div>
 
@@ -206,6 +228,394 @@ defmodule OjsLandingWeb.EditorHTML do
       </div>
     </div>
 
+    <%!-- Activity Log & Notes modal --%>
+    <div class="ojs-modal-overlay" id="activityModal">
+      <div class="ojs-modal ojs-modal-lg">
+        <div class="ojs-modal-header">
+          <h2>Activity Log</h2>
+          <button
+            type="button"
+            class="ojs-modal-close"
+            onclick="closeModal('activityModal')"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="ojs-modal-tabs">
+          <button
+            type="button"
+            class="ojs-modal-tab active"
+            data-tab="activityTab"
+            onclick="switchTab(this, 'activityTab')"
+          >
+            Activity Log
+          </button>
+          <button
+            type="button"
+            class="ojs-modal-tab"
+            data-tab="notesTab"
+            onclick="switchTab(this, 'notesTab')"
+          >
+            Notes
+          </button>
+        </div>
+
+        <div class="ojs-modal-body">
+          <div class="ojs-tab-panel" id="activityTab">
+            <table class="ojs-activity-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>User</th>
+                  <th>Event</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%= for log <- @submission.activity_log do %>
+                  <tr class="ojs-activity-row" onclick="toggleActivityDetail(this)">
+                    <td>{log.date}</td>
+                    <td>{log.user}</td>
+                    <td>
+                      <span class="ojs-activity-event">{log.event}</span>
+                      <span class="ojs-activity-caret">&#9662;</span>
+                    </td>
+                  </tr>
+                  <%= if log.details && log.details != [] do %>
+                    <tr class="ojs-activity-detail" style="display:none;">
+                      <td colspan="3">
+                        <ul class="ojs-activity-detail-list">
+                          <%= for d <- log.details do %>
+                            <li>{d}</li>
+                          <% end %>
+                        </ul>
+                      </td>
+                    </tr>
+                  <% end %>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="ojs-tab-panel" id="notesTab" style="display:none;">
+            <div class="ojs-notes-list">
+              <%= if @submission.notes == [] do %>
+                <div class="ojs-notes-empty">No notes available.</div>
+              <% else %>
+                <%= for note <- @submission.notes do %>
+                  <div class="ojs-note">
+                    <div class="ojs-note-meta">
+                      <span class="ojs-note-author">{note.author}</span>
+                      <span class="ojs-note-date">{note.date}</span>
+                    </div>
+                    <div class="ojs-note-text">{note.text}</div>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+
+            <div class="ojs-note-add">
+              <label class="ojs-form-field-label" for="newNoteText">Add Entry</label>
+              <textarea
+                id="newNoteText"
+                rows="3"
+                class="ojs-textarea"
+                placeholder="Write a new note..."
+              ></textarea>
+              <div class="ojs-note-add-actions">
+                <button type="button" class="ojs-modal-primary" onclick="addNote()">Add Note</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%!-- Submission Library modal --%>
+    <div class="ojs-modal-overlay" id="libraryModal">
+      <div class="ojs-modal ojs-modal-lg">
+        <div class="ojs-modal-header">
+          <h2>Submission Library</h2>
+          <button
+            type="button"
+            class="ojs-modal-close"
+            onclick="closeModal('libraryModal')"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="ojs-modal-toolbar">
+          <button type="button" class="ojs-modal-btn" onclick="openModal('addFileModal')">
+            Add File
+          </button>
+          <button
+            type="button"
+            class="ojs-modal-btn"
+            onclick="toggleDocLibrary(this)"
+            id="docLibraryToggle"
+          >
+            Document Library
+          </button>
+        </div>
+
+        <div class="ojs-modal-body">
+          <div class="ojs-library-doc-view" id="libraryDocView" style="display:none;">
+            <p class="ojs-library-doc-text">
+              The document library provides publisher-wide documents. This is a static preview.
+            </p>
+          </div>
+
+          <div class="ojs-library-cats" id="libraryCatView">
+            <.library_category title="Marketing" items={@submission.library.marketing} />
+            <.library_category title="Permissions" items={@submission.library.permissions} />
+            <.library_category title="Reports" items={@submission.library.reports} />
+            <.library_category title="Other" items={@submission.library.other} />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%!-- Add File sub-modal --%>
+    <div class="ojs-modal-overlay" id="addFileModal">
+      <div class="ojs-modal ojs-modal-md">
+        <div class="ojs-modal-header">
+          <h2>Add File</h2>
+          <button
+            type="button"
+            class="ojs-modal-close"
+            onclick="closeModal('addFileModal')"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="ojs-modal-body">
+          <div class="ojs-form-field">
+            <label class="ojs-form-field-label" for="addFileName">
+              Name <span class="ojs-required">*</span>
+            </label>
+            <input type="text" id="addFileName" class="ojs-input" placeholder="File name" />
+          </div>
+
+          <div class="ojs-form-field">
+            <label class="ojs-form-field-label" for="addFileType">
+              Type <span class="ojs-required">*</span>
+            </label>
+            <select id="addFileType" class="ojs-input">
+              <option value="">Select a category...</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Permissions">Permissions</option>
+              <option value="Reports">Reports</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="ojs-form-field">
+            <label class="ojs-form-field-label" for="addFileDesc">
+              Description <span class="ojs-required">*</span>
+            </label>
+            <textarea id="addFileDesc" rows="2" class="ojs-textarea" placeholder="File description"></textarea>
+          </div>
+
+          <div class="ojs-form-field">
+            <label class="ojs-form-field-label">Upload File</label>
+            <div class="ojs-dropzone" id="addFileDropzone">
+              Drag and drop a file here, or click to browse
+            </div>
+            <div class="ojs-note-add-actions">
+              <button
+                type="button"
+                class="ojs-modal-primary"
+                onclick="document.getElementById('addFileDropzone').click(); void 0;"
+              >
+                Upload File
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%!-- Schedule For Publication modal --%>
+    <div class="ojs-modal-overlay" id="scheduleModal">
+      <div class="ojs-modal ojs-modal-md">
+        <div class="ojs-modal-header">
+          <h2>Schedule For Publication</h2>
+          <button
+            type="button"
+            class="ojs-modal-close"
+            onclick="closeModal('scheduleModal')"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="ojs-modal-body">
+          <p class="pub-hint" style={["margin-top: 0 !important"]}>
+            Assign this submission to an issue for publication.
+          </p>
+
+          <div class="ojs-form-field">
+            <label class="ojs-form-field-label" for="scheduleIssue">
+              Issue <span class="ojs-required">*</span>
+            </label>
+            <select id="scheduleIssue" class="ojs-input" onchange="scheduleIssueChanged(this)">
+              <%= for {label, value} <- schedule_issues() do %>
+                <option value={value} selected={value == ""}>{label}</option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="ojs-form-field">
+            <label class="ojs-form-field-label" for="scheduleSection">Section</label>
+            <select id="scheduleSection" class="ojs-input">
+              <%= for sec <- @submission.sections do %>
+                <option selected={@submission.section == sec}>{sec}</option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="ojs-form-field">
+            <label class="ojs-form-field-label" for="schedulePages">Pages</label>
+            <input
+              type="text"
+              id="schedulePages"
+              class="ojs-input"
+              placeholder="e.g. 1-12"
+              value=""
+            />
+          </div>
+
+          <div class="ojs-form-field">
+            <label class="ojs-form-field-label" for="scheduleDate">Date Published</label>
+            <input type="date" id="scheduleDate" class="ojs-input" value="" />
+            <p class="pub-hint">
+              Leave empty to use the default publication date.
+            </p>
+          </div>
+
+          <div class="ojs-form-field">
+            <label class="ojs-checkbox-label">
+              <input type="checkbox" id="scheduleNotify" checked />
+              Send a notification to all participants
+            </label>
+          </div>
+
+          <div class="ojs-note-add-actions">
+            <button type="button" class="ojs-modal-primary" onclick="schedulePublication()">
+              Schedule
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%!-- Send to Review modal --%>
+    <div class="ojs-modal-overlay" id="sendToReviewModal">
+      <div class="ojs-modal ojs-modal-sm">
+        <div class="ojs-modal-header">
+          <h2>Send to Review</h2>
+          <button
+            type="button"
+            class="ojs-modal-close"
+            onclick="closeModal('sendToReviewModal')"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="ojs-modal-body">
+          <p class="ojs-decision-text">
+            This submission will be moved to the review stage and will await reviewer
+            assignment.
+          </p>
+
+          <div class="ojs-form-field">
+            <label class="ojs-form-field-label" for="reviewRound">Review Round</label>
+            <select id="reviewRound" class="ojs-input">
+              <option>Round 1</option>
+            </select>
+          </div>
+
+          <div class="ojs-note-add-actions">
+            <button type="button" class="ojs-modal-primary" onclick="sendToReview()">
+              Send to Review
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%!-- Accept and Skip Review modal --%>
+    <div class="ojs-modal-overlay" id="skipReviewModal">
+      <div class="ojs-modal ojs-modal-sm">
+        <div class="ojs-modal-header">
+          <h2>Accept and Skip Review</h2>
+          <button
+            type="button"
+            class="ojs-modal-close"
+            onclick="closeModal('skipReviewModal')"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="ojs-modal-body">
+          <p class="ojs-decision-text">
+            Accepting and skipping review will move this submission directly to the
+            copyediting stage.
+          </p>
+
+          <div class="ojs-note-add-actions">
+            <button type="button" class="ojs-modal-primary" onclick="skipReview()">
+              Accept and Skip Review
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%!-- Decline Submission modal --%>
+    <div class="ojs-modal-overlay" id="declineModal">
+      <div class="ojs-modal ojs-modal-sm">
+        <div class="ojs-modal-header">
+          <h2>Decline Submission</h2>
+          <button
+            type="button"
+            class="ojs-modal-close"
+            onclick="closeModal('declineModal')"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="ojs-modal-body">
+          <p class="ojs-decision-text">
+            Are you sure you want to decline this submission? The submission will no
+            longer proceed in the editorial workflow.
+          </p>
+
+          <div class="ojs-note-add-actions">
+            <button
+              type="button"
+              class="ojs-modal-primary ojs-modal-primary-danger"
+              onclick="declineSubmission()"
+            >
+              Decline Submission
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
       function toggleSubmissionNav(button) {
         var section = button.parentElement;
@@ -244,6 +654,175 @@ defmodule OjsLandingWeb.EditorHTML do
           });
         }
       });
+
+      function openModal(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'flex';
+      }
+
+      function closeModal(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      }
+
+      document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('ojs-modal-overlay')) {
+          closeModal(e.target.id);
+        }
+      });
+
+      function switchTab(btn, tabId) {
+        var tabs = btn.parentElement.querySelectorAll('.ojs-modal-tab');
+        tabs.forEach(function (t) { t.classList.remove('active'); });
+        btn.classList.add('active');
+        var panels = btn.closest('.ojs-modal').querySelectorAll('.ojs-tab-panel');
+        panels.forEach(function (p) { p.style.display = 'none'; });
+        document.getElementById(tabId).style.display = 'block';
+      }
+
+      function toggleActivityDetail(row) {
+        var detail = row.nextElementSibling;
+        var caret = row.querySelector('.ojs-activity-caret');
+        if (detail && detail.classList.contains('ojs-activity-detail')) {
+          var visible = detail.style.display === 'table-row';
+          detail.style.display = visible ? 'none' : 'table-row';
+          if (caret) caret.innerHTML = visible ? '&#9662;' : '&#9652;';
+        }
+      }
+
+      function addNote() {
+        var text = document.getElementById('newNoteText').value.trim();
+        var list = document.querySelector('#notesTab .ojs-notes-list');
+        var empty = list.querySelector('.ojs-notes-empty');
+        if (empty) empty.remove();
+        if (text === '') return;
+        var note = document.createElement('div');
+        note.className = 'ojs-note';
+        var meta = document.createElement('div');
+        meta.className = 'ojs-note-meta';
+        var author = document.createElement('span');
+        author.className = 'ojs-note-author';
+        author.textContent = 'Editor';
+        var date = document.createElement('span');
+        date.className = 'ojs-note-date';
+        date.textContent = new Date().toISOString().slice(0, 10);
+        meta.appendChild(author);
+        meta.appendChild(date);
+        var body = document.createElement('div');
+        body.className = 'ojs-note-text';
+        body.textContent = text;
+        note.appendChild(meta);
+        note.appendChild(body);
+        list.appendChild(note);
+        document.getElementById('newNoteText').value = '';
+      }
+
+      function toggleDocLibrary(btn) {
+        var doc = document.getElementById('libraryDocView');
+        var cats = document.getElementById('libraryCatView');
+        var showingDoc = doc.style.display !== 'none';
+        doc.style.display = showingDoc ? 'none' : 'block';
+        cats.style.display = showingDoc ? 'block' : 'none';
+        btn.classList.toggle('active', !showingDoc);
+      }
+
+      function scheduleIssueChanged(select) {
+        var msg = document.getElementById('scheduleErr');
+        if (msg) msg.style.display = select.value ? 'none' : 'block';
+      }
+
+      function schedulePublication() {
+        var issue = document.getElementById('scheduleIssue');
+        var err = document.getElementById('scheduleErr');
+
+        if (!issue || issue.value === '') {
+          if (!err) {
+            err = document.createElement('p');
+            err.className = 'ojs-schedule-err';
+            err.id = 'scheduleErr';
+            issue.closest('.ojs-form-field').appendChild(err);
+          }
+          err.textContent = 'A publication issue is required.';
+          err.style.display = 'block';
+          return;
+        }
+
+        var label = issue.options[issue.selectedIndex].text;
+        var statusPill = document.querySelector('.publication-status-pill');
+        var versionSelect = document.querySelector('.publication-version-picker .publication-select');
+        var statusBox = document.querySelector('.pub-status-box-text p');
+        var scheduleBtn = document.querySelector('.pub-schedule-primary');
+
+        closeModal('scheduleModal');
+
+        if (statusPill) {
+          statusPill.innerHTML = '<span class="publication-status-dot"></span> Scheduled';
+        }
+        if (versionSelect) {
+          versionSelect.innerHTML = '<option>1 - Scheduled</option>';
+        }
+        if (statusBox) {
+          statusBox.textContent = 'This article is scheduled for publication in ' + label + '.';
+        }
+        if (scheduleBtn) {
+          var badge = document.createElement('span');
+          badge.className = 'pub-scheduled-badge';
+          badge.textContent = 'Scheduled';
+          scheduleBtn.replaceWith(badge);
+        }
+      }
+
+      function applyEditorialDecision(stageText, dotColor, modalId, storedMsg) {
+        closeModal(modalId);
+
+        var indicator = document.querySelector('.submission-stage-indicator');
+        if (indicator) {
+          var dot = indicator.querySelector('.submission-stage-dot');
+          if (dot) dot.style.backgroundColor = dotColor;
+          var text = indicator.cloneNode(true);
+          text.querySelector('.submission-stage-dot').remove();
+          text.textContent = ' ' + stageText;
+          indicator.textContent = '';
+          indicator.appendChild(dot);
+          indicator.appendChild(text);
+        }
+
+        var actions = document.querySelector('.submission-actions');
+        if (actions) {
+          var done = document.createElement('div');
+          done.className = 'ojs-decision-done';
+          done.textContent = storedMsg;
+          actions.innerHTML = '';
+          actions.appendChild(done);
+        }
+      }
+
+      function sendToReview() {
+        applyEditorialDecision(
+          'In Review',
+          '#f39c12',
+          'sendToReviewModal',
+          'Submission sent to review.'
+        );
+      }
+
+      function skipReview() {
+        applyEditorialDecision(
+          'Copyediting',
+          '#2ecc71',
+          'skipReviewModal',
+          'Submission accepted and skipped review. Moved to copyediting.'
+        );
+      }
+
+      function declineSubmission() {
+        applyEditorialDecision(
+          'Declined',
+          '#c0392b',
+          'declineModal',
+          'Submission declined.'
+        );
+      }
     </script>
     """
   end
@@ -408,6 +987,57 @@ defmodule OjsLandingWeb.EditorHTML do
     """
   end
 
+  attr :title, :string, required: true
+  attr :items, :list, default: []
+
+  def library_category(assigns) do
+    ~H"""
+    <div class="ojs-library-cat">
+      <div class="ojs-library-cat-header">
+        <h3>{@title}</h3>
+        <a
+          href="#"
+          class="ojs-library-add-link"
+          onclick="openModal('addFileModal'); event.preventDefault();"
+        >
+          Add File
+        </a>
+      </div>
+
+      <%= if @items == [] do %>
+        <div class="ojs-library-no-items">No Items</div>
+      <% else %>
+        <table class="ojs-library-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Added</th>
+              <th class="ojs-library-row-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for item <- @items do %>
+              <tr>
+                <td><a href="#" class="ojs-library-item">{item.name}</a></td>
+                <td>{item.added}</td>
+                <td class="ojs-library-row-actions">
+                  <button type="button" class="submission-ellipsis" onclick="toggleRowMenu(this)">
+                    <span>&#8942;</span>
+                  </button>
+                  <div class="submission-row-menu">
+                    <a href="#">Download</a>
+                    <a href="#">Delete</a>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </div>
+    """
+  end
+
   attr :section_title, :string, required: true
   attr :submission, :map, required: true
   slot :inner_block, required: true
@@ -439,7 +1069,13 @@ defmodule OjsLandingWeb.EditorHTML do
             <span class="publication-language">
               Manuscript Language: {@submission.language}
             </span>
-            <a href="#" class="publication-schedule-btn">Schedule For Publication</a>
+            <button
+              type="button"
+              class="publication-schedule-btn"
+              onclick="openModal('scheduleModal')"
+            >
+              Schedule For Publication
+            </button>
           </div>
         </div>
 

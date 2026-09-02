@@ -11,7 +11,13 @@ defmodule OjsLandingWeb.EditorPublishSectionsTest do
 
     assert html =~ "Submission"
     assert html =~ "Send to Review"
+    assert html =~ "Accept and Skip Review"
     assert html =~ "Decline Submission"
+    assert html =~ "submission-action-panel"
+    assert html =~ "submission-actions"
+    assert html =~ "sendToReviewModal"
+    assert html =~ "skipReviewModal"
+    assert html =~ "declineModal"
     assert html =~ "Submission Files"
     assert html =~ "Pre-Review Discussions"
     assert html =~ "Participants"
@@ -121,8 +127,60 @@ defmodule OjsLandingWeb.EditorPublishSectionsTest do
     assert html =~ "Cover Image"
   end
 
+  test "schedule for publication modal renders", %{conn: conn} do
+    conn = get(conn, "/dashboard/editorial/submissions/1/issue")
+    html = html_response(conn, 200)
+
+    assert html =~ "scheduleModal"
+    assert html =~ "Vol. 1, No. 1"
+    assert html =~ "Send a notification to all participants"
+  end
+
+  test "production page schedule button is wired to modal", %{conn: conn} do
+    conn = get(conn, "/dashboard/editorial/submissions/1/production")
+    html = html_response(conn, 200)
+
+    assert html =~ "openModal('scheduleModal')"
+    assert html =~ "Schedule For Publication"
+  end
+
   test "unknown section falls back to submission workflow", %{conn: conn} do
     conn = get(conn, "/dashboard/editorial/submissions/1/foo")
     assert html_response(conn, 200) =~ "Submission"
+  end
+
+  test "activity log & notes modal renders", %{conn: conn} do
+    conn = get(conn, "/dashboard/editorial/submissions/1")
+    html = html_response(conn, 200)
+
+    assert html =~ "activityModal"
+    assert html =~ "Activity Log"
+    assert html =~ "Submission created"
+    assert html =~ "Email notification sent"
+    assert html =~ "Waiting for the author to address reviewer comments"
+    assert html =~ "Add Entry"
+    assert html =~ "Add Note"
+  end
+
+  test "notes empty state renders for submission without notes", %{conn: conn} do
+    conn = get(conn, "/dashboard/editorial/submissions/2")
+    html = html_response(conn, 200)
+
+    assert html =~ "No notes available."
+  end
+
+  test "submission library modal renders categories", %{conn: conn} do
+    conn = get(conn, "/dashboard/editorial/submissions/1")
+    html = html_response(conn, 200)
+
+    assert html =~ "libraryModal"
+    assert html =~ "Submission Library"
+    assert html =~ "Add File"
+    assert html =~ "Document Library"
+    assert html =~ "Marketing"
+    assert html =~ "Permissions"
+    assert html =~ "Reports"
+    assert html =~ "Other"
+    assert html =~ "Upload File"
   end
 end

@@ -2,7 +2,13 @@
   <.workflow_page title="Production" submission={@submission}>
     <:actions>
       <a href="#" class="wf-action-btn">Add Production Discussion</a>
-      <a href="#" class="wf-action-btn wf-action-primary">Schedule For Publication</a>
+      <button
+        type="button"
+        class="wf-action-btn wf-action-primary"
+        onclick="openModal('scheduleModal')"
+      >
+        Schedule For Publication
+      </button>
     </:actions>
 
     <%!-- Production status overview --%>

@@ -5908,8 +5908,8 @@ ul.nav-list li.dropdown .dropdown-menu li a:hover {
 }
 
 .editor-main-content .page-heading {
-  font-size: 32px !important;
-  font-weight: bold !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
   color: #333 !important;
   margin: 0 0 25px 0 !important;
 }
@@ -6020,7 +6020,7 @@ ul.nav-list li.dropdown .dropdown-menu li a:hover {
   flex-shrink: 0 !important;
 }
 
-.submission-title {
+.submission-header .submission-title {
   font-size: 26px !important;
   font-weight: 600 !important;
   color: #1a1a1a !important;
@@ -6028,7 +6028,7 @@ ul.nav-list li.dropdown .dropdown-menu li a:hover {
   line-height: 1.3 !important;
 }
 
-.submission-authors {
+.submission-header .submission-authors {
   font-size: 18px !important;
   font-weight: 500 !important;
   color: #333 !important;
@@ -6397,6 +6397,8 @@ ul.nav-list li.dropdown .dropdown-menu li a:hover {
   text-decoration: none !important;
   border-radius: 4px !important;
   transition: background 0.15s ease !important;
+  cursor: pointer !important;
+  font-family: inherit !important;
 }
 
 .wf-action-btn:hover {
@@ -6573,6 +6575,426 @@ ul.nav-list li.dropdown .dropdown-menu li a:hover {
   border-radius: 50% !important;
   background: currentColor !important;
   display: inline-block !important;
+}
+
+/* --- Modals (Activity Log & Notes / Submission Library) --- */
+.ojs-modal-overlay {
+  display: none;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 40px 16px !important;
+  z-index: 1000 !important;
+  overflow-y: auto !important;
+}
+
+.ojs-modal {
+  background: #fff !important;
+  border-radius: 6px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25) !important;
+  width: 100% !important;
+  max-height: calc(100vh - 80px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.ojs-modal-lg {
+  max-width: 760px !important;
+}
+
+.ojs-modal-md {
+  max-width: 520px !important;
+}
+
+.ojs-modal-sm {
+  max-width: 440px !important;
+}
+
+.ojs-modal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  background: #f7f9fb !important;
+}
+
+.ojs-modal-header h2 {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #1a1a1a !important;
+  margin: 0 !important;
+}
+
+.ojs-modal-close {
+  border: none !important;
+  background: transparent !important;
+  font-size: 26px !important;
+  line-height: 1 !important;
+  color: #666 !important;
+  cursor: pointer !important;
+  padding: 0 4px !important;
+}
+
+.ojs-modal-close:hover {
+  color: #d9534f !important;
+}
+
+.ojs-modal-tabs {
+  display: flex !important;
+  gap: 4px !important;
+  padding: 10px 20px 0 20px !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+}
+
+.ojs-modal-tab {
+  padding: 9px 18px !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  color: #555 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+
+.ojs-modal-tab.active {
+  color: #006798 !important;
+  border-bottom-color: #006798 !important;
+  font-weight: 600 !important;
+}
+
+.ojs-modal-body {
+  padding: 20px !important;
+  overflow-y: auto !important;
+}
+
+.ojs-modal-toolbar {
+  display: flex !important;
+  gap: 8px !important;
+  padding: 12px 20px !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  background: #fafafa !important;
+}
+
+.ojs-modal-btn {
+  padding: 8px 16px !important;
+  background: #fff !important;
+  border: 1px solid #006798 !important;
+  color: #006798 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+}
+
+.ojs-modal-btn:hover,
+.ojs-modal-btn.active {
+  background: #eaf5fa !important;
+}
+
+.ojs-modal-primary {
+  padding: 8px 18px !important;
+  background: #006798 !important;
+  border: 1px solid #006798 !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+}
+
+.ojs-modal-primary:hover {
+  background: #004f6e !important;
+}
+
+.ojs-modal-primary-danger {
+  background: #c0392b !important;
+  border-color: #c0392b !important;
+}
+
+.ojs-modal-primary-danger:hover {
+  background: #a93226 !important;
+}
+
+.ojs-decision-text {
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+  color: #333 !important;
+  margin: 0 0 18px 0 !important;
+}
+
+.ojs-decision-done {
+  padding: 12px 14px !important;
+  background: #eafaf1 !important;
+  border: 1px solid #27ae60 !important;
+  color: #1e8449 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  border-radius: 4px !important;
+  text-align: center !important;
+}
+
+/* --- Activity log table --- */
+.ojs-activity-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.ojs-activity-table th {
+  text-align: left !important;
+  padding: 9px 12px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #444 !important;
+  background: #f5f5f5 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+}
+
+.ojs-activity-table td {
+  padding: 11px 12px !important;
+  font-size: 13px !important;
+  color: #333 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.ojs-activity-row {
+  cursor: pointer !important;
+}
+
+.ojs-activity-row:hover td {
+  background: #f7fbfd !important;
+}
+
+.ojs-activity-event {
+  font-weight: 500 !important;
+  margin-right: 8px !important;
+}
+
+.ojs-activity-caret {
+  color: #999 !important;
+  font-size: 12px !important;
+}
+
+.ojs-activity-detail td {
+  background: #fafafa !important;
+}
+
+.ojs-activity-detail-list {
+  margin: 0 !important;
+  padding-left: 18px !important;
+  color: #555 !important;
+}
+
+.ojs-activity-detail-list li {
+  padding: 2px 0 !important;
+}
+
+/* --- Notes --- */
+.ojs-notes-empty {
+  color: #888 !important;
+  font-style: italic !important;
+  padding: 18px !important;
+  text-align: center !important;
+  border: 1px dashed #e0e0e0 !important;
+  border-radius: 4px !important;
+}
+
+.ojs-note {
+  border: 1px solid #e0e0e0 !important;
+  border-left: 4px solid #006798 !important;
+  border-radius: 4px !important;
+  padding: 12px 14px !important;
+  margin-bottom: 12px !important;
+  background: #fafafa !important;
+}
+
+.ojs-note-meta {
+  display: flex !important;
+  justify-content: space-between !important;
+  margin-bottom: 6px !important;
+}
+
+.ojs-note-author {
+  font-weight: 600 !important;
+  color: #1a1a1a !important;
+  font-size: 13px !important;
+}
+
+.ojs-note-date {
+  color: #999 !important;
+  font-size: 12px !important;
+}
+
+.ojs-note-text {
+  color: #444 !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+.ojs-note-add {
+  margin-top: 20px !important;
+  padding-top: 16px !important;
+  border-top: 1px solid #e0e0e0 !important;
+}
+
+.ojs-note-add-actions {
+  margin-top: 10px !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+}
+
+/* --- Form fields --- */
+.ojs-form-field {
+  margin-bottom: 16px !important;
+}
+
+.ojs-form-field-label {
+  display: block !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #1a1a1a !important;
+  margin-bottom: 6px !important;
+}
+
+.ojs-required {
+  color: #d00 !important;
+  font-weight: 700 !important;
+}
+
+.ojs-input,
+.ojs-textarea {
+  width: 100% !important;
+  padding: 8px 12px !important;
+  border: 1px solid #ccc !important;
+  border-radius: 4px !important;
+  font-size: 14px !important;
+  color: #333 !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+}
+
+.ojs-input:focus,
+.ojs-textarea:focus {
+  outline: none !important;
+  border-color: #006798 !important;
+  box-shadow: 0 0 0 2px rgba(0, 103, 152, 0.15) !important;
+}
+
+.ojs-textarea {
+  resize: vertical !important;
+}
+
+/* --- Library --- */
+.ojs-library-cat {
+  margin-bottom: 22px !important;
+}
+
+.ojs-library-cat-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.ojs-library-cat-header h3 {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #1a1a1a !important;
+  margin: 0 !important;
+}
+
+.ojs-library-add-link {
+  color: #006798 !important;
+  font-size: 13px !important;
+  text-decoration: none !important;
+}
+
+.ojs-library-add-link:hover {
+  text-decoration: underline !important;
+}
+
+.ojs-library-no-items {
+  color: #999 !important;
+  font-style: italic !important;
+  padding: 12px 4px !important;
+}
+
+.ojs-library-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.ojs-library-table th {
+  text-align: left !important;
+  padding: 8px 12px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #444 !important;
+  background: #f5f5f5 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+}
+
+.ojs-library-table td {
+  padding: 9px 12px !important;
+  font-size: 13px !important;
+  color: #333 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.ojs-library-item {
+  color: #006798 !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+}
+
+.ojs-library-item:hover {
+  text-decoration: underline !important;
+}
+
+.ojs-library-row-actions {
+  width: 70px !important;
+  text-align: right !important;
+  position: relative !important;
+}
+
+.ojs-library-doc-view {
+  padding: 10px 0 !important;
+}
+
+.ojs-library-doc-text {
+  color: #555 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+/* --- Dropzone --- */
+.ojs-dropzone {
+  border: 2px dashed #c5ced6 !important;
+  border-radius: 6px !important;
+  padding: 26px 16px !important;
+  text-align: center !important;
+  color: #777 !important;
+  font-size: 13px !important;
+  background: #fafbfc !important;
+  cursor: pointer !important;
+  transition: border-color 0.15s ease, background 0.15s ease !important;
+}
+
+.ojs-dropzone:hover,
+.ojs-dropzone.dragging {
+  border-color: #006798 !important;
+  background: #f0f6fa !important;
+  color: #006798 !important;
 }
 
 /* --- Right action panel --- */
@@ -6818,6 +7240,8 @@ ul.nav-list li.dropdown .dropdown-menu li a:hover {
   border-radius: 4px !important;
   border: 1px solid #006798 !important;
   transition: background 0.15s ease !important;
+  cursor: pointer !important;
+  font-family: inherit !important;
 }
 
 .publication-schedule-btn:hover {
@@ -7168,7 +7592,36 @@ ul.nav-list li.dropdown .dropdown-menu li a:hover {
   font-weight: 500 !important;
   text-decoration: none !important;
   border-radius: 4px !important;
+  border: 1px solid #006798 !important;
   transition: background 0.15s ease !important;
+  cursor: pointer !important;
+  font-family: inherit !important;
+}
+
+.pub-scheduled-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 9px 18px !important;
+  background: #27ae60 !important;
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  border-radius: 4px !important;
+}
+
+.ojs-checkbox-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  color: #333 !important;
+  cursor: pointer !important;
+}
+
+.ojs-schedule-err {
+  color: #d9534f !important;
+  font-size: 13px !important;
+  margin: 8px 0 0 0 !important;
 }
 
 .pub-schedule-primary:hover {

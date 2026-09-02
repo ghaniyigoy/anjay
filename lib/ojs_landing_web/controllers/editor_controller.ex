@@ -288,7 +288,71 @@ defmodule OjsLandingWeb.EditorController do
         sections: ["Articles", "Reviews", "Case Studies"],
         section: "Articles",
         abstract:
-          "This study explores the application of machine learning techniques for sentiment analysis of Indonesian-language social media text. A supervised learning approach was used to classify opinions into positive, negative, and neutral sentiment classes, achieving competitive accuracy on the evaluation dataset."
+          "This study explores the application of machine learning techniques for sentiment analysis of Indonesian-language social media text. A supervised learning approach was used to classify opinions into positive, negative, and neutral sentiment classes, achieving competitive accuracy on the evaluation dataset.",
+        activity_log: [
+          %{
+            date: "2026-09-01",
+            time: "09:14",
+            user: "Ahmad Fauzi",
+            event: "Submission created",
+            details: ["Manuscript uploaded: manuscript.docx"]
+          },
+          %{
+            date: "2026-09-01",
+            time: "10:02",
+            user: "Editor",
+            event: "Submission assigned to editor",
+            details: ["Assigned to: Prof. Budi Santoso"]
+          },
+          %{
+            date: "2026-09-02",
+            time: "08:45",
+            user: "Editor",
+            event: "Email notification sent",
+            details: ["Recipient: Ahmad Fauzi", "Subject: Submission received"]
+          },
+          %{
+            date: "2026-09-02",
+            time: "11:30",
+            user: "Ahmad Fauzi",
+            event: "Metadata updated",
+            details: ["Keywords updated by author"]
+          },
+          %{
+            date: "2026-09-03",
+            time: "14:05",
+            user: "Editor",
+            event: "File revision uploaded",
+            details: ["New version: manuscript-rev1.docx"]
+          },
+          %{
+            date: "2026-09-04",
+            time: "16:20",
+            user: "Budi Santoso",
+            event: "Payment received",
+            details: ["Transaction ID: INV-2026-0142", "Amount: $50.00"]
+          }
+        ],
+        notes: [
+          %{
+            author: "Prof. Budi Santoso",
+            date: "2026-09-03",
+            text: "Waiting for the author to address reviewer comments on the abstract."
+          }
+        ],
+        library: %{
+          marketing: [
+            %{name: "journal-call-for-papers.pdf", added: "2026-08-20"},
+            %{name: "author-guidelines.pdf", added: "2026-08-20"}
+          ],
+          permissions: [
+            %{name: "copyright-agreement.pdf", added: "2026-08-21"}
+          ],
+          reports: [],
+          other: [
+            %{name: "cover-letter.docx", added: "2026-08-22"}
+          ]
+        }
       },
       %{
         id: 2,
@@ -408,7 +472,46 @@ defmodule OjsLandingWeb.EditorController do
         sections: ["Articles", "Reviews", "Case Studies"],
         section: "Articles",
         abstract:
-          "This paper presents a collaborative filtering-based recommender system tailored for Open Journal Systems. The proposed method combines user-based and item-based filtering to generate personalized article recommendations, addressing data sparsity through matrix factorization."
+          "This paper presents a collaborative filtering-based recommender system tailored for Open Journal Systems. The proposed method combines user-based and item-based filtering to generate personalized article recommendations, addressing data sparsity through matrix factorization.",
+        activity_log: [
+          %{
+            date: "2026-08-28",
+            time: "15:40",
+            user: "Siti Nurhaliza",
+            event: "Submission created",
+            details: ["Manuscript uploaded: manuscript.docx"]
+          },
+          %{
+            date: "2026-08-28",
+            time: "16:10",
+            user: "Editor",
+            event: "Submission assigned to editor",
+            details: ["Assigned to: Prof. Budi Santoso"]
+          },
+          %{
+            date: "2026-08-29",
+            time: "09:05",
+            user: "Editor",
+            event: "Review round started",
+            details: ["Round 1 initiated", "Reviewers invited: 2"]
+          },
+          %{
+            date: "2026-08-30",
+            time: "13:22",
+            user: "Siti Nurhaliza",
+            event: "File revision uploaded",
+            details: ["New version: manuscript-rev2.docx"]
+          }
+        ],
+        notes: [],
+        library: %{
+          marketing: [],
+          permissions: [
+            %{name: "copyright-agreement.pdf", added: "2026-08-25"}
+          ],
+          reports: [],
+          other: []
+        }
       }
     ]
   end

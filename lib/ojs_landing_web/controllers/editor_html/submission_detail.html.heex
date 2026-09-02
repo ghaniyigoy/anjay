@@ -1,11 +1,5 @@
 <.submission_workflow_layout submission={@submission} active_section={@active_section}>
   <.workflow_page title="Submission" submission={@submission}>
-    <:actions>
-      <a href="#" class="wf-action-btn">Send to Review</a>
-      <a href="#" class="wf-action-btn">Accept and Skip Review</a>
-      <a href="#" class="wf-action-btn wf-action-danger">Decline Submission</a>
-    </:actions>
-
     <.workflow_files title="Submission Files" files={@submission.files} />
 
     <.workflow_discussions
@@ -17,6 +11,30 @@
 
   <%!-- Right action / participants panel --%>
   <aside class="submission-action-panel">
+    <div class="submission-actions">
+      <button
+        type="button"
+        class="submission-action-btn"
+        onclick="openModal('sendToReviewModal')"
+      >
+        Send to Review
+      </button>
+      <button
+        type="button"
+        class="submission-action-btn"
+        onclick="openModal('skipReviewModal')"
+      >
+        Accept and Skip Review
+      </button>
+      <button
+        type="button"
+        class="submission-action-btn submission-action-danger"
+        onclick="openModal('declineModal')"
+      >
+        Decline Submission
+      </button>
+    </div>
+
     <div class="submission-participants">
       <div class="submission-participants-header">
         <h3>Participants</h3>
