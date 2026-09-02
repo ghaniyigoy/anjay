@@ -2,9 +2,13 @@ defmodule OjsLanding.Issue do
   @moduledoc """
   Journal issues (volume/number publications).
 
-  Static seed data modeled after the `OjsLanding.Journal` module. Each issue
-  belongs to a journal (via `journal_id`) and holds its own list of articles.
+  Keeps issues in an in-memory Agent store so newly created issues survive
+  across requests (resets whenever the server restarts). Seeded data modeled
+  after the `OjsLanding.Journal` module. Each issue belongs to a journal (via
+  `journal_id`) and holds its own list of articles.
   """
+
+  use Agent
 
   defstruct [
     :id,
@@ -18,19 +22,22 @@ defmodule OjsLanding.Issue do
     :articles
   ]
 
+  def start_link(_opts) do
+    Agent.start_link(&seed/0, name: __MODULE__)
+  end
+
   @doc """
   Get all issues (newest first by year/volume/number).
   """
   def all do
-    seed()
-    |> Enum.sort_by(&{&1.year || 0, &1.volume || 0, &1.number || 0}, :desc)
+    Agent.get(__MODULE__, &sort_newest/1)
   end
 
   @doc """
   Get a single issue by id.
   """
   def get(id) when is_integer(id) do
-    Enum.find(seed(), &(&1.id == id))
+    Agent.get(__MODULE__, fn issues -> Enum.find(issues, &(&1.id == id)) end)
   end
 
   def get(id) when is_binary(id) do
@@ -54,19 +61,86 @@ defmodule OjsLanding.Issue do
   Get all issues belonging to a journal (newest first).
   """
   def for_journal(journal_id) do
-    all()
-    |> Enum.filter(&(&1.journal_id == journal_id))
+    Agent.get(__MODULE__, fn issues ->
+      issues
+      |> Enum.filter(&(&1.journal_id == journal_id))
+      |> sort_newest()
+    end)
   end
 
   @doc """
   Get the current (most recent published) issue for a journal.
   """
   def current(journal_id) do
-    journal_id
-    |> for_journal()
-    |> Enum.find(&(&1.status == :published)) ||
-      List.first(for_journal(journal_id))
+    issues = for_journal(journal_id)
+    Enum.find(issues, &(&1.status == :published)) || List.first(issues)
   end
+
+  @doc """
+  Create a new (future, unpublished) issue for a journal and persist it.
+
+  Accepts atom- or string-keyed params. Volume/number default to the next
+  value after the journal's most recent issue.
+  """
+  def create(journal_id, params) do
+    title = params[:title] || params["title"] || ""
+    title = if is_binary(title), do: String.trim(title), else: ""
+
+    if title == "" do
+      {:error, :missing_title}
+    else
+      year = to_int(params[:year] || params["year"])
+
+      latest =
+        Agent.get(__MODULE__, fn issues ->
+          issues
+          |> Enum.filter(&(&1.journal_id == journal_id))
+          |> Enum.max_by(&{&1.year || 0, &1.volume || 0, &1.number || 0}, fn -> nil end)
+        end)
+
+      explicit_volume = to_int(params[:volume] || params["volume"])
+      explicit_number = to_int(params[:number] || params["number"])
+
+      volume = explicit_volume || (latest && latest.volume) || 1
+      number = explicit_number || 1
+
+      new_issue = %__MODULE__{
+        id: Agent.get(__MODULE__, &next_id/1),
+        journal_id: journal_id,
+        title: title,
+        volume: volume,
+        number: number,
+        year: year || (latest && latest.year) || Date.utc_today().year,
+        published_date: nil,
+        status: :scheduled,
+        articles: []
+      }
+
+      Agent.update(__MODULE__, fn issues -> [new_issue | issues] end)
+      {:ok, new_issue}
+    end
+  end
+
+  defp sort_newest(issues) do
+    Enum.sort_by(issues, &{&1.year || 0, &1.volume || 0, &1.number || 0}, :desc)
+  end
+
+  defp next_id(issues) do
+    Enum.reduce(issues, 0, fn i, acc -> max(i.id, acc) end) + 1
+  end
+
+  defp to_int(nil), do: nil
+  defp to_int(""), do: nil
+  defp to_int(v) when is_integer(v), do: v
+
+  defp to_int(v) when is_binary(v) do
+    case Integer.parse(v) do
+      {int, _} -> int
+      :error -> nil
+    end
+  end
+
+  defp to_int(_), do: nil
 
   defp seed do
     [

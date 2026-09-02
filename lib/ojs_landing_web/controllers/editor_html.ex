@@ -11,7 +11,7 @@ defmodule OjsLandingWeb.EditorHTML do
   end
 
   def stage_label(:needs_editor), do: "Needs Editor"
-  def stage_label(:initial_review), do: "Initial Review"
+  def stage_label(:initial_review), do: "Submission"
   def stage_label(:needs_reviews), do: "Needs Reviews"
   def stage_label(:awaiting_reviews), do: "Awaiting Reviews"
   def stage_label(:reviews_submitted), do: "Reviews Submitted"

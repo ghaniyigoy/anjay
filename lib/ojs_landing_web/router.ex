@@ -141,6 +141,7 @@ defmodule OjsLandingWeb.Router do
     get "/dois", SettingsController, :dois
     get "/issue/:issue_id", JournalController, :issue_view
     get "/manageIssues", SettingsController, :manage_issues
+    post "/manageIssues", SettingsController, :create_issue
 
     # Statistics (OJS PKP 3.5 style)
     get "/stats/publications/publications", StatsController, :publications

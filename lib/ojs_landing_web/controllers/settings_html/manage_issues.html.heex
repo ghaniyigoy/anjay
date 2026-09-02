@@ -29,7 +29,11 @@
       <span class="manage-issues-toolbar-hint">
         Unpublished issues that have not yet been made available to readers.
       </span>
-      <button type="button" class="btn-ojs-primary manage-issues-create">Create Issue</button>
+      <button
+        type="button"
+        class="btn-ojs-primary manage-issues-create"
+        onclick="openCreateIssue()"
+      >Create Issue</button>
     </div>
 
     <%= if length(groups.future) > 0 do %>
@@ -126,6 +130,73 @@
   </div>
 </div>
 
+<div id="create-issue-overlay" class="manage-issue-overlay" style="display: none;">
+  <div
+    class="manage-issue-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="create-issue-title"
+  >
+    <header class="manage-issue-modal-header">
+      <h2 id="create-issue-title">Create Issue</h2>
+      <button
+        type="button"
+        class="manage-issue-modal-close"
+        aria-label="Close"
+        onclick="closeCreateIssue()"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </header>
+
+    <form action={"/#{@journal_path}/manageIssues"} method="post">
+      <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+      <div class="manage-issue-form-body">
+        <div class="manage-issue-field">
+          <label for="issue-title">Title</label>
+          <input
+            id="issue-title"
+            name="issue[title]"
+            type="text"
+            required
+            placeholder="e.g. Volume 3, Number 2"
+          />
+        </div>
+
+        <div class="manage-issue-field-row">
+          <div class="manage-issue-field">
+            <label for="issue-volume">Volume</label>
+            <input id="issue-volume" name="issue[volume]" type="number" min="1" placeholder="3" />
+          </div>
+          <div class="manage-issue-field">
+            <label for="issue-number">Number</label>
+            <input id="issue-number" name="issue[number]" type="number" min="1" placeholder="2" />
+          </div>
+          <div class="manage-issue-field">
+            <label for="issue-year">Year</label>
+            <input id="issue-year" name="issue[year]" type="number" min="1900" placeholder="2026" />
+          </div>
+        </div>
+      </div>
+
+      <footer class="manage-issue-modal-footer">
+        <button type="button" class="manage-issue-btn-cancel" onclick="closeCreateIssue()">Cancel</button>
+        <button type="submit" class="btn-ojs-primary">Save</button>
+      </footer>
+    </form>
+  </div>
+</div>
+
 <script>
   (function () {
     function toggleIssueActions(button) {
@@ -163,5 +234,16 @@
     });
 
     activate(currentTab());
+
+    function openCreateIssue() {
+      document.getElementById('create-issue-overlay').style.display = 'flex';
+    }
+
+    function closeCreateIssue() {
+      document.getElementById('create-issue-overlay').style.display = 'none';
+    }
+
+    window.openCreateIssue = openCreateIssue;
+    window.closeCreateIssue = closeCreateIssue;
   })();
 </script>

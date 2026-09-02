@@ -12,6 +12,7 @@ defmodule OjsLanding.Application do
       OjsLanding.User,
       OjsLanding.Submission,
       OjsLanding.ReviewerAssignment,
+      OjsLanding.Issue,
 
       # Start to serve requests, typically the last entry
       OjsLandingWeb.Endpoint

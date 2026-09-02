@@ -150,7 +150,10 @@
                       class="btn-view btn-continue"
                     >Continue</a>
                   <% else %>
-                    <a href={"/submission/wizard/#{submission.id}?tab=review"} class="btn-view">View</a>
+                    <a
+                      href={submission_workflow_path(submission, @current_view)}
+                      class="btn-view"
+                    >View</a>
                   <% end %>
                 </td>
               </tr>

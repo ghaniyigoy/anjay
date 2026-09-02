@@ -60,6 +60,24 @@ defmodule OjsLandingWeb.AuthorHTML do
     end
   end
 
+  # --- Editor workflow view link (stage-aware) -----------------------------
+
+  def submission_workflow_path(submission, view_id) do
+    menu = workflow_menu_for_stage(submission.stage)
+
+    "/dashboard/editorial?workflowSubmissionId=#{submission.id}" <>
+      "&currentViewId=#{view_id}&workflowMenuKey=#{menu}"
+  end
+
+  defp workflow_menu_for_stage(:copyediting), do: "workflow_4"
+  defp workflow_menu_for_stage(:production), do: "workflow_5"
+  defp workflow_menu_for_stage(:needs_reviews), do: "workflow_3_1"
+  defp workflow_menu_for_stage(:awaiting_reviews), do: "workflow_3_1"
+  defp workflow_menu_for_stage(:reviews_submitted), do: "workflow_3_1"
+  defp workflow_menu_for_stage(:external_review), do: "workflow_3_1"
+  defp workflow_menu_for_stage(:revisions_submitted), do: "workflow_3_1"
+  defp workflow_menu_for_stage(_stage), do: "workflow_1"
+
   # --- Submission wizard (tab-driven) --------------------------------------
 
   def tab_class(current, tab, _submission) do

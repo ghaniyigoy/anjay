@@ -67,6 +67,28 @@ defmodule OjsLandingWeb.SettingsController do
     end
   end
 
+  def create_issue(conn, %{"journal_path" => journal_path, "issue" => issue_params}) do
+    journal = find_journal_by_path(journal_path)
+
+    if journal do
+      case Issue.create(journal.id, issue_params) do
+        {:ok, _issue} ->
+          conn
+          |> put_flash(:info, "Issue created successfully.")
+          |> redirect(to: "/#{journal_path}/manageIssues")
+
+        {:error, _reason} ->
+          conn
+          |> put_flash(:error, "Please fill in a title for the issue.")
+          |> redirect(to: "/#{journal_path}/manageIssues")
+      end
+    else
+      conn
+      |> put_flash(:error, "Journal not found")
+      |> redirect(to: "/")
+    end
+  end
+
   def dois(conn, %{"journal_path" => journal_path}) do
     journal = find_journal_by_path(journal_path)
 

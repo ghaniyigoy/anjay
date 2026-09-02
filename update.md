@@ -2,6 +2,81 @@
 
 Catatan perubahan terbaru pada aplikasi.
 
+## Halaman "Make a Submission" (`/submission/new`): field Section, Language, dan Comments to the Editor dihapus
+
+Field **Section \***, **Language \***, dan **Comments to the Editor** dihapus dari form
+awal submission (`/submission/new`). Form kini hanya berisi **Title \***, **Submission
+Checklist** (required), **Privacy Consent** (required), dan tombol Begin Submission.
+
+Backend tetap memakai nilai default saat field tersebut tidak dikirim: `section` →
+`"Artikel Penelitian"`, `language` → `"id"`, `comments_to_editor` → `""` (default di
+`OjsLanding.Submission.create/2`), sehingga tidak ada perubahan pada controller maupun
+model.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/author_html/new_submission.html.heex` — blok field
+  Section, Language, dan Comments to the Editor dihapus.
+
+### Status
+- Template dikompilasi ulang; request ke `/submission/new` tampil tanpa ketiga field
+  tersebut (perlu hard-refresh Ctrl+F5).
+
+## My Submissions: tombol "View" menghubungkan ke editor workflow page
+
+Tombol **View** pada `/dashboard/mySubmissions` tidak lagi membuka wizard submission
+(`/submission/wizard/:id?tab=...`), melainkan membuka **editor workflow page**
+(`/dashboard/editorial?workflowSubmissionId=<id>&currentViewId=...&workflowMenuKey=...`)
+sesuai stage submission — konsisten dengan tombol View di editorial dashboard.
+
+- Stage `initial_review`/belum review → `workflow_1` (Submission).
+- Stage review (`external_review`, `needs_reviews`, `awaiting_reviews`, `reviews_submitted`,
+  `revisions_submitted`) → `workflow_3_1` (External Review).
+- Stage `copyediting` → `workflow_4`.
+- Stage `production` → `workflow_5`.
+- Submission status `:incomplete` tetap menampilkan tombol **Continue** yang membuka wizard
+  detail (`?tab=details`).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/author_html.ex` — helper `submission_workflow_path/2` (URL
+  workflow + `workflow_menu_for_stage/1` meniru `default_workflow_menu_for_stage` editor).
+- `lib/ojs_landing_web/controllers/author_html/my_submissions.html.heex` — link View memakai
+  `submission_workflow_path/2`.
+
+### Status
+- `mix compile` sukses; route workflow mengembalikan HTTP 200 untuk submission yang aktif.
+
+## Manage Issues: tombol "Create Issue" berfungsi (modal form + persist)
+
+Tombol **Create Issue** pada `/informatika/manageIssues` (dan tab Future Issues) sebelumnya
+hanya `<button>` bawaan tanpa aksi — kini berfungsi penuh.
+
+### Fitur
+- Klik **Create Issue** membuka **modal form** untuk mengisi **Title \*** (wajib), **Volume**,
+  **Number**, dan **Year**.
+- **Save** mengirim POST ke `POST /:journal_path/manageIssues` → `SettingsController.create_issue/2`
+  → `Issue.create/2`, lalu redirect balik ke list dengan flash sukses. Volume/number/year
+  diisi default otomatis (mengikuti issue terbaru journal) bila dikosongkan.
+- Issue baru berstatus `:scheduled` (muncul di **Future Issues**).
+- **Cancel** / klik overlay menutup modal tanpa menyimpan.
+- `Issue` diubah dari data statis menjadi **Agent store** (in-memory) sehingga issue yang baru
+  dibuat bertahan antar-request (resets saat server restart).
+
+### File yang diubah
+- `lib/ojs_landing/issue.ex` — diubah menjadi Agent store (`start_link`, `all/0`, `get/1`,
+  `for_journal/1`, `current/1` membaca dari Agent) + fungsi `create/2` (validasi title,
+  next_id, penentuan volume/number/year default).
+- `lib/ojs_landing/application.ex` — daftarkan `OjsLanding.Issue` di supervisor.
+- `lib/ojs_landing_web/router.ex` — route `post "/manageIssues"`.
+- `lib/ojs_landing_web/controllers/settings_controller.ex` — aksi `create_issue/2`.
+- `lib/ojs_landing_web/controllers/settings_html/manage_issues.html.heex` — tombol gave
+  `onclick="openCreateIssue()"`; modal create issue (overlay + form + footer); fungsi JS
+  `openCreateIssue`/`closeCreateIssue` (exposed ke `window`).
+- `assets/css/app.css` — gaya `.manage-issue-*` (overlay, modal, field, footer).
+
+### Status
+- `mix precommit` lulus: 150 test, tanpa warning.
+- `mix assets.build` sukses (asset CSS/JS ulang).
+
 ## Review Step 3: komentar "For Author and Editor" & "For Editor" tidak hilang setelah upload file
 
 ### Bug
