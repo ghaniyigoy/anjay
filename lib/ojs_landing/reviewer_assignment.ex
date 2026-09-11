@@ -679,6 +679,33 @@ defmodule OjsLanding.ReviewerAssignment do
         galley_files: [],
         proofread_tasks: proofread_tasks([]),
         wizard_step: 4
+      },
+      %__MODULE__{
+        id: 7,
+        title: "Arsitektur Microservices untuk Skalabilitas Aplikasi E-Commerce",
+        subtitle: "Pendekatan Event-Driven dengan Kafka",
+        abstract:
+          "Studi ini membahas desain arsitektur microservices berbasis event-driven untuk meningkatkan skalabilitas platform e-commerce yang menangani jutaan transaksi harian.",
+        author: "Rina Widyastuti",
+        journal: "Jurnal Perang Dunia 1",
+        section: "Artikel Penelitian",
+        language: "Bahasa Indonesia",
+        keywords: "microservices, e-commerce, kafka, skalabilitas",
+        status: :archived,
+        date_assigned: ~D[2026-05-10],
+        due_date: ~D[2026-06-10],
+        round: 1,
+        stage: :review,
+        files: [
+          %{name: "manuscript-archived.pdf", type: "PDF", size: "1.2 MB", date: "2026-05-05"}
+        ],
+        review_history: [
+          %{round: 1, reviewer: "Rina Widyastuti", decision: "Decline", date: "2026-06-08"}
+        ],
+        copyedit_tasks: copyedit_tasks([]),
+        galley_files: [],
+        proofread_tasks: proofread_tasks([]),
+        wizard_step: 4
       }
     ]
   end

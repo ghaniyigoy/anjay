@@ -73,7 +73,8 @@ defmodule OjsLandingWeb.ReviewerControllerTest do
       html = html_response(conn, 200)
 
       assert html =~ "Review Files"
-      assert html =~ "Submit Review"
+      assert html =~ "Continue to Step 4"
+      refute html =~ "Recommendation"
 
       conn =
         post(conn, "/review/1/step", %{
@@ -85,10 +86,14 @@ defmodule OjsLandingWeb.ReviewerControllerTest do
       conn = get(conn, "/review/1")
       html = html_response(conn, 200)
 
-      assert html =~ "Review Submitted"
-      assert html =~ "Review Discussions"
+      assert html =~ "Completion"
+      assert html =~ "Recommendation"
+      assert html =~ "Accept Submission"
+      assert html =~ "Revisions Required"
+      assert html =~ "Resubmit for Review"
+      assert html =~ "Decline Submission"
+      assert html =~ "Submit Review"
       assert html =~ "comments_author"
-      refute html =~ "Recommendation"
     end
 
     test "POST /review/:id/go-back returns to the Request step from Guidelines", %{conn: conn} do

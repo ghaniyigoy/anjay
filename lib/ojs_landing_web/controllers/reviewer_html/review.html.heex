@@ -790,27 +790,8 @@
                 </div>
               </div>
 
-              <%!-- Recommendation + Actions --%>
+              <%!-- Actions for Step 3: Continue to Step 4 (Recommendation moved to Step 4 per OJS 4-step spec) --%>
               <div class="rp-panel">
-                <div class="rp-panel-header">
-                  <h2 class="rp-panel-title">Recommendation</h2>
-                </div>
-                <div class="rp-panel-body">
-                  <select
-                    name="recommendation"
-                    form="review-form"
-                    class="rp-select"
-                    id="rp-recommendation"
-                  >
-                    <option value="" disabled selected>Choose one</option>
-                    <option value="Accept Submission">Accept Submission</option>
-                    <option value="Revisions Required">Revisions Required</option>
-                    <option value="Resubmit for Review">Resubmit for Review</option>
-                    <option value="Resubmit Elsewhere">Resubmit Elsewhere</option>
-                    <option value="Decline Submission">Decline Submission</option>
-                    <option value="See Comments">See Comments</option>
-                  </select>
-                </div>
                 <div class="rp-panel-footer">
                   <div class="rp-actions">
                     <form
@@ -837,7 +818,7 @@
                         class="rp-btn rp-btn-primary"
                         id="rp-btn-submit-review"
                       >
-                        Submit Review
+                        Continue to Step 4
                       </button>
                     </div>
                   </div>
@@ -859,31 +840,105 @@
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
-              Review Submitted
+              Completion
             </h2>
 
             <div class="review-submitted-summary">
               <p class="review-help">
-                You have finished reviewing this submission. Click the button below to submit
-                your completed review to the editor. You can still go back to review the
+                You have finished reviewing this submission. Select your final recommendation
+                below and submit your review to the editor. You can still go back to review the
                 manuscript or edit your comments at any time.
               </p>
 
-              <dl class="review-meta-list">
-                <%= if @assignment.comments_author not in [nil, ""] do %>
-                  <div class="review-meta-item">
-                    <dt>Comments to the Author</dt>
-                    <dd>{@assignment.comments_author}</dd>
-                  </div>
-                <% end %>
+              <%= if @assignment.comments_author not in [nil, ""] or @assignment.comments_editor not in [nil, ""] do %>
+                <dl class="review-meta-list">
+                  <%= if @assignment.comments_author not in [nil, ""] do %>
+                    <div class="review-meta-item">
+                      <dt>Comments to the Author</dt>
+                      <dd>{@assignment.comments_author}</dd>
+                    </div>
+                  <% end %>
 
-                <%= if @assignment.comments_editor not in [nil, ""] do %>
-                  <div class="review-meta-item">
-                    <dt>Comments to the Editor</dt>
-                    <dd>{@assignment.comments_editor}</dd>
+                  <%= if @assignment.comments_editor not in [nil, ""] do %>
+                    <div class="review-meta-item">
+                      <dt>Comments to the Editor</dt>
+                      <dd>{@assignment.comments_editor}</dd>
+                    </div>
+                  <% end %>
+                </dl>
+              <% end %>
+
+              <form method="POST" action={"/review/#{@assignment.id}"} id="completion-submit">
+                <input
+                  type="hidden"
+                  name="_csrf_token"
+                  value={Plug.CSRFProtection.get_csrf_token()}
+                />
+                <input
+                  type="hidden"
+                  name="comments_author"
+                  value={@assignment.comments_author || ""}
+                />
+                <input
+                  type="hidden"
+                  name="comments_editor"
+                  value={@assignment.comments_editor || ""}
+                />
+
+                <div class="review-field">
+                  <span class="review-label">Recommendation <span class="review-req">*</span></span>
+                  <p class="review-help">Select the overall recommendation for this submission.</p>
+
+                  <div class="review-recommendation-options">
+                    <label class="review-radio" id="rec-accept">
+                      <input
+                        type="radio"
+                        name="recommendation"
+                        value="Accept"
+                        required
+                        checked={@assignment.recommendation == "Accept"}
+                      />
+                      <span>Accept Submission</span>
+                    </label>
+
+                    <label class="review-radio" id="rec-revisions">
+                      <input
+                        type="radio"
+                        name="recommendation"
+                        value="Revisions Required"
+                        required
+                        checked={@assignment.recommendation == "Revisions Required"}
+                      />
+                      <span>Revisions Required</span>
+                    </label>
+
+                    <label class="review-radio" id="rec-resubmit">
+                      <input
+                        type="radio"
+                        name="recommendation"
+                        value="Resubmit for Review"
+                        required
+                        checked={@assignment.recommendation == "Resubmit for Review"}
+                      />
+                      <span>Resubmit for Review</span>
+                    </label>
+
+                    <label class="review-radio" id="rec-decline">
+                      <input
+                        type="radio"
+                        name="recommendation"
+                        value="Decline Submission"
+                        required
+                        checked={@assignment.recommendation == "Decline Submission"}
+                      />
+                      <span>Decline Submission</span>
+                    </label>
                   </div>
-                <% end %>
-              </dl>
+                  <p class="review-help" style="margin-top: 8px; font-size: 12px;">
+                    OJS alternatives: Resubmit Elsewhere / See Comments are also accepted if needed.
+                  </p>
+                </div>
+              </form>
 
               <div class="review-form-actions">
                 <form
@@ -900,31 +955,14 @@
                     Go Back to Review
                   </button>
                 </form>
-                <form method="POST" action={"/review/#{@assignment.id}"} id="completion-submit">
-                  <input
-                    type="hidden"
-                    name="_csrf_token"
-                    value={Plug.CSRFProtection.get_csrf_token()}
-                  />
-                  <input
-                    type="hidden"
-                    name="recommendation"
-                    value={@assignment.recommendation || "See Comments"}
-                  />
-                  <input
-                    type="hidden"
-                    name="comments_author"
-                    value={@assignment.comments_author || ""}
-                  />
-                  <input
-                    type="hidden"
-                    name="comments_editor"
-                    value={@assignment.comments_editor || ""}
-                  />
-                  <button type="submit" class="btn-ojs-primary" id="btn-completion-submit-review">
-                    Submit Review
-                  </button>
-                </form>
+                <button
+                  type="submit"
+                  form="completion-submit"
+                  class="btn-ojs-primary"
+                  id="btn-completion-submit-review"
+                >
+                  Submit Review
+                </button>
               </div>
             </div>
 
