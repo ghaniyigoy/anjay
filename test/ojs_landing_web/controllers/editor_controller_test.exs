@@ -54,4 +54,117 @@ defmodule OjsLandingWeb.EditorControllerTest do
       assert html =~ "Ahmad Fauzi"
     end
   end
+
+  describe "send to review email notification wizard" do
+    setup %{conn: conn} do
+      conn = init_test_session(conn, current_user: "editor")
+      submission = Submission.create("author1", "Naskah Email Notification")
+
+      {:ok, _} =
+        Submission.update(submission.id, %{
+          "contributors" => [
+            %{
+              id: 1,
+              given_name: "Siti",
+              family_name: "Marpuah",
+              email: "siti@test.com",
+              primary: true
+            }
+          ]
+        })
+
+      {:ok, conn: conn, submission: submission}
+    end
+
+    test "GET /dashboard/editorial/:id/send-to-review renders the Notify Authors page", %{
+      conn: conn,
+      submission: submission
+    } do
+      conn = get(conn, "/dashboard/editorial/#{submission.id}/send-to-review")
+
+      html = html_response(conn, 200)
+
+      assert html =~ "Send for Review"
+      assert html =~ "Notify authors"
+      assert html =~ "This submission is ready to be sent for peer review."
+      assert html =~ "Email Templates"
+      assert html =~ "Find Template"
+      assert html =~ "Your submission has been sent for review"
+    end
+
+    test "Continue goes to the Select Files step", %{conn: conn, submission: submission} do
+      conn =
+        get(
+          conn,
+          "/dashboard/editorial/#{submission.id}/send-to-review/select-files"
+        )
+
+      html = html_response(conn, 200)
+
+      assert html =~ "Select files"
+      assert html =~ "Submission Files"
+      assert html =~ "Send for Review"
+    end
+
+    test "POST /send-to-review still transitions the submission", %{
+      conn: conn,
+      submission: submission
+    } do
+      conn = post(conn, "/dashboard/editorial/#{submission.id}/send-to-review")
+
+      assert redirected_to(conn) =~ "workflow_3_1"
+
+      updated = Submission.get(submission.id)
+      assert updated.stage == :external_review
+      assert updated.status == :active
+    end
+  end
+
+  describe "workflow_3_1 external review layout" do
+    setup %{conn: conn} do
+      conn = init_test_session(conn, current_user: "editor")
+      submission = Submission.create("author1", "Naskah Review Round")
+
+      {:ok, _} =
+        Submission.update(submission.id, %{"title" => "Naskah Review Round"})
+
+      Submission.set_status(submission.id, :active)
+      Submission.set_stage(submission.id, :external_review)
+
+      {:ok, conn: conn, submission: submission}
+    end
+
+    test "renders the redesigned external review panels and right-side action panel", %{
+      conn: conn,
+      submission: submission
+    } do
+      conn =
+        get(
+          conn,
+          "/dashboard/editorial?workflowSubmissionId=#{submission.id}&currentViewId=assigned-to-me&workflowMenuKey=workflow_3_1"
+        )
+
+      html = html_response(conn, 200)
+
+      assert html =~ "WORKFLOW: REVIEW (ROUND 1)"
+      assert html =~ "Status Info"
+      assert html =~ "Round 1 Status"
+      assert html =~ "Waiting for reviewers to be assigned."
+      assert html =~ "Revisions Uploaded"
+      assert html =~ "Reviewers"
+      assert html =~ "Add reviewers"
+      assert html =~ "Review Discussions"
+      assert html =~ "Add Discussion"
+      assert html =~ "btn-request-revisions"
+      assert html =~ "Request Revisions"
+      assert html =~ "btn-accept-submission"
+      assert html =~ "Accept Submission"
+      assert html =~ "btn-decline-review"
+      assert html =~ "Decline Submission"
+      assert html =~ "btn-create-new-review-round"
+      assert html =~ "Create New Review Round"
+      assert html =~ "btn-cancel-review-round"
+      assert html =~ "Cancel Review Round"
+    end
+  end
 end

@@ -1,0 +1,262 @@
+<div class="enr-page">
+  <nav class="enr-breadcrumb" aria-label="Breadcrumb">
+    <a href={"/dashboard/editorial?currentViewId=#{@current_view}"}>Dashboard</a>
+    <span class="enr-breadcrumb-sep">/</span>
+    <span class="enr-breadcrumb-link">
+      <a href={
+        OjsLandingWeb.EditorHTML.workflow_menu_path(@submission.id, @current_view, "workflow_1")
+      }>
+        {@row.author}, {@submission.title || "(Untitled submission)"}
+      </a>
+    </span>
+    <span class="enr-breadcrumb-sep">/</span>
+    <span class="enr-breadcrumb-current">Send for review</span>
+  </nav>
+
+  <div class="enr-header">
+    <h1 class="enr-title">
+      <span class="enr-title-flag">#</span> Send for Review <span class="enr-title-colon">:</span>
+      <span class="enr-title-step">Notify authors</span>
+    </h1>
+    <p class="enr-subtitle">
+      This submission is ready to be sent for peer review.
+    </p>
+  </div>
+
+  <ol class="enr-stepper">
+    <li class="enr-step enr-step-active">
+      <span class="enr-step-num">1</span>
+      <span class="enr-step-label">Notify Authors</span>
+    </li>
+    <li class="enr-step-connector"></li>
+    <li class="enr-step">
+      <span class="enr-step-num">2</span>
+      <span class="enr-step-label">Select Files</span>
+    </li>
+  </ol>
+
+  <div class="enr-layout">
+    <%!-- Left: Email Templates --%>
+    <aside class="enr-templates-col">
+      <div class="enr-templates-head">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          style="color: #006798;"
+        >
+          <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+          <path d="m22 7-10 6L2 7"></path>
+        </svg>
+        <h2 class="enr-templates-title">Email Templates</h2>
+        <span class="enr-templates-count">{length(@email_templates)}</span>
+      </div>
+
+      <div class="enr-templates-search">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          id="enr-template-search"
+          class="enr-templates-search-input"
+          placeholder="Find Template"
+          data-target-list="enr-template-list"
+        />
+      </div>
+
+      <div class="enr-templates-hint">
+        Select a template to fill the subject and message body.
+      </div>
+    </aside>
+
+    <%!-- Right: compose email --%>
+    <section class="enr-compose-col">
+      <div class="enr-compose-head">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          style="color: #006798;"
+        >
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+          </path>
+          <path d="m22 7-10 6L2 7"></path>
+        </svg>
+        <h2 class="enr-compose-title">Email Message</h2>
+        <span class="enr-compose-hint">Step 1 of 2</span>
+      </div>
+
+      <div class="enr-compose-body">
+        <div class="enr-field">
+          <label class="enr-label" for="enr-to">To</label>
+          <input
+            type="text"
+            id="enr-to"
+            name="to"
+            class="enr-input"
+            value={@recipient_name}
+            readonly
+          />
+        </div>
+
+        <div class="enr-field">
+          <label class="enr-label" for="enr-subject">Subject</label>
+          <input
+            type="text"
+            id="enr-subject"
+            name="subject"
+            class="enr-input"
+            value="Your submission has been sent for review"
+          />
+        </div>
+
+        <div class="enr-field">
+          <label class="enr-label">Message</label>
+          <div class="enr-richtext-wrapper">
+            <div id="enr-message-toolbar" class="enr-toolbar">
+              <button type="button" data-cmd="bold" class="enr-toolbar-btn" title="Bold">
+                <b>B</b>
+              </button>
+              <button type="button" data-cmd="italic" class="enr-toolbar-btn" title="Italic">
+                <i>I</i>
+              </button>
+              <button
+                type="button"
+                data-cmd="superscript"
+                class="enr-toolbar-btn"
+                title="Superscript"
+              >
+                <span class="enr-toolbar-script enr-toolbar-super">X</span>
+              </button>
+              <button type="button" data-cmd="subscript" class="enr-toolbar-btn" title="Subscript">
+                <span class="enr-toolbar-script enr-toolbar-sub">X</span>
+              </button>
+              <button
+                type="button"
+                data-cmd="createLink"
+                class="enr-toolbar-btn"
+                title="Insert/edit link"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="enr-toolbar-btn enr-toolbar-btn-text"
+                title="Attach file"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48">
+                  </path>
+                </svg>
+                <span>Attach file</span>
+              </button>
+              <button
+                type="button"
+                class="enr-toolbar-btn enr-toolbar-btn-text"
+                title="Insert Content"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="12" y1="18" x2="12" y2="12"></line>
+                  <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+                <span>Insert Content</span>
+              </button>
+            </div>
+            <textarea name="message" id="enr-message" class="enr-richtext-hidden"></textarea>
+            <div
+              id="enr-message-editor"
+              class="enr-richtext"
+              data-target="enr-message"
+              contenteditable="true"
+            >
+              <p>Dear {@recipient_name},</p>
+              <p>
+                Your submission "{@submission.title || "Untitled submission"}" has been sent
+                for peer review.
+              </p>
+              <p>The editorial team</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="enr-actions">
+        <span class="enr-actions-hint">The author will be notified by email.</span>
+        <div class="enr-actions-buttons">
+          <a
+            href={
+              OjsLandingWeb.EditorHTML.workflow_menu_path(
+                @submission.id,
+                @current_view,
+                "workflow_1"
+              )
+            }
+            class="enr-btn enr-btn-secondary"
+            id="btn-enr-cancel"
+          >
+            Cancel
+          </a>
+          <a
+            href={"/dashboard/editorial/#{@submission.id}/send-to-review/select-files?currentViewId=#{@current_view}"}
+            class="enr-btn enr-btn-primary"
+            id="btn-enr-continue"
+          >
+            Continue
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

@@ -308,10 +308,11 @@ defmodule OjsLandingWeb.AuthorHTML do
 
   defp tab_done?("contributors", submission), do: length(submission.contributors || []) > 0
 
-  defp tab_done?("editors", submission), do: length(submission.editors || []) > 0
+  defp tab_done?("editors", submission) do
+    is_binary(submission.editor_comments) and submission.editor_comments != ""
+  end
 
   defp tab_done?("review", submission) do
-    tab_done?("details", submission) and tab_done?("files", submission) and
-      tab_done?("contributors", submission)
+    submission.status != :incomplete
   end
 end

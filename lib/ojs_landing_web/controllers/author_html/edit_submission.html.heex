@@ -23,7 +23,8 @@
           class={[
             "ojs-progress-step",
             elem(tab, 0) == @current_tab && "is-current",
-            wizard_step_done?(elem(tab, 0), @submission) && "is-done"
+            elem(tab, 0) != @current_tab && wizard_step_done?(elem(tab, 0), @submission) &&
+              "is-done"
           ]}
           id={"step-" <> elem(tab, 0)}
         >
@@ -437,185 +438,19 @@
                     >
                       Preview
                     </a>
-                    <a
-                      href={
-                        submission_form_action(@submission, "contributors",
-                          view: "edit",
-                          contributor_id: next_contributor_id(@submission, @user)
-                        )
-                      }
+                    <button
+                      type="button"
                       class="btn-ojs-secondary"
                       id="btn-add-contributor"
+                      data-open-contributor-modal="contributor-modal"
                     >
                       Add Contributor
-                    </a>
+                    </button>
                   <% end %>
                 </div>
               </div>
 
               <div class="ojs-contributors-list" id="contributors-list">
-                <%= if @editing_contributor do %>
-                  <div class="ojs-contributor-card" id="contributor-edit-card">
-                    <div class="ojs-contributor-edit">
-                      <.form
-                        for={contributor_form(@editing_contributor)}
-                        id="contributor-edit-form"
-                        class="ojs-contributor-edit-form"
-                        action={
-                          submission_form_action(@submission, "contributors",
-                            view: "edit",
-                            contributor_id: @editing_contributor.id
-                          )
-                        }
-                        method="post"
-                      >
-                        <input type="hidden" name="_method" value="put" />
-                        <input
-                          type="hidden"
-                          name="_csrf_token"
-                          value={Plug.CSRFProtection.get_csrf_token()}
-                        />
-                        <input
-                          type="hidden"
-                          name="submission[contributor_edit_id]"
-                          value={@editing_contributor.id}
-                        />
-                        <h4 class="ojs-block-title ojs-field-full">Edit Contributor</h4>
-                        <div class="ojs-field">
-                          <label for="edit-given-name">Given name</label>
-                          <input
-                            class="ojs-input"
-                            id="edit-given-name"
-                            name="submission[contributor_edit][given_name]"
-                            value={@editing_contributor.given_name}
-                          />
-                        </div>
-                        <div class="ojs-field">
-                          <label for="edit-family-name">Family name</label>
-                          <input
-                            class="ojs-input"
-                            id="edit-family-name"
-                            name="submission[contributor_edit][family_name]"
-                            value={@editing_contributor.family_name}
-                          />
-                        </div>
-                        <div class="ojs-field ojs-field-full">
-                          <label for="edit-preferred-name">Preferred Public Name</label>
-                          <p class="ojs-field-hint">
-                            If you do not wish to use your given and family name in public lists,
-                            you may provide a preferred public name here.
-                          </p>
-                          <input
-                            class="ojs-input"
-                            id="edit-preferred-name"
-                            name="submission[contributor_edit][preferred_public_name]"
-                            value={Map.get(@editing_contributor, :preferred_public_name, "")}
-                          />
-                        </div>
-                        <div class="ojs-field ojs-field-full">
-                          <label for="edit-email">Email</label>
-                          <input
-                            type="email"
-                            class="ojs-input"
-                            id="edit-email"
-                            name="submission[contributor_edit][email]"
-                            value={@editing_contributor.email}
-                          />
-                        </div>
-                        <div class="ojs-field">
-                          <label for="edit-country">Country</label>
-                          <input
-                            class="ojs-input"
-                            id="edit-country"
-                            name="submission[contributor_edit][country]"
-                            value={@editing_contributor.country}
-                          />
-                        </div>
-                        <div class="ojs-field ojs-field-full">
-                          <label for="edit-affiliation">Affiliation</label>
-                          <input
-                            class="ojs-input"
-                            id="edit-affiliation"
-                            name="submission[contributor_edit][affiliation]"
-                            value={@editing_contributor.affiliation}
-                          />
-                        </div>
-                        <div class="ojs-field ojs-field-full">
-                          <label for="edit-bio">Bio Statement</label>
-                          <textarea
-                            class="ojs-textarea"
-                            id="edit-bio"
-                            name="submission[contributor_edit][bio_statement]"
-                            rows="3"
-                          >{Map.get(@editing_contributor, :bio_statement, "")}</textarea>
-                        </div>
-                        <div class="ojs-field">
-                          <label for="edit-role">Role</label>
-                          <select
-                            class="ojs-select"
-                            id="edit-role"
-                            name="submission[contributor_edit][role]"
-                          >
-                            <%= for {value, label} <- contributor_roles() do %>
-                              <option
-                                value={value}
-                                selected={
-                                  contributor_role_value(@editing_contributor.role) ==
-                                    value
-                                }
-                              >
-                                {label}
-                              </option>
-                            <% end %>
-                          </select>
-                        </div>
-                        <div class="ojs-field ojs-contributor-edit-options">
-                          <label class="ojs-checkbox-label" for="edit-primary">
-                            <input
-                              type="hidden"
-                              name="submission[contributor_edit][primary]"
-                              value="false"
-                            />
-                            <input
-                              type="checkbox"
-                              id="edit-primary"
-                              name="submission[contributor_edit][primary]"
-                              value="true"
-                              checked={@editing_contributor.primary == true}
-                            /> Primary contact
-                          </label>
-                          <label class="ojs-checkbox-label" for="edit-public-list">
-                            <input
-                              type="hidden"
-                              name="submission[contributor_edit][public_list]"
-                              value="false"
-                            />
-                            <input
-                              type="checkbox"
-                              id="edit-public-list"
-                              name="submission[contributor_edit][public_list]"
-                              value="true"
-                              checked={Map.get(@editing_contributor, :public_list, true) == true}
-                            /> Include in public list
-                          </label>
-                        </div>
-                        <div class="ojs-contributor-actions">
-                          <button type="submit" class="btn-ojs-primary" id="btn-save-edit">
-                            Save
-                          </button>
-                          <a
-                            href={submission_form_action(@submission, "contributors")}
-                            class="btn-ojs-secondary"
-                            id="btn-cancel-edit"
-                          >
-                            Cancel
-                          </a>
-                        </div>
-                      </.form>
-                    </div>
-                  </div>
-                <% end %>
-
                 <%= for {contributor, index} <- Enum.with_index(contributors, 1) do %>
                   <div
                     class="ojs-contributor-card"
@@ -631,22 +466,66 @@
                             </div>
                           </div>
                           <div class="ojs-contributor-order">
-                            <button
-                              type="button"
-                              class="ojs-order-btn"
-                              disabled
-                              aria-label="Move up"
+                            <form
+                              method="post"
+                              action={submission_form_action(@submission, "contributors")}
+                              data-move-contributor
                             >
-                              ↑
-                            </button>
-                            <button
-                              type="button"
-                              class="ojs-order-btn"
-                              disabled
-                              aria-label="Move down"
+                              <input type="hidden" name="_method" value="put" />
+                              <input
+                                type="hidden"
+                                name="_csrf_token"
+                                value={Plug.CSRFProtection.get_csrf_token()}
+                              />
+                              <input
+                                type="hidden"
+                                name="submission[move_contributor_id]"
+                                value={contributor.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="submission[move_dir]"
+                                value="up"
+                              />
+                              <button
+                                type="submit"
+                                class="ojs-order-btn"
+                                aria-label="Move up"
+                                {if(index == 1, do: %{disabled: "disabled"}, else: %{})}
+                              >
+                                ↑
+                              </button>
+                            </form>
+                            <form
+                              method="post"
+                              action={submission_form_action(@submission, "contributors")}
+                              data-move-contributor
                             >
-                              ↓
-                            </button>
+                              <input type="hidden" name="_method" value="put" />
+                              <input
+                                type="hidden"
+                                name="_csrf_token"
+                                value={Plug.CSRFProtection.get_csrf_token()}
+                              />
+                              <input
+                                type="hidden"
+                                name="submission[move_contributor_id]"
+                                value={contributor.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="submission[move_dir]"
+                                value="down"
+                              />
+                              <button
+                                type="submit"
+                                class="ojs-order-btn"
+                                aria-label="Move down"
+                                {if(index == length(contributors), do: %{disabled: "disabled"}, else: %{})}
+                              >
+                                ↓
+                              </button>
+                            </form>
                           </div>
                         </div>
                       <% @contributor_view == :preview -> %>
@@ -682,7 +561,30 @@
                             <%= if primary_contact?(contributor) do %>
                               <span class="ojs-chip">Primary Contact</span>
                             <% else %>
-                              <a href="#" class="ojs-primary-contact-btn">Primary Contact</a>
+                              <.form
+                                for={contributor_form(contributor)}
+                                id={"set-primary-form-" <> to_string(contributor.id)}
+                                action={"/submission/wizard/#{@submission.id}/set-primary-contact"}
+                                method="post"
+                              >
+                                <input
+                                  type="hidden"
+                                  name="_csrf_token"
+                                  value={Plug.CSRFProtection.get_csrf_token()}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="contributor_id"
+                                  value={contributor.id}
+                                />
+                                <button
+                                  type="submit"
+                                  class="ojs-set-primary-btn"
+                                  id={"set-primary-contact-" <> to_string(contributor.id)}
+                                >
+                                  Set Primary Contact
+                                </button>
+                              </.form>
                             <% end %>
                             <a
                               href={
@@ -731,6 +633,366 @@
                 <% end %>
               </div>
             </div>
+
+            <div class="ojs-modal-overlay" id="contributor-modal" hidden>
+              <div
+                class="ojs-modal-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="contributor-modal-title"
+              >
+                <div class="ojs-modal-header">
+                  <h3 class="ojs-modal-title" id="contributor-modal-title">Add Contributor</h3>
+                  <button
+                    type="button"
+                    class="ojs-modal-close"
+                    id="btn-close-contributor-modal"
+                    aria-label="Close"
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <div class="ojs-modal-body">
+                  <p class="ojs-modal-instruction">
+                    Provide the contact information for this contributor. One contributor must be
+                    the primary contact.
+                  </p>
+                  <.form
+                    for={
+                      contributor_form(new_contributor(next_contributor_id(@submission, @user)))
+                    }
+                    id="contributor-add-form"
+                    class="ojs-contributor-edit-form"
+                    action={submission_form_action(@submission, @current_tab)}
+                    method="post"
+                  >
+                    <input type="hidden" name="_method" value="put" />
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Plug.CSRFProtection.get_csrf_token()}
+                    />
+                    <input
+                      type="hidden"
+                      name="submission[contributor_edit_id]"
+                      value={next_contributor_id(@submission, @user)}
+                    />
+                    <div class="ojs-field">
+                      <label for="add-given-name">Given name</label>
+                      <input
+                        class="ojs-input"
+                        id="add-given-name"
+                        name="submission[contributor_edit][given_name]"
+                      />
+                    </div>
+                    <div class="ojs-field">
+                      <label for="add-family-name">Family name</label>
+                      <input
+                        class="ojs-input"
+                        id="add-family-name"
+                        name="submission[contributor_edit][family_name]"
+                      />
+                    </div>
+                    <div class="ojs-field ojs-field-full">
+                      <label for="add-preferred-name">Preferred Public Name</label>
+                      <p class="ojs-field-hint">
+                        If you do not wish to use your given and family name in public lists, you
+                        may provide a preferred public name here.
+                      </p>
+                      <input
+                        class="ojs-input"
+                        id="add-preferred-name"
+                        name="submission[contributor_edit][preferred_public_name]"
+                      />
+                    </div>
+                    <div class="ojs-field ojs-field-full">
+                      <label for="add-email">Email</label>
+                      <input
+                        type="email"
+                        class="ojs-input"
+                        id="add-email"
+                        name="submission[contributor_edit][email]"
+                      />
+                    </div>
+                    <div class="ojs-field">
+                      <label for="add-country">Country</label>
+                      <input
+                        class="ojs-input"
+                        id="add-country"
+                        name="submission[contributor_edit][country]"
+                      />
+                    </div>
+                    <div class="ojs-field ojs-field-full">
+                      <label for="add-affiliation">Affiliation</label>
+                      <input
+                        class="ojs-input"
+                        id="add-affiliation"
+                        name="submission[contributor_edit][affiliation]"
+                      />
+                    </div>
+                    <div class="ojs-field ojs-field-full">
+                      <label for="add-bio">Bio Statement</label>
+                      <textarea
+                        class="ojs-textarea"
+                        id="add-bio"
+                        name="submission[contributor_edit][bio_statement]"
+                        rows="3"
+                      ></textarea>
+                    </div>
+                    <div class="ojs-field">
+                      <label for="add-role">Role</label>
+                      <select
+                        class="ojs-select"
+                        id="add-role"
+                        name="submission[contributor_edit][role]"
+                      >
+                        <%= for {value, label} <- contributor_roles() do %>
+                          <option value={value}>{label}</option>
+                        <% end %>
+                      </select>
+                    </div>
+                    <div class="ojs-field ojs-contributor-edit-options">
+                      <label class="ojs-checkbox-label" for="add-primary">
+                        <input
+                          type="hidden"
+                          name="submission[contributor_edit][primary]"
+                          value="false"
+                        />
+                        <input
+                          type="checkbox"
+                          id="add-primary"
+                          name="submission[contributor_edit][primary]"
+                          value="true"
+                        /> Primary contact
+                      </label>
+                      <label class="ojs-checkbox-label" for="add-public-list">
+                        <input
+                          type="hidden"
+                          name="submission[contributor_edit][public_list]"
+                          value="false"
+                        />
+                        <input
+                          type="checkbox"
+                          id="add-public-list"
+                          name="submission[contributor_edit][public_list]"
+                          value="true"
+                          checked
+                        /> Include in public list
+                      </label>
+                    </div>
+                  </.form>
+                </div>
+
+                <div class="ojs-modal-footer">
+                  <button
+                    type="button"
+                    class="btn-ojs-secondary"
+                    id="btn-cancel-add-contributor"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    form="contributor-add-form"
+                    class="btn-ojs-primary"
+                    id="btn-save-add-contributor"
+                  >
+                    Save Contributor
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <%= if @editing_contributor do %>
+              <div class="ojs-modal-overlay" id="contributor-edit-modal">
+                <div
+                  class="ojs-modal-dialog"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="contributor-edit-modal-title"
+                >
+                  <div class="ojs-modal-header">
+                    <h3 class="ojs-modal-title" id="contributor-edit-modal-title">
+                      Edit Contributor
+                    </h3>
+                    <button
+                      type="button"
+                      class="ojs-modal-close"
+                      id="btn-close-edit-modal"
+                      aria-label="Close"
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  <div class="ojs-modal-body">
+                    <p class="ojs-modal-instruction">
+                      Update the contact information for this contributor.
+                    </p>
+                    <.form
+                      for={contributor_form(@editing_contributor)}
+                      id="contributor-edit-form"
+                      class="ojs-contributor-edit-form"
+                      action={
+                        submission_form_action(@submission, "contributors",
+                          view: "edit",
+                          contributor_id: @editing_contributor.id
+                        )
+                      }
+                      method="post"
+                    >
+                      <input type="hidden" name="_method" value="put" />
+                      <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value={Plug.CSRFProtection.get_csrf_token()}
+                      />
+                      <input
+                        type="hidden"
+                        name="submission[contributor_edit_id]"
+                        value={@editing_contributor.id}
+                      />
+                      <div class="ojs-field">
+                        <label for="edit-given-name">Given name</label>
+                        <input
+                          class="ojs-input"
+                          id="edit-given-name"
+                          name="submission[contributor_edit][given_name]"
+                          value={@editing_contributor.given_name}
+                        />
+                      </div>
+                      <div class="ojs-field">
+                        <label for="edit-family-name">Family name</label>
+                        <input
+                          class="ojs-input"
+                          id="edit-family-name"
+                          name="submission[contributor_edit][family_name]"
+                          value={@editing_contributor.family_name}
+                        />
+                      </div>
+                      <div class="ojs-field ojs-field-full">
+                        <label for="edit-preferred-name">Preferred Public Name</label>
+                        <p class="ojs-field-hint">
+                          If you do not wish to use your given and family name in public lists,
+                          you may provide a preferred public name here.
+                        </p>
+                        <input
+                          class="ojs-input"
+                          id="edit-preferred-name"
+                          name="submission[contributor_edit][preferred_public_name]"
+                          value={Map.get(@editing_contributor, :preferred_public_name, "")}
+                        />
+                      </div>
+                      <div class="ojs-field ojs-field-full">
+                        <label for="edit-email">Email</label>
+                        <input
+                          type="email"
+                          class="ojs-input"
+                          id="edit-email"
+                          name="submission[contributor_edit][email]"
+                          value={@editing_contributor.email}
+                        />
+                      </div>
+                      <div class="ojs-field">
+                        <label for="edit-country">Country</label>
+                        <input
+                          class="ojs-input"
+                          id="edit-country"
+                          name="submission[contributor_edit][country]"
+                          value={@editing_contributor.country}
+                        />
+                      </div>
+                      <div class="ojs-field ojs-field-full">
+                        <label for="edit-affiliation">Affiliation</label>
+                        <input
+                          class="ojs-input"
+                          id="edit-affiliation"
+                          name="submission[contributor_edit][affiliation]"
+                          value={@editing_contributor.affiliation}
+                        />
+                      </div>
+                      <div class="ojs-field ojs-field-full">
+                        <label for="edit-bio">Bio Statement</label>
+                        <textarea
+                          class="ojs-textarea"
+                          id="edit-bio"
+                          name="submission[contributor_edit][bio_statement]"
+                          rows="3"
+                        >{Map.get(@editing_contributor, :bio_statement, "")}</textarea>
+                      </div>
+                      <div class="ojs-field">
+                        <label for="edit-role">Role</label>
+                        <select
+                          class="ojs-select"
+                          id="edit-role"
+                          name="submission[contributor_edit][role]"
+                        >
+                          <%= for {value, label} <- contributor_roles() do %>
+                            <option
+                              value={value}
+                              selected={
+                                contributor_role_value(@editing_contributor.role) == value
+                              }
+                            >
+                              {label}
+                            </option>
+                          <% end %>
+                        </select>
+                      </div>
+                      <div class="ojs-field ojs-contributor-edit-options">
+                        <label class="ojs-checkbox-label" for="edit-primary">
+                          <input
+                            type="hidden"
+                            name="submission[contributor_edit][primary]"
+                            value="false"
+                          />
+                          <input
+                            type="checkbox"
+                            id="edit-primary"
+                            name="submission[contributor_edit][primary]"
+                            value="true"
+                            checked={@editing_contributor.primary == true}
+                          /> Primary contact
+                        </label>
+                        <label class="ojs-checkbox-label" for="edit-public-list">
+                          <input
+                            type="hidden"
+                            name="submission[contributor_edit][public_list]"
+                            value="false"
+                          />
+                          <input
+                            type="checkbox"
+                            id="edit-public-list"
+                            name="submission[contributor_edit][public_list]"
+                            value="true"
+                            checked={Map.get(@editing_contributor, :public_list, true) == true}
+                          /> Include in public list
+                        </label>
+                      </div>
+                    </.form>
+                  </div>
+
+                  <div class="ojs-modal-footer">
+                    <a
+                      href={submission_form_action(@submission, "contributors")}
+                      class="btn-ojs-secondary"
+                      id="btn-cancel-edit"
+                    >
+                      Cancel
+                    </a>
+                    <button
+                      type="submit"
+                      form="contributor-edit-form"
+                      class="btn-ojs-primary"
+                      id="btn-save-edit"
+                    >
+                      Save Contributor
+                    </button>
+                  </div>
+                </div>
+              </div>
+            <% end %>
 
             <.form
               for={submission_to_form(@submission)}
@@ -1154,6 +1416,73 @@
     var hasId = function (selector) {
       return document.getElementById((selector + '').replace('#', '')) !== null;
     };
+
+    // Add Contributor modal
+    var addBtn = document.getElementById('btn-add-contributor');
+    var modal = document.getElementById('contributor-modal');
+    var openModal = function () {
+      if (!modal) return;
+      modal.hidden = false;
+      document.body.classList.add('ojs-modal-open');
+      var given = document.getElementById('add-given-name');
+      if (given) given.focus();
+    };
+    var closeModal = function () {
+      if (!modal) return;
+      modal.hidden = true;
+      document.body.classList.remove('ojs-modal-open');
+    };
+
+    if (addBtn) {
+      addBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        openModal();
+      });
+    }
+
+    var modalCloseBtn = document.getElementById('btn-close-contributor-modal');
+    var modalCancelBtn = document.getElementById('btn-cancel-add-contributor');
+    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
+    if (modalCancelBtn) modalCancelBtn.addEventListener('click', closeModal);
+
+    if (modal) {
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+      });
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal && !modal.hidden) closeModal();
+      if (e.key === 'Escape' && editModal && !editModal.hidden) closeEditModal();
+    });
+
+    // Edit Contributor modal
+    var editModal = document.getElementById('contributor-edit-modal');
+    var openEditModal = function () {
+      if (!editModal) return;
+      editModal.hidden = false;
+      document.body.classList.add('ojs-modal-open');
+      var given = document.getElementById('edit-given-name');
+      if (given) given.focus();
+    };
+    var closeEditModal = function () {
+      if (!editModal) return;
+      editModal.hidden = true;
+      document.body.classList.remove('ojs-modal-open');
+    };
+
+    var editModalCloseBtn = document.getElementById('btn-close-edit-modal');
+    var editCancelBtn = document.getElementById('btn-cancel-edit');
+    if (editModalCloseBtn) editModalCloseBtn.addEventListener('click', closeEditModal);
+    if (editCancelBtn) editCancelBtn.addEventListener('click', closeEditModal);
+
+    if (editModal) {
+      editModal.addEventListener('click', function (e) {
+        if (e.target === editModal) closeEditModal();
+      });
+      // Open automatically when the page rendered an editing contributor
+      openEditModal();
+    }
 
     // File upload handlers
     var btnDemo = document.getElementById('btn-load-demo');

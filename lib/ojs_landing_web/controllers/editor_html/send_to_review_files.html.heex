@@ -1,0 +1,145 @@
+<div class="enr-page enr-page-wide">
+  <nav class="enr-breadcrumb" aria-label="Breadcrumb">
+    <a href={"/dashboard/editorial?currentViewId=#{@current_view}"}>Dashboard</a>
+    <span class="enr-breadcrumb-sep">/</span>
+    <span class="enr-breadcrumb-link">
+      <a href={
+        OjsLandingWeb.EditorHTML.workflow_menu_path(@submission.id, @current_view, "workflow_1")
+      }>
+        {@row.author}, {@submission.title || "(Untitled submission)"}
+      </a>
+    </span>
+    <span class="enr-breadcrumb-sep">/</span>
+    <span class="enr-breadcrumb-current">Send for review</span>
+  </nav>
+
+  <div class="enr-header">
+    <div>
+      <h1 class="enr-title">
+        <span class="enr-title-flag">#</span>
+        Send for Review <span class="enr-title-colon">:</span>
+        <span class="enr-title-step">Select files</span>
+      </h1>
+      <p class="enr-subtitle">
+        Select the submission files that will be sent for peer review.
+      </p>
+    </div>
+  </div>
+
+  <ol class="enr-stepper">
+    <li class="enr-step enr-step-done">
+      <span class="enr-step-num">✓</span>
+      <span class="enr-step-label">Notify Authors</span>
+    </li>
+    <li class="enr-step-connector enr-step-connector-done"></li>
+    <li class="enr-step enr-step-active">
+      <span class="enr-step-num">2</span>
+      <span class="enr-step-label">Select Files</span>
+    </li>
+  </ol>
+
+  <div class="enr-layout enr-layout-single">
+    <section class="enr-files-card">
+      <div class="enr-files-header">
+        <h2 class="enr-files-title">Submission Files</h2>
+        <span class="enr-files-count">{length(@submission.files || [])} file(s)</span>
+      </div>
+
+      <div class="enr-files-body">
+        <%= if @submission.files in [nil, []] do %>
+          <div class="enr-files-empty">
+            No files have been uploaded for this submission. Reviewers will be notified without
+            attached files.
+          </div>
+        <% else %>
+          <table class="enr-files-table">
+            <tbody>
+              <%= for {file, idx} <- Enum.with_index(@submission.files, 1) do %>
+                <tr>
+                  <td class="enr-files-col-select">
+                    <input
+                      type="checkbox"
+                      class="enr-file-check"
+                      checked="checked"
+                      data-enr-file-check
+                    />
+                  </td>
+                  <td>
+                    <span class="enr-file-icon">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                        </path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                      </svg>
+                    </span>
+                    {file[:filename]}
+                  </td>
+                  <td>
+                    <% raw_date = file[:date] %>
+                    <% uploaded_on =
+                      if raw_date in ["", nil] do
+                        datetime = @submission.date_submitted || @submission.created_at
+                        datetime |> DateTime.to_date() |> Date.to_string()
+                      else
+                        raw_date
+                      end %> Uploaded by {@submission.author_username || "Author"} on {uploaded_on}
+                  </td>
+                  <td>
+                    <span class="enr-file-type">{file[:genre] || "Article Text"}</span>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      </div>
+
+      <div class="enr-actions enr-actions-file">
+        <div class="enr-actions-buttons">
+          <a
+            href={"/dashboard/editorial/#{@submission.id}/send-to-review?currentViewId=#{@current_view}"}
+            class="enr-btn enr-btn-secondary"
+            id="btn-enr-prev"
+          >
+            Previous
+          </a>
+          <a
+            href={
+              OjsLandingWeb.EditorHTML.workflow_menu_path(
+                @submission.id,
+                @current_view,
+                "workflow_1"
+              )
+            }
+            class="enr-btn enr-btn-secondary"
+            id="btn-enr-cancel"
+          >
+            Cancel
+          </a>
+        </div>
+        <form
+          method="POST"
+          action={"/dashboard/editorial/#{@submission.id}/send-to-review"}
+          id="enr-send-form"
+        >
+          <input
+            type="hidden"
+            name="_csrf_token"
+            value={Plug.CSRFProtection.get_csrf_token()}
+          />
+          <input type="hidden" name="currentViewId" value={@current_view} />
+          <button type="submit" class="enr-btn enr-btn-primary" id="btn-enr-send">
+            Record Decision
+          </button>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>

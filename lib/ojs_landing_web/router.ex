@@ -53,12 +53,19 @@ defmodule OjsLandingWeb.Router do
     get "/dashboard/editorial", EditorController, :editorial
     get "/dashboard/editorial/activity/:id", EditorController, :activity
     post "/dashboard/editorial/:id/publication", EditorController, :save_publication
+    get "/dashboard/editorial/:id/send-to-review", EditorController, :send_to_review_email
+
+    get "/dashboard/editorial/:id/send-to-review/select-files",
+        EditorController,
+        :send_to_review_files
+
     post "/dashboard/editorial/:id/send-to-review", EditorController, :send_to_review
     post "/dashboard/editorial/:id/request-revisions", EditorController, :request_revisions
     post "/dashboard/editorial/:id/accept", EditorController, :accept_submission
     post "/dashboard/editorial/:id/decline", EditorController, :decline_submission
     post "/dashboard/editorial/:id/assign-reviewer", EditorController, :assign_reviewer
     post "/dashboard/editorial/assign-editor", EditorController, :assign_editor
+    post "/dashboard/editorial/:id/discussion", EditorController, :add_discussion
 
     # Editor DOI Article Registration Routes
     get "/dashboard/doiArticles", DoiArticleController, :index
@@ -74,8 +81,12 @@ defmodule OjsLandingWeb.Router do
     post "/submission/wizard", AuthorController, :create_submission
     get "/submission/wizard/:id", AuthorController, :edit_submission
     put "/submission/wizard/:id", AuthorController, :update_submission
+    post "/submission/wizard/:id/set-primary-contact", AuthorController, :set_primary_contact
     get "/submission/wizard/:id/saved", AuthorController, :saved_submission
     get "/submission/:id/workflow", AuthorController, :author_workflow
+    post "/submission/:id/workflow/editor-reply", AuthorController, :add_editor_reply
+    post "/submission/:id/discussion", AuthorController, :add_discussion
+    post "/submission/:id/edit-file", AuthorController, :edit_file
     get "/submission/:id", AuthorController, :show
 
     # Make a Submission: Details (OJS 3.5 wizard)

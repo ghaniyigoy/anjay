@@ -95,7 +95,7 @@
       </ul>
     </div>
 
-    <%= if @mode != :author do %>
+    <%= if @mode != :author and @active_menu not in ["workflow_1", "workflow_3_1"] do %>
       <div class="sidebar-section">
         <div class="sidebar-header">
           <svg
@@ -130,13 +130,13 @@
             </li>
           <% end %>
 
-          <%= if @user do %>
+          <%= for editor <- @submission.editors || [] do %>
             <li class="wf-participant">
               <span class="wf-avatar wf-avatar-editor">{String.first(
-                String.capitalize(@user.username || "E")
+                String.capitalize(editor["name"] || editor["username"] || "E")
               )}</span>
               <span class="wf-participant-info">
-                <strong>{String.trim("#{@user.given_name} #{@user.family_name}")}</strong>
+                <strong>{editor["name"] || editor["username"]}</strong>
                 <small>Editor</small>
               </span>
             </li>
@@ -223,21 +223,28 @@
               <section class="wf-card">
                 <div class="wf-card-header">
                   <h2 class="wf-card-title">Submission Files</h2>
-                  <button type="button" class="wf-btn-link">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
+                  <%= if @mode != :author do %>
+                    <button
+                      type="button"
+                      class="wf-btn-link"
+                      id="btn-upload-submission-file"
+                      onclick="openUploadRevisionModal()"
                     >
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="17 8 12 3 7 8"></polyline>
-                      <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    Upload
-                  </button>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                      Upload
+                    </button>
+                  <% end %>
                 </div>
 
                 <%= if @submission.files in [nil, []] do %>
@@ -250,6 +257,7 @@
                         <th>File Name</th>
                         <th>Date Uploaded</th>
                         <th>Type</th>
+                        <th class="wf-table-col-actions"></th>
                       </tr>
                     </thead>
 
@@ -257,9 +265,55 @@
                       <%= for {file, idx} <- Enum.with_index(@submission.files, 1) do %>
                         <tr>
                           <td class="wf-table-col-num">{idx}</td>
-                          <td>{file[:filename]}</td>
+                          <td id={"submission-file-name-#{idx}"}>{file[:filename]}</td>
                           <td>{file[:date]}</td>
-                          <td>{file[:genre] || "Article Text"}</td>
+                          <td>
+                            <span class="wf-file-type-badge">Article Text</span>
+                          </td>
+                          <td class="wf-table-col-actions">
+                            <div class="wf-file-menu" id={"submission-file-menu-#{idx}"}>
+                              <button
+                                type="button"
+                                class="wf-file-menu-btn"
+                                onclick={"openFileMenu('submission-file-menu-#{idx}')"}
+                                aria-label="File actions"
+                              >
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 16 16"
+                                  fill="currentColor"
+                                >
+                                  <circle cx="3" cy="8" r="1.5" />
+                                  <circle cx="8" cy="8" r="1.5" />
+                                  <circle cx="13" cy="8" r="1.5" />
+                                </svg>
+                              </button>
+                              <div class="wf-file-menu-dropdown">
+                                <button
+                                  type="button"
+                                  class="wf-file-menu-item"
+                                  onclick={
+                                    "closeFileMenu('submission-file-menu-#{idx}'); openEditFileModal(" <>
+                                      "#{idx}, " <>
+                                      Jason.encode!(file[:filename] || "") <> ")"
+                                  }
+                                >Edit</button>
+                                <%= if @mode != :author do %>
+                                  <button
+                                    type="button"
+                                    class="wf-file-menu-item"
+                                    onclick={"closeFileMenu('submission-file-menu-#{idx}')"}
+                                  >More Information</button>
+                                  <button
+                                    type="button"
+                                    class="wf-file-menu-item wf-file-menu-danger"
+                                    onclick={"closeFileMenu('submission-file-menu-#{idx}')"}
+                                  >Delete</button>
+                                <% end %>
+                              </div>
+                            </div>
+                          </td>
                         </tr>
                       <% end %>
                     </tbody>
@@ -288,7 +342,12 @@
               <section class="wf-card">
                 <div class="wf-card-header">
                   <h2 class="wf-card-title">Pre-Review Discussions</h2>
-                  <button type="button" class="wf-btn-link">
+                  <button
+                    type="button"
+                    class="wf-btn-link"
+                    id="btn-add-discussion-pre"
+                    onclick="openPreDiscussionModal()"
+                  >
                     <svg
                       width="16"
                       height="16"
@@ -304,24 +363,65 @@
                   </button>
                 </div>
 
-                <div class="wf-empty">No discussions have been started yet.</div>
+                <% discussions = Map.get(@submission, :discussions) || [] %>
 
-                <%!-- <table class="wf-table">
-                  <thead>
-                    <tr>
-                      <th>Subject</th>
-                      <th>From</th>
-                      <th>Last Reply</th>
-                      <th>Replies</th>
-                      <th>Closed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colspan="5" class="wf-empty">No discussions have been started yet.</td>
-                    </tr>
-                  </tbody>
-                </table> --%>
+                <%= if editor_comments_present?(@submission) or discussions != [] do %>
+                  <table class="wf-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>From</th>
+                        <th>Last Reply</th>
+                        <th>Replies</th>
+                        <th>Closed</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <%= if editor_comments_present?(@submission) do %>
+                        <% ec_replies = editor_comment_replies(@submission) %>
+                        <% ec_last = List.last(ec_replies) %>
+                        <% ec_from = editor_comment_from(@submission) %>
+                        <tr>
+                          <td>
+                            <a
+                              href="#"
+                              class="wf-discussion-link"
+                              id="link-open-editor-comment"
+                              onclick="openEditorCommentPanel(); return false;"
+                            >
+                              Comments for The editor
+                            </a>
+                          </td>
+                          <td>
+                            <div class="ec-thread-name">{ec_from.name}</div>
+                            <div class="ec-thread-date">{ec_from.date}</div>
+                          </td>
+                          <td>
+                            <%= if ec_last do %>
+                              <div class="ec-thread-name">{ec_last.author}</div>
+                              <div class="ec-thread-date">{ec_last.date}</div>
+                            <% else %>
+                              —
+                            <% end %>
+                          </td>
+                          <td>{length(ec_replies)}</td>
+                          <td>—</td>
+                        </tr>
+                      <% end %>
+                      <%= for d <- discussions do %>
+                        <tr>
+                          <td>{d.subject}</td>
+                          <td>{d.author}</td>
+                          <td>{discussion_last_reply(d)}</td>
+                          <td>{discussion_replies_count(d)}</td>
+                          <td>{discussion_closed_label(d)}</td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                <% else %>
+                  <div class="wf-empty">No Items</div>
+                <% end %>
               </section>
             </div>
 
@@ -331,24 +431,13 @@
                 <section class="wf-card">
                   <h2 class="wf-card-title">Action Panel</h2>
                   <div class="wf-action-panel">
-                    <form
-                      method="POST"
-                      action={"/dashboard/editorial/#{@submission.id}/send-to-review"}
+                    <a
+                      href={"/dashboard/editorial/#{@submission.id}/send-to-review?currentViewId=#{@current_view}"}
+                      class="wf-btn-action wf-btn-action-primary"
+                      id="btn-send-for-review"
                     >
-                      <input
-                        type="hidden"
-                        name="_csrf_token"
-                        value={Plug.CSRFProtection.get_csrf_token()}
-                      />
-                      <input type="hidden" name="currentViewId" value={@current_view} />
-                      <button
-                        type="submit"
-                        class="wf-btn-action wf-btn-action-primary"
-                        id="btn-send-for-review"
-                      >
-                        Send For Review
-                      </button>
-                    </form>
+                      Send For Review
+                    </a>
                     <form
                       method="POST"
                       action={"/dashboard/editorial/#{@submission.id}/accept"}
@@ -394,7 +483,12 @@
                 <section class="wf-card">
                   <div class="wf-card-header">
                     <h2 class="wf-card-title">Participants</h2>
-                    <button type="button" class="wf-btn-link">
+                    <button
+                      type="button"
+                      class="wf-btn-link"
+                      id="btn-assign-participant"
+                      onclick="openAssignParticipantDrawer()"
+                    >
                       <svg
                         width="16"
                         height="16"
@@ -423,6 +517,18 @@
                         </span>
                       </li>
                     <% end %>
+
+                    <%= for editor <- @submission.editors || [] do %>
+                      <li class="wf-participant-item">
+                        <span class="wf-avatar-sm wf-avatar-editor">{String.first(
+                          String.capitalize(editor["name"] || editor["username"] || "E")
+                        )}</span>
+                        <span class="wf-participant-detail">
+                          <strong>{editor["name"] || editor["username"]}</strong>
+                          <small>Editor</small>
+                        </span>
+                      </li>
+                    <% end %>
                   </ul>
                 </section>
               </div>
@@ -432,26 +538,256 @@
 
         <%!-- ==================== WORKFLOW_3_1: EXTERNAL REVIEW ==================== --%>
       <% @active_menu == "workflow_3_1" -> %>
-        <div class="wf-panel">
-          <section class="wf-card">
-            <div class="wf-card-head">
-              <h2 class="wf-card-title">Review Round 1</h2>
-              <span class={[
-                "wf-status-badge",
-                if(@review_assignments == [], do: "wf-status-info", else: "wf-status-ok")
-              ]}>
-                {if @review_assignments == [],
-                  do: "Not Started",
-                  else: "#{length(@review_assignments)} assignment(s)"}
-              </span>
-            </div>
+        <div class="wf-page-heading">
+          <span class="wf-page-stage-label">WORKFLOW: REVIEW (ROUND 1)</span>
+        </div>
 
-            <%= if @review_assignments == [] do %>
-              <div class="wf-empty">
-                No reviewers have been assigned yet. Assign reviewers to begin the external
-                review round.
+        <div class="wf-two-col-layout">
+          <%!-- Left Column --%>
+          <div class="wf-col-main">
+            <%!-- Status Info --%>
+            <section class="wf-card">
+              <div class="wf-card-header">
+                <h2 class="wf-card-title">Status Info</h2>
               </div>
-              <div class="wf-action-buttons" style="margin-top: 1rem;">
+              <div class="wf-status-box">
+                <span class="wf-status-box-title">Round 1 Status</span>
+                <%= if @review_assignments == [] do %>
+                  <p class="wf-status-box-text">Waiting for reviewers to be assigned.</p>
+                <% else %>
+                  <p class="wf-status-box-text">
+                    {length(@review_assignments)} reviewer assignment(s) in this round.
+                  </p>
+                <% end %>
+              </div>
+            </section>
+
+            <%!-- Revision Uploaded --%>
+            <section class="wf-card">
+              <div class="wf-card-header">
+                <h2 class="wf-card-title">Revisions Uploaded</h2>
+                <button
+                  type="button"
+                  class="wf-btn-link"
+                  id="btn-upload-revision"
+                  onclick="openUploadRevisionModal()"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  Upload
+                </button>
+              </div>
+
+              <% revision_files =
+                Enum.filter(@submission.files || [], &(&1[:has_revisions] == true)) %>
+              <table class="wf-table">
+                <thead>
+                  <tr>
+                    <th class="wf-table-col-num">NO</th>
+                    <th>FILE NAME</th>
+                    <th>DATE UPLOADED</th>
+                    <th>TYPE</th>
+                    <th class="wf-table-col-actions"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <%= if revision_files == [] do %>
+                    <tr>
+                      <td colspan="5" class="wf-table-empty">
+                        No revisions have been uploaded. These files are submitted by the author
+                        after revisions were requested.
+                      </td>
+                    </tr>
+                  <% else %>
+                    <%= for {file, idx} <- Enum.with_index(revision_files, 1) do %>
+                      <tr>
+                        <td class="wf-table-col-num">{idx}</td>
+                        <td>{file[:filename]}</td>
+                        <td>{file[:date]}</td>
+                        <td>{file[:genre] || "Revision"}</td>
+                        <td class="wf-table-col-actions">
+                          <div class="wf-file-menu" id={"file-menu-revision-#{idx}"}>
+                            <button
+                              type="button"
+                              class="wf-file-menu-btn"
+                              onclick={"openFileMenu('file-menu-revision-#{idx}')"}
+                              aria-label="File actions"
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                              >
+                                <circle cx="3" cy="8" r="1.5" />
+                                <circle cx="8" cy="8" r="1.5" />
+                                <circle cx="13" cy="8" r="1.5" />
+                              </svg>
+                            </button>
+                            <div class="wf-file-menu-dropdown">
+                              <button
+                                type="button"
+                                class="wf-file-menu-item"
+                                onclick={"closeFileMenu('file-menu-revision-#{idx}')"}
+                              >Edit</button>
+                              <button
+                                type="button"
+                                class="wf-file-menu-item"
+                                onclick={"closeFileMenu('file-menu-revision-#{idx}')"}
+                              >More Information</button>
+                              <button
+                                type="button"
+                                class="wf-file-menu-item wf-file-menu-danger"
+                                onclick={"closeFileMenu('file-menu-revision-#{idx}')"}
+                              >Delete</button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    <% end %>
+                  <% end %>
+                </tbody>
+              </table>
+            </section>
+
+            <%!-- Files for Review --%>
+            <section class="wf-card">
+              <div class="wf-card-header">
+                <div>
+                  <h2 class="wf-card-title">Files for Review</h2>
+                  <p class="wf-card-subtitle">
+                    These files will be sent to the reviewers to review.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="wf-btn-link"
+                  id="btn-upload-review-files"
+                  onclick="openReviewFileSelection()"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  Upload/Select Files
+                </button>
+              </div>
+
+              <% review_files =
+                Enum.filter(@submission.files || [], &(&1[:has_revisions] != true)) %>
+              <%= if review_files == [] do %>
+                <div class="wf-empty">No files have been uploaded for review yet.</div>
+              <% else %>
+                <table class="wf-table">
+                  <thead>
+                    <tr>
+                      <th class="wf-table-col-num">#</th>
+                      <th>File Name</th>
+                      <th>Date Uploaded</th>
+                      <th>Type</th>
+                      <th class="wf-table-col-actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <%= for {file, idx} <- Enum.with_index(review_files, 1) do %>
+                      <tr>
+                        <td class="wf-table-col-num">{idx}</td>
+                        <td>{file[:filename]}</td>
+                        <td>{file[:date]}</td>
+                        <td>
+                          <span class="wf-file-type-badge">Article Text</span>
+                        </td>
+                        <td class="wf-table-col-actions">
+                          <div class="wf-file-menu" id={"file-menu-review-#{idx}"}>
+                            <button
+                              type="button"
+                              class="wf-file-menu-btn"
+                              onclick={"openFileMenu('file-menu-review-#{idx}')"}
+                              aria-label="File actions"
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                              >
+                                <circle cx="3" cy="8" r="1.5" />
+                                <circle cx="8" cy="8" r="1.5" />
+                                <circle cx="13" cy="8" r="1.5" />
+                              </svg>
+                            </button>
+                            <div class="wf-file-menu-dropdown">
+                              <button
+                                type="button"
+                                class="wf-file-menu-item"
+                                onclick={"closeFileMenu('file-menu-review-#{idx}')"}
+                              >Edit</button>
+                              <button
+                                type="button"
+                                class="wf-file-menu-item"
+                                onclick={"closeFileMenu('file-menu-review-#{idx}')"}
+                              >More Information</button>
+                              <button
+                                type="button"
+                                class="wf-file-menu-item wf-file-menu-danger"
+                                onclick={"closeFileMenu('file-menu-review-#{idx}')"}
+                              >Delete</button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              <% end %>
+            </section>
+
+            <%!-- Reviewers --%>
+            <section class="wf-card">
+              <div class="wf-card-header">
+                <h2 class="wf-card-title">Reviewers</h2>
+                <%= if @mode != :author do %>
+                  <button
+                    type="button"
+                    class="wf-btn-link"
+                    id="btn-add-reviewers"
+                    onclick="arOpenAddReviewerModal()"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add reviewers
+                  </button>
+                <% end %>
+              </div>
+
+              <div id="assign-reviewer-inline" class="wf-inline-assign wf-hidden">
                 <form
                   method="POST"
                   action={"/dashboard/editorial/#{@submission.id}/assign-reviewer"}
@@ -475,96 +811,238 @@
                   </button>
                 </form>
               </div>
-            <% else %>
+
               <table class="wf-table">
                 <thead>
                   <tr>
-                    <th>Reviewer</th>
-                    <th>Round</th>
-                    <th>Status</th>
-                    <th>Due Date</th>
-                    <th>Recommendation</th>
-                    <th>Action</th>
+                    <th>REVIEWERS</th>
+                    <th>REVIEWER STATUS</th>
+                    <th>TYPE</th>
+                    <th>ACTIONS</th>
                   </tr>
                 </thead>
-
                 <tbody>
-                  <%= for assignment <- @review_assignments do %>
+                  <%= if @review_assignments == [] do %>
                     <tr>
-                      <td>{latest_reviewer(assignment) || "Awaiting response"}</td>
-                      <td>{assignment.round || 1}</td>
-                      <td>{reviewer_status_label(assignment.status)}</td>
-                      <td>{format_date(assignment.due_date)}</td>
-                      <td>{reviewer_recommendation(assignment.recommendation)}</td>
-                      <td>
-                        <a href={"/review/#{assignment.id}"} class="editorial-view-link">Open</a>
+                      <td colspan="4" class="wf-table-empty">
+                        No reviewers have been assigned yet.
                       </td>
                     </tr>
+                  <% else %>
+                    <%= for assignment <- @review_assignments do %>
+                      <tr>
+                        <td>{latest_reviewer(assignment) || "Awaiting response"}</td>
+                        <td>{reviewer_status_label(assignment.status)}</td>
+                        <td>{reviewer_type(assignment)}</td>
+                        <td>
+                          <a href={"/review/#{assignment.id}"} class="editorial-view-link">Open</a>
+                        </td>
+                      </tr>
+                    <% end %>
                   <% end %>
                 </tbody>
               </table>
-            <% end %>
+            </section>
 
-            <%= if @mode == :author do %>
-              <div class="wf-empty" style="margin-top: 1rem;">
-                You can view the review progress of this submission. Editorial decisions are
-                managed by the journal's editors.
+            <%!-- Review Discussions --%>
+            <section class="wf-card">
+              <div class="wf-card-header">
+                <h2 class="wf-card-title">Review Discussions</h2>
+                <button type="button" class="wf-btn-link" id="btn-add-discussion-review">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Discussion
+                </button>
               </div>
-            <% else %>
+              <% discussions = review_discussions(@review_assignments) %>
+              <table class="wf-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>From</th>
+                    <th>Last Reply</th>
+                    <th>Replies</th>
+                    <th>Closed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <%= if discussions == [] do %>
+                    <tr>
+                      <td colspan="5" class="wf-table-empty">
+                        No discussions have been started yet.
+                      </td>
+                    </tr>
+                  <% else %>
+                    <%= for {d, idx} <- Enum.with_index(discussions, 1) do %>
+                      <tr>
+                        <td>{d[:subject] || "Discussion #{idx}"}</td>
+                        <td>{d[:author] || "—"}</td>
+                        <td>{discussion_last_reply(d)}</td>
+                        <td>{discussion_replies_count(d)}</td>
+                        <td>{discussion_closed_label(d)}</td>
+                      </tr>
+                    <% end %>
+                  <% end %>
+                </tbody>
+              </table>
+            </section>
+          </div>
+
+          <%!-- Right Column --%>
+          <%= if @mode == :author do %>
+            <div class="wf-col-side">
+              <section class="wf-card">
+                <div class="wf-card-header">
+                  <h2 class="wf-card-title">Review Progress</h2>
+                </div>
+                <div class="wf-empty">
+                  You can view the review progress of this submission. Editorial decisions are
+                  managed by the journal's editors.
+                </div>
+              </section>
+            </div>
+          <% else %>
+            <div class="wf-col-side">
               <%= if @row.status not in [:declined, :published, :scheduled] do %>
-                <div class="wf-action-buttons" style="margin-top: 1rem;">
-                  <form
-                    method="POST"
-                    action={"/dashboard/editorial/#{@submission.id}/request-revisions"}
-                  >
-                    <input
-                      type="hidden"
-                      name="_csrf_token"
-                      value={Plug.CSRFProtection.get_csrf_token()}
-                    />
-                    <input type="hidden" name="currentViewId" value={@current_view} />
-                    <button type="submit" class="wf-btn-secondary" id="btn-request-revisions">
-                      Request Revisions
-                    </button>
-                  </form>
-                  <form
-                    method="POST"
-                    action={"/dashboard/editorial/#{@submission.id}/accept"}
-                  >
-                    <input
-                      type="hidden"
-                      name="_csrf_token"
-                      value={Plug.CSRFProtection.get_csrf_token()}
-                    />
-                    <input type="hidden" name="currentViewId" value={@current_view} />
-                    <button type="submit" class="wf-btn-primary" id="btn-accept-submission">
-                      Accept Submission
-                    </button>
-                  </form>
-                  <form
-                    method="POST"
-                    action={"/dashboard/editorial/#{@submission.id}/decline"}
-                    id="decline-form-review"
-                  >
-                    <input
-                      type="hidden"
-                      name="_csrf_token"
-                      value={Plug.CSRFProtection.get_csrf_token()}
-                    />
-                    <input type="hidden" name="currentViewId" value={@current_view} />
+                <section class="wf-card">
+                  <div class="wf-card-header">
+                    <h2 class="wf-card-title">Action Panel</h2>
+                  </div>
+                  <div class="wf-action-panel">
+                    <form
+                      method="POST"
+                      action={"/dashboard/editorial/#{@submission.id}/request-revisions"}
+                      class="wf-action-form"
+                    >
+                      <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value={Plug.CSRFProtection.get_csrf_token()}
+                      />
+                      <input type="hidden" name="currentViewId" value={@current_view} />
+                      <button
+                        type="submit"
+                        class="wf-btn-action wf-btn-action-secondary"
+                        id="btn-request-revisions"
+                      >
+                        Request Revisions
+                      </button>
+                    </form>
+                    <form
+                      method="POST"
+                      action={"/dashboard/editorial/#{@submission.id}/accept"}
+                      class="wf-action-form"
+                    >
+                      <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value={Plug.CSRFProtection.get_csrf_token()}
+                      />
+                      <input type="hidden" name="currentViewId" value={@current_view} />
+                      <button
+                        type="submit"
+                        class="wf-btn-action wf-btn-action-primary"
+                        id="btn-accept-submission"
+                      >
+                        Accept Submission
+                      </button>
+                    </form>
                     <button
                       type="button"
-                      class="wf-btn-danger"
-                      id="btn-decline-review"
-                      onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
+                      class="wf-btn-action wf-btn-action-secondary"
+                      id="btn-create-new-review-round"
                     >
-                      Decline Submission
+                      Create New Review Round
                     </button>
-                  </form>
-                </div>
+                    <button
+                      type="button"
+                      class="wf-btn-action wf-btn-action-secondary"
+                      id="btn-cancel-review-round"
+                    >
+                      Cancel Review Round
+                    </button>
+                    <form
+                      method="POST"
+                      action={"/dashboard/editorial/#{@submission.id}/decline"}
+                      id="decline-form-review"
+                      class="wf-action-form"
+                    >
+                      <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value={Plug.CSRFProtection.get_csrf_token()}
+                      />
+                      <input type="hidden" name="currentViewId" value={@current_view} />
+                      <button
+                        type="button"
+                        class="wf-btn-action wf-btn-action-danger"
+                        id="btn-decline-review"
+                        onclick="confirmAction('Are you sure you want to decline this submission? This action cannot be undone.', this.form)"
+                      >
+                        Decline Submission
+                      </button>
+                    </form>
+                  </div>
+                </section>
               <% end %>
-            <% end %>
-          </section>
+
+              <section class="wf-card">
+                <div class="wf-card-header">
+                  <h2 class="wf-card-title">Participants</h2>
+                  <button type="button" class="wf-btn-link" id="btn-assign-participant-review">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="8.5" cy="7" r="4"></circle>
+                      <line x1="20" y1="8" x2="20" y2="14"></line>
+                      <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    Assign
+                  </button>
+                </div>
+
+                <ul class="wf-participants-list">
+                  <%= for contributor <- @submission.contributors || [] do %>
+                    <% info = contributor_display(contributor) %>
+                    <li class="wf-participant-item">
+                      <span class="wf-avatar-sm">{contributor_initials(info.name)}</span>
+                      <span class="wf-participant-detail">
+                        <strong>{info.name}</strong>
+                        <small>Author{if info[:primary], do: " (Contact)"}</small>
+                      </span>
+                    </li>
+                  <% end %>
+
+                  <%= for editor <- @submission.editors || [] do %>
+                    <li class="wf-participant-item">
+                      <span class="wf-avatar-sm wf-avatar-editor">{String.first(
+                        String.capitalize(editor["name"] || editor["username"] || "E")
+                      )}</span>
+                      <span class="wf-participant-detail">
+                        <strong>{editor["name"] || editor["username"]}</strong>
+                        <small>Editor</small>
+                      </span>
+                    </li>
+                  <% end %>
+                </ul>
+              </section>
+            </div>
+          <% end %>
         </div>
 
         <%!-- ==================== WORKFLOW_4: COPYEDITING ==================== --%>
@@ -658,7 +1136,17 @@
                 <%= if @mode != :author do %>
                   <form
                     method="POST"
-                    action={"/dashboard/editorial/#{@submission.id}/accept"}
+                    action={
+                      if @mode == :author,
+                        do: "/submission/#{@submission.id}/discussion",
+                        else: "/dashboard/editorial/#{@submission.id}/discussion"
+                    }
+                    id="pre-discussion-form"
+                    data-self-only={
+                      if @mode == :author and other_discussion_participants(@submission) == [],
+                        do: "true",
+                        else: "false"
+                    }
                   >
                     <input
                       type="hidden"
@@ -975,5 +1463,1613 @@
           </section>
         </div>
     <% end %>
+  </div>
+</div>
+
+<%!-- Upload Review File Modal --%>
+<div id="upload-revision-overlay" class="urf-overlay">
+  <div class="urf-modal">
+    <div class="urf-header">
+      <button
+        type="button"
+        class="urf-back"
+        onclick="closeUploadRevisionModal()"
+        aria-label="Close"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <h2 class="urf-title">Upload Review File</h2>
+      <span class="urf-title-spacer"></span>
+    </div>
+
+    <div class="urf-stepper">
+      <div
+        class="urf-step urf-step-active urf-step-clickable"
+        id="urf-step-1-indicator"
+        onclick="urfGoToStep(1)"
+      >
+        <span class="urf-step-num">1</span>
+        <span class="urf-step-label">Upload File</span>
+      </div>
+      <div class="urf-step-connector"></div>
+      <div
+        class="urf-step"
+        id="urf-step-2-indicator"
+        onclick="urfGoToStep(2)"
+      >
+        <span class="urf-step-num">2</span>
+        <span class="urf-step-label">Review Details</span>
+      </div>
+      <div class="urf-step-connector"></div>
+      <div
+        class="urf-step"
+        id="urf-step-3-indicator"
+        onclick="urfGoToStep(3)"
+      >
+        <span class="urf-step-num">3</span>
+        <span class="urf-step-label">Confirm</span>
+      </div>
+    </div>
+
+    <div class="urf-body">
+      <%!-- Step 1: Upload File --%>
+      <div class="urf-step-content" id="urf-step-1">
+        <div class="urf-field-group">
+          <label class="urf-label">Article Component</label>
+          <div class="urf-upload-row">
+            <select
+              id="urf-article-component"
+              class="urf-select"
+              onchange="onArticleComponentChange()"
+            >
+              <option value="">Select article component</option>
+              <option value="article_text">Article Text</option>
+              <option value="research_instrument">Research Instrument</option>
+              <option value="research_materials">Research Materials</option>
+              <option value="research_results">Research Results</option>
+              <option value="transcripts">Transcripts</option>
+              <option value="data_analysis">Data Analysis</option>
+              <option value="data_set">Data Set</option>
+              <option value="source_text">Source Text</option>
+              <option value="other">Other</option>
+            </select>
+
+            <button
+              type="button"
+              class="urf-btn-upload"
+              id="urf-btn-upload-file"
+              style="display:none"
+              onclick="document.getElementById('urf-file-input').click()"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Upload File
+            </button>
+
+            <input
+              type="file"
+              id="urf-file-input"
+              style="display:none"
+              onchange="onFileSelected(this)"
+              accept=".pdf,.doc,.docx,.rtf,.txt,.zip"
+            />
+
+            <span class="urf-file-name" id="urf-file-name"></span>
+
+            <button
+              type="button"
+              class="urf-btn-change-file"
+              id="urf-btn-change-file"
+              style="display:none"
+              onclick="document.getElementById('urf-file-input').click()"
+            >
+              Change file
+            </button>
+          </div>
+
+          <div class="urf-added-files" id="urf-added-files"></div>
+        </div>
+      </div>
+
+      <%!-- Step 2: Review Details --%>
+      <div class="urf-step-content urf-step-hidden" id="urf-step-2">
+        <p class="urf-hint">Review the file details before confirming.</p>
+        <div class="urf-detail-row">
+          <span class="urf-detail-label">Article Component:</span>
+          <span class="urf-detail-value" id="urf-detail-component">—</span>
+        </div>
+        <div class="urf-detail-row">
+          <span class="urf-detail-label">File Name:</span>
+          <span class="urf-detail-value" id="urf-detail-filename">—</span>
+        </div>
+        <div class="urf-detail-row">
+          <span class="urf-detail-label">File Size:</span>
+          <span class="urf-detail-value" id="urf-detail-filesize">—</span>
+        </div>
+      </div>
+
+      <%!-- Step 3: Confirm --%>
+      <div class="urf-step-content urf-step-hidden" id="urf-step-3">
+        <div class="urf-confirm-box">
+          <p class="urf-confirm-text">File Added</p>
+          <button
+            type="button"
+            class="urf-btn-upload"
+            id="urf-btn-add-another"
+            onclick="urfAddAnotherFile()"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Another File
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="urf-footer">
+      <button type="button" class="urf-btn-cancel" onclick="closeUploadRevisionModal()">Cancel</button>
+      <button
+        type="button"
+        class="urf-btn-continue"
+        id="urf-btn-continue"
+        disabled
+        onclick="urfNextStep()"
+      >Continue</button>
+    </div>
+  </div>
+</div>
+
+<%!-- Review File Selection Dialog (workflow_3_1) --%>
+<% submission_files = @submission.files || [] %>
+<% rfs_review_files = Enum.filter(@submission.files || [], &(&1[:has_revisions] != true)) %>
+<div id="review-file-selection-overlay" class="rfs-overlay">
+  <div class="rfs-dialog">
+    <div class="rfs-header">
+      <button
+        type="button"
+        class="rfs-back"
+        onclick="closeReviewFileSelection()"
+        aria-label="Close"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <h2 class="rfs-title">Current Review Files For Round 1</h2>
+      <span class="rfs-title-spacer"></span>
+    </div>
+
+    <div class="rfs-body">
+      <div class="rfs-section-head">
+        <h3 class="rfs-section-title">Review Files</h3>
+        <button
+          type="button"
+          class="rfs-btn-upload"
+          onclick="openUploadRevisionModal()"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          Upload Review Files
+        </button>
+      </div>
+
+      <div class="rfs-filter">
+        <label class="rfs-filter-label">
+          <input
+            type="checkbox"
+            class="rfs-filter-check"
+            id="rfs-filter-stage"
+            onchange="toggleRfsStages()"
+          />
+          <span>Show files from all accessible workflow stages</span>
+        </label>
+      </div>
+
+      <%!-- Single stage: Review only --%>
+      <div id="rfs-single-stages">
+        <h4 class="rfs-sub-title">Review</h4>
+        <div class="rfs-file-list">
+          <%= if rfs_review_files == [] do %>
+            <div class="rfs-file-empty">No files have been uploaded for review yet.</div>
+          <% else %>
+            <%= for {file, idx} <- Enum.with_index(rfs_review_files, 1) do %>
+              <div class="rfs-file-row">
+                <div class="wf-file-menu" id={"rfs-file-menu-s-#{idx}"}>
+                  <button
+                    type="button"
+                    class="wf-file-menu-btn rfs-menu-arrow"
+                    onclick={"openFileMenu('rfs-file-menu-s-#{idx}')"}
+                    aria-label="File actions"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    >
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                  <div class="wf-file-menu-dropdown">
+                    <button
+                      type="button"
+                      class="wf-file-menu-item"
+                      onclick={"closeFileMenu('rfs-file-menu-s-#{idx}')"}
+                    >More Information</button>
+                  </div>
+                </div>
+
+                <input
+                  type="checkbox"
+                  class="rfs-file-check"
+                  aria-label={"Select #{file[:filename]}"}
+                />
+
+                <div class="rfs-file-info">
+                  <span class="rfs-file-name">{file[:filename]}</span>
+                  <span class="rfs-file-genre">Article Text</span>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <%!-- All workflow stages --%>
+      <div id="rfs-all-stages" class="rfs-stages-hidden">
+        <div class="rfs-stage-group">
+          <h4 class="rfs-sub-title">Submission</h4>
+          <div class="rfs-file-list">
+            <%= if submission_files == [] do %>
+              <div class="rfs-file-empty">No Items</div>
+            <% else %>
+              <%= for {file, idx} <- Enum.with_index(submission_files, 1) do %>
+                <div class="rfs-file-row">
+                  <div class="wf-file-menu" id={"rfs-file-menu-sub-#{idx}"}>
+                    <button
+                      type="button"
+                      class="wf-file-menu-btn rfs-menu-arrow"
+                      onclick={"openFileMenu('rfs-file-menu-sub-#{idx}')"}
+                      aria-label="File actions"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                      >
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
+                    <div class="wf-file-menu-dropdown">
+                      <button
+                        type="button"
+                        class="wf-file-menu-item"
+                        onclick={"closeFileMenu('rfs-file-menu-sub-#{idx}')"}
+                      >More Information</button>
+                    </div>
+                  </div>
+
+                  <input
+                    type="checkbox"
+                    class="rfs-file-check"
+                    aria-label={"Select #{file[:filename]}"}
+                  />
+
+                  <div class="rfs-file-info">
+                    <span class="rfs-file-name">{file[:filename]}</span>
+                    <span class="rfs-file-genre">Article Text</span>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="rfs-stage-group">
+          <h4 class="rfs-sub-title">Review</h4>
+          <div class="rfs-file-list">
+            <%= if rfs_review_files == [] do %>
+              <div class="rfs-file-empty">No Items</div>
+            <% else %>
+              <%= for {file, idx} <- Enum.with_index(rfs_review_files, 1) do %>
+                <div class="rfs-file-row">
+                  <div class="wf-file-menu" id={"rfs-file-menu-arev-#{idx}"}>
+                    <button
+                      type="button"
+                      class="wf-file-menu-btn rfs-menu-arrow"
+                      onclick={"openFileMenu('rfs-file-menu-arev-#{idx}')"}
+                      aria-label="File actions"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                      >
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
+                    <div class="wf-file-menu-dropdown">
+                      <button
+                        type="button"
+                        class="wf-file-menu-item"
+                        onclick={"closeFileMenu('rfs-file-menu-arev-#{idx}')"}
+                      >More Information</button>
+                    </div>
+                  </div>
+
+                  <input
+                    type="checkbox"
+                    class="rfs-file-check"
+                    aria-label={"Select #{file[:filename]}"}
+                  />
+
+                  <div class="rfs-file-info">
+                    <span class="rfs-file-name">{file[:filename]}</span>
+                    <span class="rfs-file-genre">Article Text</span>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="rfs-stage-group">
+          <h4 class="rfs-sub-title">Copyediting</h4>
+          <div class="rfs-file-list">
+            <div class="rfs-file-empty">No Items</div>
+          </div>
+        </div>
+
+        <div class="rfs-stage-group">
+          <h4 class="rfs-sub-title">Production</h4>
+          <div class="rfs-file-list">
+            <div class="rfs-file-empty">No Items</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rfs-footer">
+      <button
+        type="button"
+        class="rfs-btn-cancel"
+        onclick="closeReviewFileSelection()"
+      >Cancel</button>
+      <button
+        type="button"
+        class="rfs-btn-ok"
+        onclick="closeReviewFileSelection()"
+      >Ok</button>
+    </div>
+  </div>
+</div>
+
+<%= if @mode != :author do %>
+  <%!-- Add Reviewer Slide-in Modal --%>
+  <div id="add-reviewer-overlay" class="ar-overlay">
+    <div class="ar-panel">
+      <div class="ar-header">
+        <button
+          type="button"
+          class="ar-back"
+          onclick="closeAddReviewerModal()"
+          aria-label="Close"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <h2 class="ar-title">Add Reviewer</h2>
+        <span class="ar-title-spacer"></span>
+      </div>
+
+      <div class="ar-body">
+        <%!-- Locate a Reviewer --%>
+        <div class="ar-locate-head">
+          <h3 class="ar-section-title">Locate a Reviewer</h3>
+          <div class="ar-locate-actions">
+            <div class="ar-search-box">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                class="ar-search-input"
+                placeholder="Search"
+                id="ar-search-input"
+                oninput="arFilterReviewers()"
+              />
+            </div>
+            <button
+              type="button"
+              class="ar-btn-filters"
+              id="ar-btn-filters"
+              onclick="arToggleFilters()"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              Filters
+            </button>
+          </div>
+        </div>
+
+        <%!-- Content: filters sidebar + reviewer list --%>
+        <div class="ar-content-wrap">
+          <%!-- Filters sidebar --%>
+          <div class="ar-filters-sidebar" id="ar-filters-sidebar">
+            <div class="ar-filters-head">
+              <h4 class="ar-filters-title">Filters</h4>
+              <div class="ar-filters-actions">
+                <span class="ar-filters-count" id="ar-filters-count"></span>
+                <button type="button" class="ar-filters-reset" onclick="arResetFilters()">Reset</button>
+              </div>
+            </div>
+
+            <div class="ar-active-filters" id="ar-active-filters"></div>
+
+            <div class="ar-filters-group">
+              <div class="ar-filter-row">
+                <label class="ar-filter-label">Rated at least</label>
+                <button
+                  type="button"
+                  class="ar-filter-add"
+                  id="ar-add-rated"
+                  onclick="arAddFilter('rated')"
+                >+</button>
+              </div>
+              <div class="ar-filter-sub">
+                Rate this reviewer's completed reviews on a scale of 1 to 5.
+              </div>
+
+              <div class="ar-filter-row">
+                <label class="ar-filter-label">Reviews completed</label>
+                <button
+                  type="button"
+                  class="ar-filter-add"
+                  id="ar-add-completed"
+                  onclick="arAddFilter('completed')"
+                >+</button>
+              </div>
+              <div class="ar-filter-sub">
+                The number of reviews this reviewer has completed.
+              </div>
+
+              <div class="ar-filter-row">
+                <label class="ar-filter-label">Days since last review assigned</label>
+                <button
+                  type="button"
+                  class="ar-filter-add"
+                  id="ar-add-days"
+                  onclick="arAddFilter('days')"
+                >+</button>
+              </div>
+              <div class="ar-filter-sub">
+                Days since this reviewer's last review was assigned.
+              </div>
+
+              <div class="ar-filter-row">
+                <label class="ar-filter-label">Active reviews currently assigned</label>
+                <button
+                  type="button"
+                  class="ar-filter-add"
+                  id="ar-add-active"
+                  onclick="arAddFilter('active')"
+                >+</button>
+              </div>
+              <div class="ar-filter-sub">
+                Reviews this reviewer is currently working on.
+              </div>
+
+              <div class="ar-filter-row">
+                <label class="ar-filter-label">Average days to complete review</label>
+                <button
+                  type="button"
+                  class="ar-filter-add"
+                  id="ar-add-avg"
+                  onclick="arAddFilter('avg')"
+                >+</button>
+              </div>
+              <div class="ar-filter-sub">
+                Average number of days this reviewer takes to complete a review.
+              </div>
+            </div>
+          </div>
+
+          <%!-- Reviewer list --%>
+          <div class="ar-reviewer-list" id="ar-reviewer-list">
+            <%= for reviewer <- @reviewers do %>
+              <div
+                class="ar-reviewer-card"
+                data-name={
+                  String.downcase(
+                    "#{reviewer["given_name"] || ""} #{reviewer["family_name"] || ""} #{reviewer["username"] || ""}"
+                  )
+                }
+                data-role={to_string(reviewer["role"] || "")}
+              >
+                <div class="ar-reviewer-main">
+                  <div class="ar-reviewer-identity">
+                    <div class="ar-reviewer-topline">
+                      <span class="ar-reviewer-name">{reviewer["username"] || "—"}</span>
+                      <span class="ar-reviewer-select-wrap">
+                        <button
+                          type="button"
+                          class="ar-select-reviewer-btn"
+                          onclick="arToggleDropdown(this)"
+                        >
+                          Select Reviewer
+                        </button>
+                        <button
+                          type="button"
+                          class="ar-select-reviewer-arrow"
+                          onclick="arToggleDropdown(this)"
+                          aria-label="Toggle dropdown"
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                          >
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
+                        </button>
+                        <form
+                          method="POST"
+                          action={"/dashboard/editorial/#{@submission.id}/assign-reviewer"}
+                          id={"ar-assign-form-#{reviewer["id"]}"}
+                          class="ar-hidden"
+                        >
+                          <input
+                            type="hidden"
+                            name="_csrf_token"
+                            value={Plug.CSRFProtection.get_csrf_token()}
+                          />
+                          <input type="hidden" name="currentViewId" value={@current_view} />
+                          <input
+                            type="hidden"
+                            name="reviewer_name"
+                            value={reviewer["username"] || ""}
+                          />
+                        </form>
+                        <div
+                          class="ar-select-dropdown ar-select-dropdown-wide"
+                          id={"ar-select-dropdown-#{reviewer["id"]}"}
+                          onclick="event.stopPropagation()"
+                        >
+                          <div class="ar-dropdown-stat-panel">
+                            <div class="ar-dropdown-stat-title">Reviewer Statistics Panel</div>
+                            <div class="ar-dropdown-stat-grid">
+                              <div class="ar-dropdown-stat">
+                                <span class="ar-dropdown-stat-label">Active reviews currently assigned</span>
+                                <span class="ar-dropdown-stat-value">{reviewer["active_reviews"] ||
+                                  0}</span>
+                              </div>
+                              <div class="ar-dropdown-stat">
+                                <span class="ar-dropdown-stat-label">Reviews Completed</span>
+                                <span class="ar-dropdown-stat-value">{reviewer[
+                                  "reviews_completed"
+                                ] || 0}</span>
+                              </div>
+                              <div class="ar-dropdown-stat">
+                                <span class="ar-dropdown-stat-label">Review requests declined</span>
+                                <span class="ar-dropdown-stat-value">{reviewer["reviews_declined"] ||
+                                  0}</span>
+                              </div>
+                              <div class="ar-dropdown-stat">
+                                <span class="ar-dropdown-stat-label">Review requests cancelled</span>
+                                <span class="ar-dropdown-stat-value">{reviewer[
+                                  "reviews_cancelled"
+                                ] || 0}</span>
+                              </div>
+                              <div class="ar-dropdown-stat">
+                                <span class="ar-dropdown-stat-label">Days since last review assigned</span>
+                                <span class="ar-dropdown-stat-value">{reviewer[
+                                  "days_since_last_review"
+                                ] || 0}</span>
+                              </div>
+                              <div class="ar-dropdown-stat">
+                                <span class="ar-dropdown-stat-label">Average days to complete review</span>
+                                <span class="ar-dropdown-stat-value">{reviewer[
+                                  "avg_days_to_complete"
+                                ] || 0}</span>
+                              </div>
+                            </div>
+                            <div class="ar-dropdown-interests">
+                              <span class="ar-dropdown-interests-label">Reviewing Interests</span>
+                              <span class="ar-dropdown-interests-value">{reviewer[
+                                "reviewing_interests"
+                              ]}</span>
+                            </div>
+                          </div>
+                          <div
+                            class="ar-select-dropdown-item"
+                            onclick={"arSelectReviewer('ar-assign-form-#{reviewer["id"]}')"}
+                          >
+                            Select Reviewer
+                          </div>
+                          <div
+                            class="ar-select-dropdown-item"
+                            onclick="arCloseAllDropdowns()"
+                          >
+                            Cancel
+                          </div>
+                        </div>
+                      </span>
+                    </div>
+                    <div class="ar-reviewer-affiliation">
+                      {reviewer["affiliation"] || "—"}
+                    </div>
+
+                    <div class="ar-reviewer-stats">
+                      <div class="ar-stat">
+                        <span class="ar-stat-label">Review Count</span>
+                        <span class="ar-stat-value">{reviewer["review_count"] || 0}</span>
+                      </div>
+                      <div class="ar-stat">
+                        <span class="ar-stat-label">Last Review</span>
+                        <span class="ar-stat-value">{format_date(reviewer["last_review"])}</span>
+                      </div>
+                      <div class="ar-stat">
+                        <span class="ar-stat-label">Status</span>
+                        <span class={[
+                          "ar-status-badge",
+                          if(reviewer["status"] == "Available",
+                            do: "ar-status-available",
+                            else: "ar-status-busy"
+                          )
+                        ]}>
+                          {reviewer["status"] || "Available"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+            <div class="ar-no-results" id="ar-no-results" style="display:none">
+              No reviewers match your search.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ar-footer">
+        <button type="button" class="ar-btn-create" onclick="arOpenCreateReviewer()">
+          Create New Reviewer
+        </button>
+        <button type="button" class="ar-btn-enroll" onclick="arOpenEnrollUser()">
+          Enroll Existing User
+        </button>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<%= if @mode != :author do %>
+  <script>
+    window.__apUsers = <%= raw(@ap_users_json || "[]") %>;
+  </script>
+
+  <%!-- Assign Participant Drawer (OJS 3.5 style right slide-in panel) --%>
+  <div id="assign-participant-drawer" class="apd-overlay">
+    <div class="apd-panel">
+      <div class="apd-header">
+        <button
+          type="button"
+          class="apd-back"
+          onclick="closeAssignParticipantDrawer()"
+          aria-label="Back"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <h2 class="apd-title">Assign Participant</h2>
+        <span class="apd-title-spacer"></span>
+      </div>
+
+      <div class="apd-body">
+        <div class="apd-heading">Locate a User</div>
+
+        <div class="apd-locate-row">
+          <select class="apd-select" id="apd-role-filter" onchange="apdFilterUsers()">
+            <option value="editor">Journal Editor</option>
+            <option value="section_editor">Section Editor</option>
+            <option value="guest_editor">Guest Editor</option>
+            <option value="finding_coordinator">Finding coordinator</option>
+            <option value="author">Author</option>
+            <option value="translator">Translator</option>
+          </select>
+
+          <div class="apd-search-wrap">
+            <div class="apd-search-box">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                class="apd-search-input"
+                id="apd-search-name"
+                placeholder="Search"
+                oninput="apdFilterUsers()"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="apd-table-wrapper">
+          <table class="apd-users-table" id="apd-users-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Assignments</th>
+                <th>Affiliation</th>
+                <th>Reviewing Interest</th>
+              </tr>
+            </thead>
+            <tbody id="apd-users-tbody"></tbody>
+          </table>
+          <div class="apd-no-results" id="apd-no-results" style="display:none">
+            No users found.
+          </div>
+        </div>
+
+        <div class="apd-message-section">
+          <p class="apd-message-hint">
+            Choose a predefined message to use, or fill out the form below.
+          </p>
+          <label class="apd-message-label">Predefined Message</label>
+          <select
+            id="apd-predefined-message"
+            class="apd-select apd-predefined-select"
+            onchange="apdApplyPredefinedMessage(this.value)"
+          >
+            <option value="">Choose a predefined message...</option>
+            <option value="discussion">Discussion (Submission)</option>
+            <option value="assign_editor">Assign Editor</option>
+          </select>
+          <label class="apd-message-label">Message</label>
+          <div class="apd-richtext-wrapper">
+            <div class="apd-richtext-toolbar">
+              <button type="button" class="apd-richtext-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+              <button type="button" class="apd-richtext-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+              <button
+                type="button"
+                class="apd-richtext-btn"
+                data-cmd="underline"
+                title="Underline"
+              ><u>U</u></button>
+              <button
+                type="button"
+                class="apd-richtext-btn"
+                data-cmd="insertUnorderedList"
+                title="Bullet List"
+              >&#8226;</button>
+            </div>
+            <div class="apd-richtext-editor" id="apd-message-editor" contenteditable="true"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="apd-footer">
+        <button type="button" class="apd-btn-cancel" onclick="closeAssignParticipantDrawer()">Cancel</button>
+        <button type="button" class="apd-btn-ok" id="apd-btn-ok" onclick="apdSubmit()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <%!-- Hidden form for POSTing the assigned participant --%>
+  <form
+    id="assign-participant-form"
+    method="post"
+    action="/dashboard/editorial/assign-editor"
+    style="display:none"
+  >
+    <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+    <input type="hidden" id="apd-form-submission-id" name="submission_id" value={@submission.id} />
+    <input type="hidden" id="apd-form-current-view" name="currentViewId" value={@current_view} />
+    <input type="hidden" id="apd-form-workflow-menu" name="workflowMenuKey" value={@active_menu} />
+    <input type="hidden" id="apd-form-role" name="role" value="" />
+    <input type="hidden" id="apd-form-user-id" name="user_id" value="" />
+    <input type="hidden" id="apd-form-username" name="username" value="" />
+    <input type="hidden" id="apd-form-message" name="message" value="" />
+  </form>
+<% end %>
+
+<%!-- Edit File Slide-in Modal --%>
+<div id="edit-file-overlay" class="ar-overlay">
+  <div class="ar-panel ef-panel">
+    <div class="ar-header">
+      <button
+        type="button"
+        class="ar-back"
+        onclick="closeEditFileModal()"
+        aria-label="Close"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <h2 class="ar-title">Edit a File</h2>
+      <span class="ar-title-spacer"></span>
+    </div>
+
+    <div class="ar-body">
+      <input type="hidden" id="edit-file-submission-id" value={@submission.id} />
+      <input type="hidden" id="edit-file-id" value="" />
+      <label class="ef-label" for="edit-file-name-input">
+        Name the file (e.g., Manuscript; Table 1)
+        <abbr class="ef-required" title="required">*</abbr>
+      </label>
+      <input
+        type="text"
+        id="edit-file-name-input"
+        class="ef-input"
+        placeholder="Name the file"
+      />
+      <div class="ef-hint" id="edit-file-name-hint"></div>
+    </div>
+
+    <div class="ar-footer">
+      <button type="button" class="ar-btn-create" onclick="closeEditFileModal()">
+        Cancel
+      </button>
+      <button type="button" class="ar-btn-enroll" onclick="saveEditFile()">
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<%!-- Pre-Review Discussion Modal --%>
+<div id="pre-discussion-overlay" class="prd-overlay">
+  <div class="prd-panel">
+    <div class="prd-header">
+      <button
+        type="button"
+        class="prd-back"
+        onclick="closePreDiscussionModal()"
+        aria-label="Back"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <h2 class="prd-title">Add discussion</h2>
+    </div>
+    <form
+      method="POST"
+      action={
+        if @mode == :author,
+          do: "/submission/#{@submission.id}/discussion",
+          else: "/dashboard/editorial/#{@submission.id}/discussion"
+      }
+      id="pre-discussion-form"
+      data-self-only={
+        if @mode == :author and other_discussion_participants(@submission) == [],
+          do: "true",
+          else: "false"
+      }
+    >
+      <input
+        type="hidden"
+        name="_csrf_token"
+        value={Plug.CSRFProtection.get_csrf_token()}
+      />
+      <input type="hidden" name="currentViewId" value={@current_view} />
+      <input type="hidden" name="workflowMenuKey" value={@active_menu} />
+      <div class="prd-body">
+        <section class="prd-section">
+          <h3 class="prd-label">Participants</h3>
+
+          <%= for {editor, idx} <- Enum.with_index(@submission.editors || []) do %>
+            <% uname =
+              editor["username"] ||
+                String.split(editor["email"] || "", "@") |> List.first() ||
+                editor["name"] ||
+                "Editor" %>
+            <label class="prd-checkbox-row">
+              <input
+                type="checkbox"
+                name="participant[]"
+                id={"prd-participant-editor-#{idx + 1}"}
+                value={uname}
+                checked
+              />
+              <span class="prd-checkbox-name">{uname}</span>
+              <span class="prd-role">{editor["role"] || "Editor"}</span>
+            </label>
+          <% end %>
+
+          <% primary_author =
+            Enum.find(@submission.contributors || [], &(Map.get(&1, :primary) == true)) ||
+              List.first(@submission.contributors || []) %>
+
+          <%= if primary_author do %>
+            <% info = contributor_display(primary_author) %>
+            <% uname =
+              String.split(info.email || "", "@")
+              |> List.first()
+              |> case do
+                nil -> info.name
+                "" -> info.name
+                local -> local
+              end %>
+            <label class="prd-checkbox-row">
+              <input
+                type="checkbox"
+                name="participant[]"
+                id="prd-participant-author"
+                value={uname}
+                checked
+              />
+              <span class="prd-checkbox-name">{uname}</span>
+              <span class="prd-role">Author</span>
+            </label>
+          <% end %>
+        </section>
+
+        <div class="prd-error" id="prd-self-only-error" style="display:none">
+          Belum ada editor yang ditugaskan, sehingga diskusi belum dapat dimulai.
+        </div>
+
+        <label class="prd-label" for="pre-discussion-subject">Subject</label>
+        <input
+          type="text"
+          name="subject"
+          id="pre-discussion-subject"
+          class="prd-input"
+          placeholder="Brief subject line"
+          required
+        />
+        <label class="prd-label">Message</label>
+        <div class="prd-richtext-wrapper">
+          <div id="prd-message-toolbar" class="prd-toolbar">
+            <button type="button" data-cmd="bold" class="prd-toolbar-btn" title="Bold">
+              <b>B</b>
+            </button>
+            <button type="button" data-cmd="italic" class="prd-toolbar-btn" title="Italic">
+              <i>I</i>
+            </button>
+            <button type="button" data-cmd="underline" class="prd-toolbar-btn" title="Underline">
+              <u>U</u>
+            </button>
+            <button
+              type="button"
+              data-cmd="insertUnorderedList"
+              class="prd-toolbar-btn"
+              title="Bullet List"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+            </button>
+            <button
+              type="button"
+              data-cmd="createLink"
+              class="prd-toolbar-btn"
+              title="Insert link"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+            </button>
+          </div>
+          <input type="hidden" name="message" id="prd-message" value="" required />
+          <div
+            id="prd-message-editor"
+            class="prd-richtext"
+            data-target="prd-message"
+            data-placeholder="Write your message…"
+            contenteditable="true"
+          ></div>
+        </div>
+
+        <label class="prd-label">Attached Files</label>
+        <div class="prd-attach-box">
+          <div class="prd-attach-head">
+            <h3 class="prd-attach-title">Attached Files</h3>
+            <div class="prd-attach-actions">
+              <button
+                type="button"
+                id="prd-btn-search-file"
+                class="prd-btn-outline"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                Search
+              </button>
+              <button
+                type="button"
+                id="prd-btn-upload-file"
+                class="prd-btn-outline"
+                onclick="openUploadDiscussionFileModal()"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Upload File
+              </button>
+            </div>
+          </div>
+          <div class="prd-attach-body">
+            <div class="prd-attach-empty">No files are attached to this discussion.</div>
+          </div>
+        </div>
+        <input type="hidden" name="attached_files" id="prd-attached-files" value="" />
+      </div>
+      <div class="prd-footer">
+        <button
+          type="button"
+          class="prd-btn-secondary"
+          onclick="closePreDiscussionModal()"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="prd-btn-primary">Add Discussion</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%!-- Editor Comment Detail Panel (slides in from right) --%>
+<div id="editor-comment-overlay" class="prd-overlay pcd-overlay">
+  <div class="prd-panel pcd-panel">
+    <div class="prd-header pcd-header">
+      <button
+        type="button"
+        class="prd-back"
+        onclick="closeEditorCommentPanel()"
+        aria-label="Back"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <h2 class="prd-title">Comment for the Editor</h2>
+      <span class="pcd-title-spacer"></span>
+    </div>
+
+    <div class="prd-body pcd-body">
+      <section class="pcd-section">
+        <div class="pcd-section-head">
+          <h3 class="pcd-section-title">Participants</h3>
+        </div>
+        <div class="pcd-participant-row">
+          <span class="pcd-avatar">{pcd_initials(@submission)}</span>
+          <div class="pcd-participant-detail">
+            <strong class="pcd-participant-name">{pcd_participant_name(@submission)}</strong>
+            <span class="pcd-participant-role">Author</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="pcd-section">
+        <div class="pcd-section-head">
+          <h3 class="pcd-section-title">Message</h3>
+        </div>
+        <div class="pcd-note-box">
+          <div class="pcd-note-head">
+            <span class="pcd-note-title">Note</span>
+            <span class="pcd-note-from">From: {pcd_participant_name(@submission)}</span>
+          </div>
+          <div class="pcd-note-content">
+            {raw(pcd_editor_comment(@submission))}
+          </div>
+        </div>
+        <%= for reply <- editor_comment_replies(@submission) do %>
+          <div class="pcd-note-box pcd-note-box-reply">
+            <div class="pcd-note-head">
+              <span class="pcd-note-title">{reply.author}</span>
+              <span class="pcd-note-from">{reply.date}</span>
+            </div>
+            <div class="pcd-note-content">
+              {raw(reply.message)}
+            </div>
+          </div>
+        <% end %>
+      </section>
+
+      <section class="pcd-section" id="pcd-reply-section" style="display:none">
+        <form
+          id="pcd-reply-form"
+          method="post"
+          action={"/submission/#{@submission.id}/workflow/editor-reply"}
+        >
+          <input
+            type="hidden"
+            name="_csrf_token"
+            value={Plug.CSRFProtection.get_csrf_token()}
+          />
+          <input type="hidden" name="workflowMenuKey" value={@active_menu} />
+          <h3 class="pcd-section-title">Message</h3>
+          <div class="prd-richtext-wrapper">
+            <div id="pcd-message-toolbar" class="prd-toolbar">
+              <button type="button" data-cmd="bold" class="prd-toolbar-btn" title="Bold">
+                <b>B</b>
+              </button>
+              <button type="button" data-cmd="italic" class="prd-toolbar-btn" title="Italic">
+                <i>I</i>
+              </button>
+              <button type="button" data-cmd="underline" class="prd-toolbar-btn" title="Underline">
+                <u>U</u>
+              </button>
+              <button
+                type="button"
+                data-cmd="insertUnorderedList"
+                class="prd-toolbar-btn"
+                title="Bullet List"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+              </button>
+              <button
+                type="button"
+                data-cmd="createLink"
+                class="prd-toolbar-btn"
+                title="Insert link"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+              </button>
+            </div>
+            <input type="hidden" name="message" id="pcd-message" value="" />
+            <div
+              id="pcd-message-editor"
+              class="prd-richtext"
+              data-target="pcd-message"
+              data-placeholder="Write your message…"
+              contenteditable="true"
+            ></div>
+          </div>
+
+          <label class="prd-label">Attached Files</label>
+          <div class="prd-attach-box">
+            <div class="prd-attach-head">
+              <h3 class="prd-attach-title">Attached Files</h3>
+              <div class="prd-attach-actions">
+                <button
+                  type="button"
+                  id="pcd-btn-search-file"
+                  class="prd-btn-outline"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  Search
+                </button>
+                <button
+                  type="button"
+                  id="pcd-btn-upload-file"
+                  class="prd-btn-outline"
+                  onclick="openUploadDiscussionFileModal()"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  Upload File
+                </button>
+              </div>
+            </div>
+            <div class="prd-attach-body">
+              <div class="prd-attach-empty">No files are attached to this discussion.</div>
+            </div>
+          </div>
+          <input type="hidden" name="attached_files" id="pcd-attached-files" value="" />
+
+          <div class="prd-footer">
+            <button
+              type="button"
+              class="prd-btn-secondary"
+              onclick="togglePcdReplySection()"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="prd-btn-primary">OK</button>
+          </div>
+        </form>
+      </section>
+
+      <div class="pcd-actions">
+        <button type="button" class="pcd-btn-add-message">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Message
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%!-- Upload Discussion File Modal --%>
+<div id="upload-discussion-file-overlay" class="udf-overlay">
+  <div class="udf-modal">
+    <div class="udf-header">
+      <button
+        type="button"
+        class="udf-back"
+        onclick="closeUploadDiscussionFileModal()"
+        aria-label="Back"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <h2 class="udf-title">Upload a Discussion File</h2>
+      <span class="udf-title-spacer"></span>
+    </div>
+
+    <div class="udf-stepper">
+      <div
+        class="udf-step udf-step-active udf-step-clickable"
+        id="udf-step-1-indicator"
+        onclick="udfGoToStep(1)"
+      >
+        <span class="udf-step-num">1</span>
+        <span class="udf-step-label">Upload File</span>
+      </div>
+      <div class="udf-step-connector"></div>
+      <div
+        class="udf-step"
+        id="udf-step-2-indicator"
+        onclick="udfGoToStep(2)"
+      >
+        <span class="udf-step-num">2</span>
+        <span class="udf-step-label">Review Details</span>
+      </div>
+      <div class="udf-step-connector"></div>
+      <div
+        class="udf-step"
+        id="udf-step-3-indicator"
+        onclick="udfGoToStep(3)"
+      >
+        <span class="udf-step-num">3</span>
+        <span class="udf-step-label">Confirm</span>
+      </div>
+    </div>
+
+    <div class="udf-body">
+      <%!-- Step 1: Upload File --%>
+      <div class="udf-step-content" id="udf-step-1">
+        <div class="udf-field-group">
+          <label class="udf-label" for="udf-article-component">
+            Article Component <abbr class="udf-required" title="required">*</abbr>
+          </label>
+          <div class="udf-upload-row">
+            <select
+              id="udf-article-component"
+              class="udf-select"
+              onchange="onUdfArticleComponentChange()"
+            >
+              <option value="">Select article component</option>
+              <option value="article_text">Article Text</option>
+              <option value="research_instrument">Research Instrument</option>
+              <option value="research_materials">Research Materials</option>
+              <option value="research_results">Research Results</option>
+              <option value="transcripts">Transcript</option>
+              <option value="data_analysis">Data Analysis</option>
+              <option value="data_set">Data Set</option>
+              <option value="source_text">Source Text</option>
+              <option value="other">Other</option>
+            </select>
+
+            <button
+              type="button"
+              class="udf-btn-upload"
+              id="udf-btn-upload-file"
+              style="display:none"
+              onclick="document.getElementById('udf-file-input').click()"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Upload File
+            </button>
+
+            <input
+              type="file"
+              id="udf-file-input"
+              style="display:none"
+              onchange="onUdfFileSelected(this)"
+              accept=".pdf,.doc,.docx,.rtf,.txt,.zip"
+            />
+
+            <span class="udf-file-name" id="udf-file-name"></span>
+
+            <button
+              type="button"
+              class="udf-btn-change-file"
+              id="udf-btn-change-file"
+              style="display:none"
+              onclick="document.getElementById('udf-file-input').click()"
+            >
+              Change file
+            </button>
+          </div>
+
+          <div class="udf-added-files" id="udf-added-files"></div>
+        </div>
+      </div>
+
+      <%!-- Step 2: Review Details --%>
+      <div class="udf-step-content udf-step-hidden" id="udf-step-2">
+        <label class="udf-label" for="udf-file-name-input">
+          Name the file (e.g., Manuscript; Table 1)
+          <abbr class="udf-required" title="required">*</abbr>
+        </label>
+        <input
+          type="text"
+          id="udf-file-name-input"
+          class="udf-input"
+          placeholder="Name the file"
+          oninput="updateUdfNameDetail()"
+        />
+        <div class="udf-hint" id="udf-name-hint"></div>
+      </div>
+
+      <%!-- Step 3: Confirm --%>
+      <div class="udf-step-content udf-step-hidden" id="udf-step-3">
+        <div class="udf-confirm-box">
+          <p class="udf-confirm-text">File Added</p>
+          <button
+            type="button"
+            class="udf-btn-upload"
+            id="udf-btn-attach"
+            onclick="udfAttachFile()"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48">
+              </path>
+            </svg>
+            Attach to Discussion
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="udf-footer">
+      <button
+        type="button"
+        class="udf-btn-cancel"
+        onclick="closeUploadDiscussionFileModal()"
+      >Cancel</button>
+      <button
+        type="button"
+        class="udf-btn-continue"
+        id="udf-btn-continue"
+        disabled
+        onclick="udfNextStep()"
+      >Continue</button>
+    </div>
   </div>
 </div>
