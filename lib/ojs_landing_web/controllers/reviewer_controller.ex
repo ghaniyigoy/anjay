@@ -5,26 +5,29 @@ defmodule OjsLandingWeb.ReviewerController do
     user = conn.assigns.current_user
 
     # Filter review assignments berdasarkan view_id
+    # Mendukung alias OJS: reviewer-action-required, reviewer-assignments-all / reviewer-all,
+    # reviewer-completed, reviewer-declined, reviewer-published, reviewer-archived
     all_assignments = OjsLanding.ReviewerAssignment.all()
+    normalized = normalize_view_id(view_id)
 
     filtered_assignments =
-      case view_id do
-        "reviewer-action-required" ->
+      case normalized do
+        :action_required ->
           Enum.filter(all_assignments, fn a -> a.status == :action_required end)
 
-        "reviewer-assignments-all" ->
+        :all ->
           all_assignments
 
-        "reviewer-assignments-completed" ->
+        :completed ->
           Enum.filter(all_assignments, fn a -> a.status == :completed end)
 
-        "reviewer-assignments-declined" ->
+        :declined ->
           Enum.filter(all_assignments, fn a -> a.status == :declined end)
 
-        "reviewer-assignments-published" ->
+        :published ->
           Enum.filter(all_assignments, fn a -> a.status == :published end)
 
-        "reviewer-assignments-archived" ->
+        :archived ->
           Enum.filter(all_assignments, fn a -> a.status == :archived end)
 
         _ ->
@@ -37,7 +40,7 @@ defmodule OjsLandingWeb.ReviewerController do
     |> render(:review_assignments,
       assignments: filtered_assignments,
       all_assignments: all_assignments,
-      current_view: view_id || "reviewer-action-required",
+      current_view: normalized_view_id_string(normalized),
       user: user
     )
   end
@@ -467,6 +470,33 @@ defmodule OjsLandingWeb.ReviewerController do
       true -> "Other"
     end
   end
+
+  defp normalize_view_id(view_id) when is_binary(view_id) do
+    case view_id do
+      "reviewer-action-required" -> :action_required
+      "reviewer-assignments-all" -> :all
+      "reviewer-all" -> :all
+      "reviewer-assignments-completed" -> :completed
+      "reviewer-completed" -> :completed
+      "reviewer-assignments-declined" -> :declined
+      "reviewer-declined" -> :declined
+      "reviewer-assignments-published" -> :published
+      "reviewer-published" -> :published
+      "reviewer-assignments-archived" -> :archived
+      "reviewer-archived" -> :archived
+      _ -> :all
+    end
+  end
+
+  defp normalize_view_id(_), do: :action_required
+
+  defp normalized_view_id_string(:action_required), do: "reviewer-action-required"
+  defp normalized_view_id_string(:all), do: "reviewer-assignments-all"
+  defp normalized_view_id_string(:completed), do: "reviewer-assignments-completed"
+  defp normalized_view_id_string(:declined), do: "reviewer-assignments-declined"
+  defp normalized_view_id_string(:published), do: "reviewer-assignments-published"
+  defp normalized_view_id_string(:archived), do: "reviewer-assignments-archived"
+  defp normalized_view_id_string(_), do: "reviewer-action-required"
 
   defp review_criteria do
     [
