@@ -15,7 +15,7 @@ defmodule OjsLandingWeb.EditorHTML do
   def stage_label(:needs_reviews), do: "Needs Reviews"
   def stage_label(:awaiting_reviews), do: "Awaiting Reviews"
   def stage_label(:reviews_submitted), do: "Reviews Submitted"
-  def stage_label(:external_review), do: "External Review"
+  def stage_label(:external_review), do: "Review (Round 1)"
   def stage_label(:copyediting), do: "Copyediting"
   def stage_label(:production), do: "Production"
   def stage_label(:scheduled), do: "Scheduled"
@@ -137,6 +137,8 @@ defmodule OjsLandingWeb.EditorHTML do
   # ============================================
 
   def editorial_actions(row) do
+    stage = normalize_stage(row.stage)
+
     cond do
       not row.has_editor ->
         %{
@@ -151,7 +153,7 @@ defmodule OjsLandingWeb.EditorHTML do
           href: workflow_menu_path(row.id, "assigned-to-me", "workflow_1")
         }
 
-      row.stage in [:initial_review, :external_review] and not row.has_reviewers ->
+      stage == :external_review and not row.has_reviewers ->
         %{
           label: "Assign Reviewers",
           href: "#",
@@ -159,33 +161,19 @@ defmodule OjsLandingWeb.EditorHTML do
         }
 
       true ->
-        next = next_action_for_stage(row.stage)
-
-        %{
-          label: next.label,
-          href: workflow_menu_path(row.id, "active", next.menu)
-        }
+        nil
     end
   end
 
-  defp next_action_for_stage(:initial_review),
-    do: %{label: "Send for Review", menu: "workflow_3_1"}
+  defp normalize_stage(stage) when is_atom(stage), do: stage
 
-  defp next_action_for_stage(:external_review), do: %{label: "View Reviews", menu: "workflow_3_1"}
-  defp next_action_for_stage(:needs_reviews), do: %{label: "View Reviews", menu: "workflow_3_1"}
+  defp normalize_stage(stage) when is_binary(stage) do
+    String.to_existing_atom(stage)
+  rescue
+    _ -> :submission
+  end
 
-  defp next_action_for_stage(:awaiting_reviews),
-    do: %{label: "View Reviews", menu: "workflow_3_1"}
-
-  defp next_action_for_stage(:reviews_submitted),
-    do: %{label: "View Reviews", menu: "workflow_3_1"}
-
-  defp next_action_for_stage(:revisions_submitted),
-    do: %{label: "View Reviews", menu: "workflow_3_1"}
-
-  defp next_action_for_stage(:copyediting), do: %{label: "Copyedit", menu: "workflow_4"}
-  defp next_action_for_stage(:production), do: %{label: "Production", menu: "workflow_5"}
-  defp next_action_for_stage(_stage), do: %{label: "Send for Review", menu: "workflow_3_1"}
+  defp normalize_stage(_), do: :submission
 
   def workflow_status_class(status) when status in [:scheduled, :published], do: "wf-status-ok"
   def workflow_status_class(:declined), do: "wf-status-danger"
@@ -212,6 +200,32 @@ defmodule OjsLandingWeb.EditorHTML do
       history -> history |> List.last() |> Map.get(:reviewer)
     end
   end
+
+  def reviewer_type(assignment) do
+    "Round #{assignment.round || 1}"
+  end
+
+  def review_discussions(assignments) when is_list(assignments) do
+    assignments
+    |> Enum.flat_map(fn assignment -> assignment.discussions || [] end)
+  end
+
+  def discussion_last_reply(discussion) do
+    case discussion.replies do
+      nil -> "—"
+      [] -> "—"
+      replies -> replies |> List.last() |> Map.get(:date, "—")
+    end
+  end
+
+  def discussion_replies_count(discussion) do
+    case discussion.replies do
+      nil -> 0
+      replies -> length(replies)
+    end
+  end
+
+  def discussion_closed_label(_discussion), do: "No"
 
   def format_date(%Date{} = date), do: Calendar.strftime(date, "%Y-%m-%d")
   def format_date(%DateTime{} = datetime), do: Calendar.strftime(datetime, "%Y-%m-%d")
@@ -364,6 +378,18 @@ defmodule OjsLandingWeb.EditorHTML do
     if is_binary(email) and email != "", do: %{name: name, email: email}, else: %{name: name}
   end
 
+  def editor_comments_present?(submission) do
+    [submission.comments_to_editor, submission.editor_comments]
+    |> Enum.any?(fn c -> is_binary(c) and String.trim(c) != "" end) or
+      (Map.get(submission, :editor_replies) || []) != []
+  end
+
+  # Participants available for a pre-review discussion other than the submitting
+  # author (through the author-mode UI these are the assigned editors).
+  def other_discussion_participants(submission) do
+    submission.editors || []
+  end
+
   def contributor_initials(name) when is_binary(name) do
     name
     |> String.split(~r{\s+}, trim: true)
@@ -371,6 +397,72 @@ defmodule OjsLandingWeb.EditorHTML do
     |> Enum.map(&String.first/1)
     |> Enum.map_join("", &String.upcase(&1 || ""))
   end
+
+  # Human label for a user role shown in the Assign Participant drawer.
+  def participant_role_label(role) do
+    case role do
+      :editor -> "Journal Editor"
+      :section_editor -> "Section Editor"
+      :guest_editor -> "Guest Editor"
+      :finding_coordinator -> "Finding coordinator"
+      :author -> "Author"
+      :translator -> "Translator"
+      :reviewer -> "Reviewer"
+      :admin -> "Administrator"
+      :manager -> "Journal Manager"
+      role when is_binary(role) -> role
+      _ -> "Participant"
+    end
+  end
+
+  # --- Pre-review "Comment for the Editor" detail panel helpers ---
+
+  defp pcd_primary_contributor(submission) do
+    contributors = submission.contributors || []
+
+    Enum.find(contributors, &(Map.get(&1, :primary) == true)) || List.first(contributors)
+  end
+
+  def pcd_initials(submission) do
+    name =
+      case pcd_primary_contributor(submission) do
+        nil -> submission.author_username || "A"
+        contributor -> contributor_display(contributor).name
+      end
+
+    name = if String.trim(name || "") == "", do: "A", else: name
+    contributor_initials(name)
+  end
+
+  def pcd_participant_name(submission) do
+    case pcd_primary_contributor(submission) do
+      nil -> submission.author_username || "Author"
+      contributor -> contributor_display(contributor).name
+    end
+  end
+
+  def pcd_editor_comment(submission) do
+    [submission.editor_comments, submission.comments_to_editor]
+    |> Enum.find(fn c -> is_binary(c) and String.trim(c) != "" end) || ""
+  end
+
+  def editor_comment_replies(submission) do
+    Map.get(submission, :editor_replies) || []
+  end
+
+  def editor_comment_last_reply(submission) do
+    submission |> editor_comment_replies() |> List.last()
+  end
+
+  def editor_comment_from(submission) do
+    name = submission.author_username || "Author"
+    date = submission.date_submitted || submission.created_at
+    %{name: name, date: format_dt(date)}
+  end
+
+  def format_dt(%DateTime{} = datetime), do: Calendar.strftime(datetime, "%Y-%m-%d %H:%M")
+  def format_dt(%Date{} = date), do: Calendar.strftime(date, "%Y-%m-%d %H:%M")
+  def format_dt(_other), do: "—"
 
   # ============================================
   # JATS XML preview (publication_jats tab)

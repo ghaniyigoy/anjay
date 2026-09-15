@@ -1413,11 +1413,11 @@ defmodule OjsLandingWeb.SubmissionWizardLive do
                             <% else %>
                               <button
                                 type="button"
-                                class="ojs-primary-contact-btn"
+                                class="ojs-set-primary-btn"
                                 phx-click="set_primary_contact"
                                 phx-value-id={contributor.id}
                               >
-                                Primary Contact
+                                Set Primary Contact
                               </button>
                             <% end %>
                             <button

@@ -8,7 +8,7 @@ defmodule OjsLandingWeb.EditorController do
 
   @workflow_menus [
     {"workflow_1", "Submission"},
-    {"workflow_3_1", "External Review"},
+    {"workflow_3_1", "Review Round 1"},
     {"workflow_4", "Copyediting"},
     {"workflow_5", "Production"}
   ]
@@ -57,12 +57,24 @@ defmodule OjsLandingWeb.EditorController do
         |> put_root_layout(false)
         |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
         |> render(:workflow,
+          mode: :editor,
           submission: submission,
           row: to_editorial_row(submission),
           active_menu: normalize_menu(params["workflowMenuKey"]),
           workflow_menus: @workflow_menus,
           publication_menus: @publication_menus,
           review_assignments: assignments,
+          reviewers:
+            OjsLanding.User.all()
+            |> Enum.filter(&(&1.role == :reviewer))
+            |> Enum.map(fn u -> reviewer_json(u) end),
+          ap_users:
+            OjsLanding.User.all()
+            |> Enum.map(fn u -> reviewer_json(u) end),
+          ap_users_json:
+            OjsLanding.User.all()
+            |> Enum.map(fn u -> reviewer_json(u) end)
+            |> Jason.encode!(),
           issues: OjsLanding.Issue.all(),
           current_view: params["currentViewId"] || "assigned-to-me",
           prev_submission_id: prev_id,
@@ -209,6 +221,119 @@ defmodule OjsLandingWeb.EditorController do
           user: user
         )
     end
+  end
+
+  # ============================================
+  # SEND FOR REVIEW — EMAIL NOTIFICATION WIZARD
+  #
+  # Step 1 (Notify Authors) renders the email composition page. Step 2
+  # (Select Files) lets the editor confirm which submission files to attach
+  # before the real POST /send-to-review transitions the submission.
+  # ============================================
+
+  def send_to_review_email(conn, %{"id" => id} = params) do
+    case guard_editor(conn) do
+      :redirected ->
+        conn
+
+      :ok ->
+        case Submission.get(id) do
+          nil ->
+            conn
+            |> put_flash(:error, "Submission tidak ditemukan.")
+            |> redirect(to: "/dashboard/editorial")
+
+          submission ->
+            view = params["currentViewId"] || "active"
+            recipients = primary_contact(submission)
+
+            conn
+            |> put_root_layout(false)
+            |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+            |> render(:send_to_review_email,
+              submission: submission,
+              row: to_editorial_row(submission),
+              current_view: view,
+              recipients: recipients,
+              recipient_name: recipient_text(recipients),
+              email_templates: send_to_review_templates(),
+              user: conn.assigns.current_user
+            )
+        end
+    end
+  end
+
+  def send_to_review_files(conn, %{"id" => id} = params) do
+    case guard_editor(conn) do
+      :redirected ->
+        conn
+
+      :ok ->
+        case Submission.get(id) do
+          nil ->
+            conn
+            |> put_flash(:error, "Submission tidak ditemukan.")
+            |> redirect(to: "/dashboard/editorial")
+
+          submission ->
+            view = params["currentViewId"] || "active"
+
+            conn
+            |> put_root_layout(false)
+            |> put_layout(html: {OjsLandingWeb.Layouts, :dashboard})
+            |> render(:send_to_review_files,
+              submission: submission,
+              row: to_editorial_row(submission),
+              current_view: view,
+              user: conn.assigns.current_user
+            )
+        end
+    end
+  end
+
+  # Primary contact (or first) contributor that emails should be addressed to.
+  defp primary_contact(submission) do
+    submission.contributors
+    |> Enum.sort_by(&(Map.get(&1, :primary) == true), :desc)
+    |> List.first()
+  end
+
+  defp recipient_text(nil) do
+    "Author"
+  end
+
+  defp recipient_text(contributor) do
+    name =
+      String.trim(
+        "#{Map.get(contributor, :given_name) || ""} #{Map.get(contributor, :family_name) || ""}"
+      )
+
+    if name == "", do: Map.get(contributor, :full_name) || "Author", else: name
+  end
+
+  defp send_to_review_templates do
+    [
+      %{
+        name: "Submission Acknowledgment",
+        subject: "Your submission has been received",
+        description: "Sent on submission to confirm receipt."
+      },
+      %{
+        name: "Submission Sent for Review",
+        subject: "Your submission has been sent for review",
+        description: "Notifies the author that the submission entered peer review."
+      },
+      %{
+        name: "Review Request",
+        subject: "You have been selected as a reviewer",
+        description: "Invites a reviewer to accept or decline the assignment."
+      },
+      %{
+        name: "Review Completed",
+        subject: "Thank you for completing your review",
+        description: "Acknowledges a submitted review."
+      }
+    ]
   end
 
   # Save publication fields (Title & Abstract / Metadata / References tabs)
@@ -379,6 +504,7 @@ defmodule OjsLandingWeb.EditorController do
 
       :ok ->
         view = params["currentViewId"] || "active"
+        menu = params["workflowMenuKey"]
 
         case Submission.get(id) do
           nil ->
@@ -405,13 +531,58 @@ defmodule OjsLandingWeb.EditorController do
               {:ok, _submission} ->
                 conn
                 |> put_flash(:info, "Editor #{username} assigned to submission #{id}.")
-                |> redirect(to: "/dashboard/editorial?currentViewId=#{view}")
+                |> redirect(to: assign_editor_redirect(id, view, menu))
 
               {:error, :not_found} ->
                 conn
                 |> put_flash(:error, "Submission tidak ditemukan.")
                 |> redirect(to: "/dashboard/editorial")
             end
+        end
+    end
+  end
+
+  defp assign_editor_redirect(id, view, menu) do
+    if is_binary(menu) and menu != "" do
+      OjsLandingWeb.EditorHTML.workflow_menu_path(id, view, menu)
+    else
+      "/dashboard/editorial?currentViewId=#{view}"
+    end
+  end
+
+  # Add a pre-review discussion thread to a submission (workflow_1 panel).
+  def add_discussion(conn, %{"id" => id} = params) do
+    case guard_editor(conn) do
+      :redirected ->
+        conn
+
+      :ok ->
+        view = params["currentViewId"] || "assigned-to-me"
+        menu = normalize_menu(params["workflowMenuKey"])
+
+        author =
+          case conn.assigns.current_user do
+            %{given_name: given, family_name: family} -> String.trim("#{given} #{family}")
+            name when is_binary(name) -> name
+            _ -> "Editor"
+          end
+
+        case Submission.add_discussion(id, %{
+               "subject" => params["subject"] || "Discussion",
+               "message" => params["message"] || "",
+               "author" => author
+             }) do
+          {:ok, submission} ->
+            conn
+            |> put_flash(:info, "Discussion added.")
+            |> redirect(
+              to: OjsLandingWeb.EditorHTML.workflow_menu_path(submission.id, view, menu)
+            )
+
+          {:error, :not_found} ->
+            conn
+            |> put_flash(:error, "Submission tidak ditemukan.")
+            |> redirect(to: "/dashboard/editorial")
         end
     end
   end
@@ -484,8 +655,51 @@ defmodule OjsLandingWeb.EditorController do
       "role" => user.role,
       "review_count" => Enum.count(assignments, &(&1.status in [:completed, :published])),
       "last_review" => last_review_date(assignments),
-      "status" => reviewer_user_status(assignments)
+      "status" => reviewer_user_status(assignments),
+      "active_reviews" =>
+        Enum.count(assignments, &(&1.status in [:action_required, :in_progress])),
+      "reviews_completed" => Enum.count(assignments, &(&1.status in [:completed, :published])),
+      "reviews_declined" => Enum.count(assignments, &(&1.status == :declined)),
+      "reviews_cancelled" => 0,
+      "days_since_last_review" => days_since_last_review(assignments),
+      "avg_days_to_complete" => avg_days_to_complete(assignments),
+      "reviewing_interests" => reviewing_interests(user)
     }
+  end
+
+  defp days_since_last_review(assignments) do
+    assignments
+    |> Enum.filter(&(&1.date_assigned != nil))
+    |> Enum.map(& &1.date_assigned)
+    |> Enum.max(fn -> nil end)
+    |> case do
+      nil -> 0
+      date -> Date.diff(Date.utc_today(), date)
+    end
+  end
+
+  defp avg_days_to_complete(assignments) do
+    durations =
+      assignments
+      |> Enum.filter(&(&1.submitted_at != nil and &1.date_assigned != nil))
+      |> Enum.map(fn a -> Date.diff(a.submitted_at, a.date_assigned) end)
+
+    case durations do
+      [] -> 0
+      list -> div(Enum.sum(list), length(list))
+    end
+  end
+
+  defp reviewing_interests(user) do
+    interests =
+      [
+        user.affiliation,
+        if(user.role == :reviewer, do: "Peer Review", else: nil)
+      ]
+      |> Enum.reject(&is_nil/1)
+      |> Enum.join(", ")
+
+    if interests == "", do: "No interests listed", else: interests
   end
 
   defp reviewer_assignments_for_user(user) do
@@ -554,9 +768,20 @@ defmodule OjsLandingWeb.EditorController do
 
   defp has_reviewers?(assignments) do
     Enum.any?(assignments, fn a ->
-      a.status in [:action_required, :in_progress, :completed]
+      status = normalize_status(a.status)
+      status in [:action_required, :in_progress, :completed]
     end)
   end
+
+  defp normalize_status(status) when is_atom(status), do: status
+
+  defp normalize_status(status) when is_binary(status) do
+    String.to_existing_atom(status)
+  rescue
+    _ -> :unknown
+  end
+
+  defp normalize_status(_), do: :unknown
 
   defp needs_submission_complete?(submission) do
     submission.status == :incomplete or

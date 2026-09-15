@@ -609,4 +609,72 @@ defmodule OjsLandingWeb.AuthorControllerTest do
       assert html =~ "Make a Submission: Details"
     end
   end
+
+  describe "author workflow discussions" do
+    setup %{conn: conn} do
+      {:ok, conn: init_test_session(conn, current_user: "author1")}
+    end
+
+    test "workflow page keeps Add Discussion active and marks the modal self-only", %{
+      conn: conn
+    } do
+      submission = Submission.create("author1", "Naskah Diskusi")
+
+      conn = get(conn, "/submission/#{submission.id}/workflow?workflowMenuKey=workflow_1")
+
+      html = html_response(conn, 200)
+      assert html =~ "btn-add-discussion-pre"
+      assert html =~ ~s|onclick="openPreDiscussionModal()"|
+      assert html =~ "data-self-only=\"true\""
+      assert html =~ "prd-self-only-error"
+    end
+
+    test "clears the self-only flag once an editor is assigned", %{conn: conn} do
+      submission = Submission.create("author1", "Naskah Diskusi")
+      Submission.assign_editor(submission.id, %{"name" => "Pengelola", "role" => "Editor"})
+
+      conn = get(conn, "/submission/#{submission.id}/workflow?workflowMenuKey=workflow_1")
+
+      html = html_response(conn, 200)
+      assert html =~ ~s|onclick="openPreDiscussionModal()"|
+      assert html =~ "data-self-only=\"false\""
+    end
+
+    test "POST discussion without any other participant is rejected with an error", %{
+      conn: conn
+    } do
+      submission = Submission.create("author1", "Naskah Diskusi")
+
+      conn =
+        post(conn, "/submission/#{submission.id}/discussion", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+          "subject" => "Siapa editor saya?",
+          "message" => "Halo"
+        })
+
+      assert redirected_to(conn) ==
+               "/submission/#{submission.id}/workflow?workflowMenuKey=workflow_1"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Belum ada editor"
+      assert Submission.get(submission.id).discussions == []
+    end
+
+    test "POST discussion succeeds when an editor is assigned", %{conn: conn} do
+      submission = Submission.create("author1", "Naskah Diskusi")
+      Submission.assign_editor(submission.id, %{"name" => "Pengelola", "role" => "Editor"})
+
+      conn =
+        post(conn, "/submission/#{submission.id}/discussion", %{
+          "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+          "subject" => "Halo editor",
+          "message" => "Mohon cek submitan saya."
+        })
+
+      assert redirected_to(conn) ==
+               "/submission/#{submission.id}/workflow?workflowMenuKey=workflow_1"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Discussion added"
+      assert [%{subject: "Halo editor"}] = Submission.get(submission.id).discussions
+    end
+  end
 end

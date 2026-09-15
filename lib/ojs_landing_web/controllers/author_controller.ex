@@ -10,7 +10,7 @@ defmodule OjsLandingWeb.AuthorController do
 
   @workflow_menus [
     {"workflow_1", "Submission"},
-    {"workflow_3_1", "External Review"},
+    {"workflow_3_1", "Review Round 1"},
     {"workflow_4", "Copyediting"},
     {"workflow_5", "Production"}
   ]
@@ -180,6 +180,10 @@ defmodule OjsLandingWeb.AuthorController do
           is_map(submission_params["contributor_edit"]) ->
         handle_contributor_edit(conn, id, edit_id, submission_params["contributor_edit"], tab)
 
+      (move_id = submission_params["move_contributor_id"]) &&
+          is_binary(submission_params["move_dir"]) ->
+        handle_contributor_move(conn, id, move_id, submission_params["move_dir"])
+
       true ->
         handle_generic_update(conn, id, submission_params, tab, Map.get(params, "action"))
     end
@@ -226,6 +230,91 @@ defmodule OjsLandingWeb.AuthorController do
           current_view: @default_view,
           resume_tab: first_incomplete_tab(submission)
         )
+    end
+  end
+
+  def add_discussion(conn, %{"id" => id} = params) do
+    user = conn.assigns.current_user
+
+    cond do
+      is_nil(user) ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu.")
+
+      is_nil(Submission.get(id)) ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+
+      true ->
+        author =
+          case user do
+            %{given_name: given, family_name: family} -> String.trim("#{given} #{family}")
+            name when is_binary(name) -> name
+            _ -> "Author"
+          end
+
+        menu = normalize_menu(params["workflowMenuKey"])
+
+        if EditorHTML.other_discussion_participants(Submission.get(id)) == [] do
+          conn
+          |> put_flash(
+            :error,
+            "Belum ada editor yang ditugaskan, sehingga diskusi belum dapat dimulai."
+          )
+          |> redirect(to: "/submission/#{id}/workflow?workflowMenuKey=#{menu}")
+        else
+          case Submission.add_discussion(id, %{
+                 "subject" => params["subject"] || "Discussion",
+                 "message" => params["message"] || "",
+                 "author" => author
+               }) do
+            {:ok, _submission} ->
+              conn
+              |> put_flash(:info, "Discussion added.")
+              |> redirect(to: "/submission/#{id}/workflow?workflowMenuKey=#{menu}")
+
+            {:error, :not_found} ->
+              conn
+              |> put_flash(:error, "Submission tidak ditemukan.")
+              |> redirect(to: "/dashboard/mySubmissions")
+          end
+        end
+    end
+  end
+
+  def add_editor_reply(conn, %{"id" => id} = params) do
+    user = conn.assigns.current_user
+
+    cond do
+      is_nil(user) ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu.")
+
+      is_nil(Submission.get(id)) ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+
+      true ->
+        menu = normalize_menu(params["workflowMenuKey"])
+        message = params["message"] || ""
+
+        if String.trim(AuthorHTML.strip_html(message)) == "" do
+          conn
+          |> put_flash(:error, "Pesan tidak boleh kosong.")
+          |> redirect(to: "/submission/#{id}/workflow?workflowMenuKey=#{menu}")
+        else
+          case Submission.add_editor_reply(id, author_display_name(nil, user), message) do
+            {:ok, _submission} ->
+              conn
+              |> put_flash(:info, "Message added.")
+              |> redirect(to: "/submission/#{id}/workflow?workflowMenuKey=#{menu}")
+
+            {:error, :not_found} ->
+              conn
+              |> put_flash(:error, "Submission tidak ditemukan.")
+              |> redirect(to: "/dashboard/mySubmissions")
+          end
+        end
     end
   end
 
@@ -465,6 +554,8 @@ defmodule OjsLandingWeb.AuthorController do
   end
 
   defp handle_contributor_edit(conn, id, edit_id, fields, tab) do
+    ensure_default_contributor(id, conn.assigns.current_user)
+
     case Submission.update_contributor(id, edit_id, fields) do
       {:ok, _submission} ->
         conn
@@ -476,6 +567,109 @@ defmodule OjsLandingWeb.AuthorController do
         |> put_flash(:error, "Submission tidak ditemukan.")
         |> redirect(to: "/dashboard/mySubmissions")
     end
+  end
+
+  defp handle_contributor_move(conn, id, move_id, dir) do
+    case Submission.move_contributor(id, move_id, dir) do
+      {:ok, _submission} ->
+        conn
+        |> redirect(to: "/submission/wizard/#{id}?tab=contributors&view=order")
+
+      {:error, :not_found} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+    end
+  end
+
+  def set_primary_contact(conn, %{"id" => id, "contributor_id" => contributor_id}) do
+    case {conn.assigns.current_user, Submission.get(id)} do
+      {nil, _} ->
+        redirect_to_login(conn, "Silakan login terlebih dahulu untuk memperbarui submission.")
+
+      {_, nil} ->
+        conn
+        |> put_flash(:error, "Submission tidak ditemukan.")
+        |> redirect(to: "/dashboard/mySubmissions")
+
+      {_user, _submission} ->
+        case Submission.set_primary_contact(id, contributor_id) do
+          {:ok, _submission} ->
+            conn
+            |> put_flash(:info, "Primary contact berhasil diperbarui.")
+            |> redirect(to: submission_path(id, "contributors"))
+
+          {:error, :not_found} ->
+            conn
+            |> put_flash(:error, "Kontributor tidak ditemukan.")
+            |> redirect(to: submission_path(id, "contributors"))
+        end
+    end
+  end
+
+  def edit_file(conn, %{"id" => id} = params) do
+    user = conn.assigns.current_user
+
+    cond do
+      is_nil(user) ->
+        conn
+        |> put_status(401)
+        |> json(%{ok: false, error: "Silakan login terlebih dahulu."})
+
+      is_nil(Submission.get(id)) ->
+        conn
+        |> put_status(404)
+        |> json(%{ok: false, error: "Submission tidak ditemukan."})
+
+      true ->
+        file_id = params["file_id"] || params["fileId"]
+        name = params["name"] || params["filename"] || ""
+
+        case Submission.rename_file(id, file_id, name) do
+          {:ok, _submission} ->
+            conn
+            |> put_status(200)
+            |> json(%{ok: true, filename: name})
+
+          {:error, :invalid_name} ->
+            conn
+            |> put_status(422)
+            |> json(%{ok: false, error: "Nama file wajib diisi."})
+
+          {:error, :not_found} ->
+            conn
+            |> put_status(404)
+            |> json(%{ok: false, error: "File tidak ditemukan."})
+        end
+    end
+  end
+
+  # Persist the current user as the primary contributor when the submission has no
+  # stored contributors yet. Without this, the submitting author (shown as a virtual
+  # default row) would silently disappear/revert once a real contributor is added.
+  defp ensure_default_contributor(_id, nil), do: :ok
+
+  defp ensure_default_contributor(id, user) do
+    submission = Submission.get(id)
+
+    if submission && submission.contributors in [nil, []] do
+      default = AuthorHTML.default_contributor(user)
+
+      Submission.update_contributor(id, user.id, %{
+        "given_name" => default.given_name,
+        "family_name" => default.family_name,
+        "preferred_public_name" => default.preferred_public_name || "",
+        "email" => default.email,
+        "country" => default.country,
+        "bio_statement" => default.bio_statement || "",
+        "affiliation" => default.affiliation,
+        "role" => default.role |> Atom.to_string(),
+        "primary" => "true",
+        "public_list" => "true"
+      })
+    end
+
+    :ok
   end
 
   defp handle_generic_update(conn, id, submission_params, tab, action) do

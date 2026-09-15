@@ -35,6 +35,8 @@ defmodule OjsLanding.Submission do
     :editors,
     :editor_comments,
     :comments_to_editor,
+    :discussions,
+    :editor_replies,
     :checklist_agreed,
     :privacy_consent,
     :review,
@@ -105,6 +107,8 @@ defmodule OjsLanding.Submission do
       editors: [],
       editor_comments: "",
       comments_to_editor: "",
+      discussions: [],
+      editor_replies: [],
       checklist_agreed: false,
       privacy_consent: false,
       review: nil,
@@ -206,6 +210,69 @@ defmodule OjsLanding.Submission do
   end
 
   @doc """
+  Rename a single submission file (matched by its id, falling back to its
+  1-based position in the list) to a non-blank name.
+  """
+  def rename_file(id, file_id, new_name) do
+    id = normalize_id(id)
+    file_id = normalize_id(file_id)
+    current = get(id)
+
+    cond do
+      is_nil(current) ->
+        {:error, :not_found}
+
+      new_name in [nil, ""] ->
+        {:error, :invalid_name}
+
+      true ->
+        files =
+          (current.files || [])
+          |> Enum.with_index(1)
+          |> Enum.map(fn {file, idx} ->
+            if file[:id] == file_id or idx == file_id do
+              Map.put(file, :filename, new_name)
+            else
+              file
+            end
+          end)
+
+        updated = %{current | files: files}
+
+        Agent.update(__MODULE__, fn subs ->
+          Enum.map(subs, fn s -> if s.id == id, do: updated, else: s end)
+        end)
+
+        {:ok, updated}
+    end
+  end
+
+  @doc """
+  Set a single contributor (matched by id) as the primary contact, clearing
+  the primary flag on every other contributor.
+  """
+  def set_primary_contact(id, contributor_id) do
+    id = normalize_id(id)
+    contributor_id = normalize_id(contributor_id)
+    current = get(id)
+
+    if is_nil(current) || !Enum.any?(current.contributors || [], &(&1.id == contributor_id)) do
+      {:error, :not_found}
+    else
+      contributors =
+        Enum.map(current.contributors || [], fn c ->
+          %{c | primary: c.id == contributor_id}
+        end)
+
+      Agent.update(__MODULE__, fn subs ->
+        Enum.map(subs, fn s -> if s.id == id, do: %{s | contributors: contributors}, else: s end)
+      end)
+
+      {:ok, %{current | contributors: contributors}}
+    end
+  end
+
+  @doc """
   Remove a single contributor (matched by id) from a submission.
   """
   def delete_contributor(id, contributor_id) do
@@ -223,6 +290,50 @@ defmodule OjsLanding.Submission do
       end)
 
       {:ok, %{current | contributors: contributors}}
+    end
+  end
+
+  @doc """
+  Move a single contributor (matched by id) up or down in the list order.
+  `dir` is `"up"` or `"down"`.
+  """
+  def move_contributor(id, contributor_id, dir) do
+    id = normalize_id(id)
+    contributor_id = normalize_id(contributor_id)
+    current = get(id)
+
+    if is_nil(current) do
+      {:error, :not_found}
+    else
+      contributors = current.contributors || []
+      index = Enum.find_index(contributors, &(&1.id == contributor_id))
+
+      if is_nil(index) do
+        {:ok, current}
+      else
+        swap_index =
+          case dir do
+            "up" when index > 0 -> index - 1
+            "down" when index < length(contributors) - 1 -> index + 1
+            _ -> index
+          end
+
+        contributors =
+          if swap_index == index do
+            contributors
+          else
+            List.replace_at(contributors, index, Enum.at(contributors, swap_index))
+            |> List.replace_at(swap_index, Enum.at(contributors, index))
+          end
+
+        Agent.update(__MODULE__, fn subs ->
+          Enum.map(subs, fn s ->
+            if s.id == id, do: %{s | contributors: contributors}, else: s
+          end)
+        end)
+
+        {:ok, %{current | contributors: contributors}}
+      end
     end
   end
 
@@ -704,6 +815,13 @@ defmodule OjsLanding.Submission do
 
   defp normalize_id(id), do: id
 
+  defp next_discussion_id([]), do: 1
+  defp next_discussion_id(nil), do: 1
+
+  defp next_discussion_id(discussions) do
+    (discussions |> Enum.map(& &1.id) |> Enum.max()) + 1
+  end
+
   defp maybe_put(current, _key, value) when value in [nil, ""], do: current
   defp maybe_put(current, key, value), do: Map.put(current, key, value)
 
@@ -824,6 +942,66 @@ defmodule OjsLanding.Submission do
     else
       editors = (current.editors || []) ++ [editor_info]
       updated = %{current | editors: editors}
+
+      Agent.update(__MODULE__, fn subs ->
+        Enum.map(subs, fn s -> if s.id == id, do: updated, else: s end)
+      end)
+
+      {:ok, updated}
+    end
+  end
+
+  @doc """
+  Add an editor pre-review discussion thread to a submission
+  (Pre-Review Discussions panel).
+  """
+  def add_discussion(id, params) do
+    id = normalize_id(id)
+    current = get(id)
+
+    if is_nil(current) do
+      {:error, :not_found}
+    else
+      discussion = %{
+        id: next_discussion_id(Map.get(current, :discussions)),
+        subject: params["subject"] || "Discussion",
+        message: params["message"] || "",
+        author: params["author"] || "Editor",
+        date: Date.to_string(Date.utc_today()),
+        replies: []
+      }
+
+      discussions = (Map.get(current, :discussions) || []) ++ [discussion]
+      updated = Map.put(current, :discussions, discussions)
+
+      Agent.update(__MODULE__, fn subs ->
+        Enum.map(subs, fn s -> if s.id == id, do: updated, else: s end)
+      end)
+
+      {:ok, updated}
+    end
+  end
+
+  @doc """
+  Add a reply message to the submission's "Comment for the Editor" thread.
+  """
+  def add_editor_reply(id, author, message) do
+    id = normalize_id(id)
+    current = get(id)
+
+    if is_nil(current) do
+      {:error, :not_found}
+    else
+      now = DateTime.utc_now()
+
+      reply = %{
+        author: author || "Author",
+        message: message || "",
+        date: Calendar.strftime(now, "%Y-%m-%d %H:%M")
+      }
+
+      replies = (Map.get(current, :editor_replies) || []) ++ [reply]
+      updated = Map.put(current, :editor_replies, replies)
 
       Agent.update(__MODULE__, fn subs ->
         Enum.map(subs, fn s -> if s.id == id, do: updated, else: s end)

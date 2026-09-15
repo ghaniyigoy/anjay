@@ -2,6 +2,1249 @@
 
 Catatan perubahan terbaru pada aplikasi.
 
+## Workflow `workflow_1` (editor): drawer "Assign Participant" di-redesign dengan tabel user + bagian Message + tombol Cancel/OK
+
+Pada halaman workflow editor (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_1`),
+tombol **Assign** pada kartu **Participants** (`wf-col-side`) membuka **Assign Participant drawer** —
+panel ala OJS 3.5 yang muncul menyusup dari **kanan ke kiri** (`translateX(100%) → 0`, animasi 0.3s,
+backdrop gelap), memakai pola slide-in yang sama dengan modal Add Reviewer / Upload Review File
+(`.ar-overlay`, `.urf-overlay`). Drawer kini di-redesign mengikuti pola modal **Assign Editor** di
+dashboard (`ap-` prefix): daftar user berupa **tabel**, lengkap dengan bagian **Message** (predefined
+message + editor rich-text) dan tombol aksi **Cancel / OK**.
+
+### Fitur
+- **Header** biru `#006798` dengan tombol **panah kiri** (tutup) di kiri dan judul
+  **"Assign Participant"** di tengah (spacer di kanan agar judul terpusat). Panel drawer diubah
+  dari `520px` menjadi **`720px`** agar tabel nyaman dibaca.
+- Section **Locate a User**:
+  - Dropdown role (`#apd-role-filter`) dengan opsi **Journal Editor**, **Section Editor**,
+    **Guest Editor**, **Finding coordinator**, **Author**, **Translator**.
+  - Di kanan dropdown, kotak **pencarian** (ikon magnifier + input `#apd-search-name`) yang
+    memfilter tabel langsung saat mengetik (`oninput="apdFilterUsers()"`).
+- **Tabel user di tengah** (`#apd-users-table`) dengan header
+  **Name | Assignments | Affiliation | Reviewing Interest**:
+  - Baris di-render client-side ke `#apd-users-tbody` dari `window.__apUsers` (semua user
+    `OjsLanding.User.all()` lewat `reviewer_json/1`, dikirim dari controller sebagai JSON).
+  - Kolom Name menampilkan nama (given+family fallback username) + email di bawahnya; Assignments =
+    `reviews_completed`; Affiliation = `affiliation`; Reviewing Interest = `reviewing_interests`.
+  - **Pilih user** → baris ter-highlight `.apd-user-selected` (background `#e4f0f8` + garis kiri
+    biru `#006798`); pilihan tersimpan ke hidden form.
+  - **Filter client-side** `apdFilterUsers()`: role dari dropdown + pencarian nama/email.
+    Empty-state **"No users found."** (`#apd-no-results`) bila tidak ada yang cocok.
+- **Bagian Message** di bawah tabel:
+  - Instruksi: **"Choose a predefined message to use, or fill out the form below."**
+    (`.apd-message-hint`, italic abu).
+  - Label **Predefined Message** + dropdown `#apd-predefined-message` dengan opsi
+    **Discussion (Submission)** dan **Assign Editor** — memilih salah satu mengisi editor
+    message otomatis via `apdApplyPredefinedMessage(this.value)`.
+  - Label **Message** + editor rich-text (`.apd-richtext-wrapper`): toolbar B/I/U/Bullet
+    (`.apd-richtext-btn`, `data-cmd`, `execCommand`) + div contenteditable `#apd-message-editor`
+    (placeholder "Type your message here..." saat kosong).
+- **Footer kanan bawah**: tombol **Cancel** (menutup drawer) dan **OK** (mensubmit hidden form
+  `#assign-participant-form` → `POST /dashboard/editorial/assign-editor`; isi editor message
+  disalin ke hidden `name="message"`; alert "Please select a user first." bila belum ada user
+  terpilih).
+- Setelah assign, `EditorController.assign_editor/2` **kembali ke workflow yang sama**: bila hidden
+  `workflowMenuKey` dikirim, redirect ke `workflow_menu_path(submission_id, view, menu)` via helper
+  `assign_editor_redirect/3`.
+- Navigasi tutup: panah kiri, Cancel, klik backdrop, atau tombol **Escape**.
+- Style prefiks `apd-` (overlay `justify-content: flex-end`, panel `translateX(100%)` lebar `720px`,
+  header, locate row, search box, tabel user + row selected, message section + richtext, footer,
+  tombol `.apd-btn-cancel`/`.apd-btn-ok`; responsif `< 600px` panel full-width, dropdown turun ke
+  atas search).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — render workflow menambahkan assign
+  `ap_users_json` (JSON string via `Jason.encode!` dari `reviewer_json/1`, dipakai JS drawer).
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — markup drawer
+  `#assign-participant-drawer` (`.apd-*`) di-redesign: script `window.__apUsers`, tabel
+  `#apd-users-table` + tbody kosong, bagian Message (hint + predefined dropdown + richtext editor),
+  footer **Cancel / OK**. Hidden form `#assign-participant-form` ditambah input `name="message"`.
+  Tombol Assign `#btn-assign-participant` tetap memanggil `openAssignParticipantDrawer()`.
+- `assets/js/app.js` — rewrite fungsi `apd-*`: `apdReset` (reset filter + message),
+  `apdFilterUsers` (render tabel client-side), `apdSelectUser`, `apdApplyPredefinedMessage`,
+  `apdSubmit` (salin message + submit), `apdEscapeHtml`, init toolbar `.apd-richtext-btn`, handler
+  klik backdrop & Escape.
+- `assets/css/app.css` — section `.apd-*` diperbarui: panel `720px`, tabel
+  `.apd-users-table`/`.apd-user-row`/`.apd-user-selected`, message section
+  (`.apd-message-hint`, `.apd-message-label`, `.apd-predefined-select`, `.apd-richtext-*`),
+  tombol `.apd-btn-ok` (menggantikan `.apd-btn-send`); style kartu lama (`.apd-user-card`,
+  `.apd-user-avatar`, dsb.) dihapus.
+
+### Status
+- `mix precommit` lulus: 159 test, 0 failures.
+- `mix assets.build` sukses (perlu hard-refresh browser Ctrl+F5).
+- Terverifikasi live: markup drawer ter-render (tabel + message section + tombol OK), `window.__apUsers`
+  berisi semua user dengan `role`/affiliation/interests, JS `apdFilterUsers`/`apdApplyPredefinedMessage`
+  ada di bundle, CSS `.apd-users-table`/`.apd-richtext-editor`/`.apd-btn-ok` tersaji.
+
+## Comment for the Editor (`workflow_1` author): tombol Edit dihapus + Add Message menyimpan balasan ke thread
+
+Pada detail panel **Comment for the Editor** (`/submission/:id/workflow?workflowMenuKey=workflow_1`,
+dibuka dari baris "Comments for The editor" di kartu Pre-Review Discussions), tampilan dan perilaku
+diubah sesuai permintaan:
+
+### Fitur
+- **Tombol Edit dihapus** dari section **Participants** (sebelumnya ada tombol text biru "Edit" di
+  kanan header). Header Participants kini hanya berisi judul.
+- **Add Message** (sebelumnya tombol tanpa aksi) kini men-toggle area balasan `#pcd-reply-section`
+  (tersembunyi saat awal):
+  - Heading **"Message"** + editor rich-text (`.prd-richtext`, toolbar B/I/U/Bullet/Link,
+    `data-target="pcd-message"`, disinkronkan ke hidden input `name="message"` via
+    `initRichtextEditors()`).
+  - Kotak **Attached Files** di bawah editor: judul di kiri, tombol **Search** + **Upload File**
+    sejajar di kanan (reuse `.prd-attach-*`).
+  - Footer kanan-bawah: tombol **Cancel** (menutup area balasan, `togglePcdReplySection()`) dan
+    **OK** (`type="submit"`).
+- **OK** mensubmit form `#pcd-reply-form` → route baru **`POST /submission/:id/workflow/editor-reply`**
+  (`AuthorController.add_editor_reply/2`, CSRF + `workflowMenuKey` tersembunyi). Pesan kosong
+  (setelah strip HTML) ditolak dengan flash error; balasan disimpan ke `submission.editor_replies`
+  (map `%{author, message, date}`, tanggal berformat `YYYY-MM-DD HH:MM` UTC saat ini), lalu redirect
+  balik ke workflow yang sama.
+- **Tabel Pre-Review Discussions** baris "Comments for The editor" kini menampilkan:
+  - **From**: username (`author_username`) dengan tanggal `YYYY-MM-DD HH:MM` di bawahnya
+    (helper `EditorHTML.editor_comment_from/1`, ambil `date_submitted` fallback `created_at`).
+  - **Last Reply**: username + tanggal balasan terakhir bila sudah ada balasan (`List.last` dari
+    `editor_comment_replies/1`), selain itu "—".
+  - **Replies**: jumlah balasan. Sel dua baris diberi kelas `.ec-thread-name` (bold) +
+    `.ec-thread-date` (abu kecil).
+- **Panel Comment for the Editor**: setiap balasan ditampilkan sebagai kotak `.pcd-note-box-reply`
+  di bawah note asli, dengan heading author ("From:" style) + tanggal dan isi pesan (rendered `raw`).
+- `editor_comments_present?/1` kini juga bernilai true bila `editor_replies` tidak kosong, sehingga
+  baris thread tetap tampil meski author belum mengisi komentar awal.
+
+### File yang diubah
+- `lib/ojs_landing/submission.ex` — field `editor_replies` (default `[]`), fungsi
+  `add_editor_reply/3`.
+- `lib/ojs_landing_web/router.ex` — route `post "/submission/:id/workflow/editor-reply"`.
+- `lib/ojs_landing_web/controllers/author_controller.ex` — aksi `add_editor_reply/2` (guard login/
+  submission kosong, validasi pesan, simpan + flash).
+- `lib/ojs_landing_web/controllers/editor_html.ex` — helper `editor_comment_replies/1`,
+  `editor_comment_last_reply/1`, `editor_comment_from/1`, `format_dt/1`; perluasan
+  `editor_comments_present?/1`.
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — hapus tombol Edit; area
+  balasan `#pcd-reply-section` (form, rich-text Message, Attached Files, footer Cancel/OK); render
+  balasan di panel; sel From/Last Reply dua baris di tabel.
+- `assets/js/app.js` — `togglePcdReplySection/3` (toggle + fokus editor) dipakai tombol Add Message
+  dan Cancel.
+- `assets/css/app.css` — `.ec-thread-name`, `.ec-thread-date`, `.pcd-note-box-reply`.
+
+### Status
+- `mix compile` bersih; `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+- `mix precommit` lulus: 159 test, 0 failures.
+- Data balasan tersimpan di Agent store in-memory (hilang saat server restart).
+
+## Pre-Review Discussions (`workflow_1` author): tombol "Add Discussion" aktif + peringatan inline saat belum ada editor
+
+Pada workflow read-only author (`/submission/:id/workflow?workflowMenuKey=workflow_1`),
+tombol **Add Discussion** di kartu **Pre-Review Discussions** sebelumnya **dinonaktifkan**
+(`disabled` + pesan "No other participants are available yet") selama submission belum punya
+editor. Sekarang tombol **selalu aktif** dan membuka modal, sesuai permintaan pengguna;
+
+### Fitur
+- Tombol **Add Discussion** (`#btn-add-discussion-pre`) selalu dapat diklik dan membuka modal
+  `#pre-discussion-overlay` (handler `openPreDiscussionModal()` kembali normal).
+- Saat **author** meng-submit diskusi padahal submission **belum punya editor** (hanya author
+  sebagai satu-satunya partisipan), muncul **peringatan merah inline di dalam modal** — bukan
+  redirect flash — dengan teks:
+  **"Belum ada editor yang ditugaskan, sehingga diskusi belum dapat dimulai."**
+  (`.prd-error`, id `#prd-self-only-error`, border kiri merah `#c5221f`, background `#fce8e6`).
+  Isian yang sudah diketik di modal tidak hilang; peringatan hilang setelah pengguna mengetik
+  lagi di form.
+- Deteksi partisipan via atribut `data-self-only="true"|"false"` pada form `#pre-discussion-form`
+  (bernilai string eksplisit karena HEEx merender boolean `true` sebagai attribute bare dan
+  meng-omit bila `false`):
+  - `"true"` saat `@mode == :author` dan `other_discussion_participants(@submission) == []`
+    (helper `EditorHTML.other_discussion_participants/1` mengembalikan `submission.editors || []`).
+  - `"false"` atau hilang → tidak self-only, tombol tetap mengirim form.
+- **Server-side guard tetap ada sebagai pengaman**: `AuthorController.add_discussion/2`
+  (line ~258) menolak POST `/submission/:id/discussion` dengan flash error yang sama bila
+  belum ada editor. Jalur editor (`EditorController.add_discussion/2`) tidak terpengaruh.
+
+### Catatan implementasi (HEEx)
+- Boolean `true/false` pada atribut HEEx dirender sebagai attribute **bare**/di-omit — bukan
+  `"true"`/`"false"`. Karena JS membaca `getAttribute(...) === 'true'`, nilai atribut dibuat
+  string eksplisit dengan `if ..., do: "true", else: "false"`.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — kartu Pre-Review
+  Discussions: tombol selalu aktif (onclick `openPreDiscussionModal()`); form
+  `#pre-discussion-form` diberi `data-self-only`; div `#prd-self-only-error` (`.prd-error`)
+  di dalam modal setelah section Participants.
+- `assets/js/app.js` — handler submit `#pre-discussion-form`: bila
+  `data-self-only == "true"` → `preventDefault()` + tampilkan `#prd-self-only-error`; error
+  disembunyikan kembali saat pengguna mengetik (event `input`).
+- `assets/css/app.css` — rule baru `.prd-error` (margin/padding, border kiri 4px merah,
+  background, warna teks, radius 3px).
+- `lib/ojs_landing_web/controllers/editor_html.ex` — helper `other_discussion_participants/1`
+  (ditambahkan pada iterasi sebelumnya, dipakai atribut + guard).
+- `lib/ojs_landing_web/controllers/author_controller.ex` — guard `add_discussion/2`
+  (ditambahkan pada iterasi sebelumnya, tetap dipertahankan sebagai pengaman).
+- `assets/css/app.css` — class `.wf-btn-link.wf-btn-disabled` (iterasi lama) **dihapus** karena
+  sudah tidak terpakai.
+- `test/ojs_landing_web/controllers/author_controller_test.exs` — describe "author workflow
+  discussions" disesuaikan: tombol aktif + `data-self-only="true"` + elemen error ada saat
+  tanpa editor; `data-self-only="false"` saat editor ditugaskan; POST tanpa editor tetap
+  ditolak server.
+
+### Status
+- `mix precommit` lulus: 159 test, 0 failures.
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+- Terverifikasi live pada `/submission/15/workflow?workflowMenuKey=workflow_1` (login author):
+  `btn-add-discussion-pre` aktif, `data-self-only="true"` dan `#prd-self-only-error` dirender;
+  handler JS `prd-self-only-error` ada di bundle asset.
+
+## Pre-Review Discussions (`workflow_1`): baris "Comments for The editor" membuka detail panel (drawer kanan→kiri)
+
+Pada tabel **Pre-Review Discussions** (`workflow_1`), nama baris **"Comments for The editor"**
+(previously teks polos) kini berupa **link biru** yang dapat diklik dan membuka **Comment for the
+Editor detail panel** — drawer ala OJS 3.5 yang menyusup dari **kanan ke kiri** (`translateX(100%) → 0`,
+animasi 0.3s, backdrop gelap) — memakai pola slide-in yang sama dengan modal Pre-Review/Upload
+Discussion File (`.prd-overlay`/`.prd-panel`).
+
+### Fitur
+- Baris Name (hanya tampil bila `editor_comments_present?(submission)` true) dirender sebagai link
+  `#link-open-editor-comment` ber-class `.wf-discussion-link` (biru `#006798`, hover underline), dan
+  meng-call `openEditorCommentPanel()`.
+- Panel `#editor-comment-overlay` berisi:
+  - **Header** biru `#006798`: tombol **panah kiri** (tutup) di kiri + judul **"Comment for the
+    Editor"** (spacer di kanan agar judul terpusat).
+  - Section **Participants**: judul + tombol **Edit** di kanan, baris avatar (inisial) + nama
+    penulis + role "Author".
+  - Section **Message**: kotak `.pcd-note-box` dengan kepala **Note** (kiri) + **From: <nama>**
+    (kanan), dan isi note dari field `editor_comments` (fallback `comments_to_editor`) yang di-render
+    `raw` (rich text).
+  - Tombol **Add Message** (outline biru, ikon `+`) di bagian bawah.
+- Nama peserta/From diambil dari **primary contributor** (fallback `author_username`); inisial avatar
+  via `contributor_initials` (fallback "A").
+- Tutup panel: panah kiri, klik backdrop, atau tombol Escape (handler JS terpisah dari modal
+  Pre-Review sehingga tidak bentrok).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — baris "Comments for The editor"
+  jadi link (`onclick="openEditorCommentPanel()"`); markup drawer `#editor-comment-overlay`
+  (header, Participants, Message, tombol Add Message).
+- `lib/ojs_landing_web/controllers/editor_html.ex` — helper `pcd_initials/1`,
+  `pcd_participant_name/1`, `pcd_editor_comment/1` (+ private `pcd_primary_contributor/1`).
+- `assets/js/app.js` — `openEditorCommentPanel/closeEditorCommentPanel`, klik backdrop & Escape
+  untuk menutup.
+- `assets/css/app.css` — section `.pcd-*` + `.wf-discussion-link`.
+
+### Status
+- `mix compile --warnings-as-errors` bersih; `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+- Terverifikasi: link, panel, nama peserta, isi note rich-text, dan tombol Add Message render di
+  halaman (`/submission/:id/workflow?workflowMenuKey=workflow_1`).
+
+## Pre-Review Discussions (`workflow_1`): Upload Discussion File Modal (drawer kanan→kiri) + Attach to Discussion
+
+Pada modal **Add Discussion** kartu **Pre-Review Discussions** (`workflow_1`), tombol **Upload File**
+(`#prd-btn-upload-file`) kini membuka **Upload Discussion File Modal** — drawer ala OJS 3.5 yang
+muncul menyusup dari **kanan ke kiri** (`translateX(100%) → 0`, animasi 0.3s, backdrop gelap).
+
+### Fitur
+- **Header** biru `#006798`: tombol **panah kiri** (tutup) di kiri + judul **"Upload a Discussion File"**
+  di tengah (spacer di kanan agar judul terpusat).
+- **Stepper 3 langkah**: **1. Upload File** · **2. Review Details** · **3. Confirm** (nomor lingkaran +
+  connector, aktif biru `#006798`, selesai hijau `#2e7d32`). Step dapat diklik (`udfGoToStep`) untuk
+  langkah yang sudah dicapai.
+- **Step 1 — Upload File**: field wajib **Article Component** (`*` merah `.udf-required`) dengan
+  dropdown "Select article component" dan opsi Article Text, Research Instrument, Research Materials,
+  Research Results, Transcript, Data Analysis, Data Set, Source Text, Other. Setelah memilih komponen,
+  tombol **Upload File** muncul; setelah file dipilih tampil nama + ukuran file dan tombol berubah
+  menjadi **Change file**.
+- **Step 2 — Review Details**: label **"Name the file (e.g., Manuscript; Table 1)"** dengan `*` merah
+  + kolom input yang **otomatis terisi nama file** dari Step 1 (tanpa ekstensi), tetap bisa diedit.
+  Continue aktif hanya bila nama tidak kosong (`updateUdfNameDetail`).
+- **Step 3 — Confirm**: teks **"File Added"** + tombol **Attach to Discussion** (ikon paperclip).
+- Footer aksi rata kiri: **Cancel** dan **Continue** (label berubah: Continue → Continue →
+  "Attach to Discussion"); Continue nonaktif di Step 1 sampai komponen + file terisi.
+- **Attach to Discussion**: menyimpan file ke daftar `.prd-attach-body` pada modal Add Discussion
+  sebagai baris `.prd-attach-file-row` ber-chip `.prd-attach-file-chip` (komponen — nama), dan mengisi
+  hidden input `#prd-attached-files` (JSON). Menutup drawer kanan→kiri kembali.
+- Navigasi tutup: panah kiri, Cancel, klik backdrop, atau tombol Escape.
+- Style dengan prefiks `udf-` di `assets/css/app.css` (overlay `justify-content: flex-end`, modal
+  `translateX(100%)`, shadow kiri `-8px 0 30px`, header, stepper, field, footer).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — tombol `#prd-btn-upload-file`
+  memanggil `openUploadDiscussionFileModal()`; markup drawer `#upload-discussion-file-overlay`
+  (header, stepper 3 step, field Article Component, input nama file, footer).
+- `assets/js/app.js` — `openUploadDiscussionFileModal/closeUploadDiscussionFileModal`, `resetUdf`,
+  `onUdfArticleComponentChange`, `onUdfFileSelected`, `formatUdfBytes`, `updateUdfContinue`,
+  `showUdfStep`, `udfGoToStep`, `udfNextStep` (pengisian otomatis nama file), `getUdfFileName`,
+  `updateUdfNameDetail`, `udfAttachFile` (tulis ke `.prd-attach-body` + hidden input), klik backdrop
+  & Escape.
+- `assets/css/app.css` — section `.udf-*` (overlay drawer kanan, modal slide, header, stepper, field,
+  input, footer) + `.prd-attach-file-row` & `.prd-attach-file-chip`.
+
+### Status
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+- `mix compile --force` bersih.
+
+## Pre-Review Discussions (`workflow_1`): editor rich-text untuk Message + panel Attached Files
+
+Modal **Add Discussion** di kartu **Pre-Review Discussions** (`workflow_1`) kini dilengkapi
+komponen pengiriman ala OJS 3.5:
+
+### Fitur
+- **Message** sekarang berupa editor rich-text (prefiks CSS `prd-`) menggantikan textarea polos:
+  - Toolbar `.prd-toolbar` berisi B (bold) / I (italic) / U (underline) / Bullet List
+    (`insertUnorderedList`) / Insert link (`createLink`), tombol dengan `data-cmd` seperti editor
+    `rp-`/`enr-` lain.
+  - Isi editor disinkronkan ke hidden input `name="message"` (`id=prd-message`) via
+    `initRichtextEditors()` (`assets/js/app.js`), sehingga POST ke `/discussion` tetap berjalan.
+  - `data-placeholder` "Write your message…" tampil saat kosong.
+- **Attached Files**: kotak `.prd-attach-box` di bawah editor Message, berjudul **Attached Files**
+  di kiri dan tombol **Search** (`#prd-btn-search-file`) + **Upload File** (`#prd-btn-upload-file`)
+  sejajar di kanan. Badan kotak menampilkan empty-state "No files are attached to this
+  discussion." Terdapat hidden input `attached_files` (`id=prd-attached-files`).
+
+### Penghapusan dropdown "Choose a predefined message"
+- Dropdown `#prd-message-type` ("Discussion (Submission)" / "Assign Editor") beserta hint
+  "Choose a predefined message to use, or fill out the form below." dihapus karena hanya relevan
+  untuk editor. Fungsi JS `onPreDiscussionTypeChange/1` juga dihapus (sudah tidak terpakai).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — editor rich-text Message +
+  kotak Attached Files; hapus dropdown & hint predefined message.
+- `assets/css/app.css` — styles `.prd-toolbar*`, `.prd-richtext*`, `.prd-attach-*`,
+  `.prd-btn-outline`.
+- `assets/js/app.js` — daftarkan `.prd-richtext[data-target]` di selector
+  `initRichtextEditors()`; hapus `onPreDiscussionTypeChange`.
+
+### Verifikasi
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+- `mix precommit` lulus: 155 test, 0 failures.
+
+## Pre-Review Discussions (`workflow_1`): tombol "Add Discussion" kini berfungsi penuh
+
+Pada halaman workflow (`/dashboard/editorial?workflowSubmissionId=<id>&workflowMenuKey=workflow_1`),
+tombol **Add Discussion** di kartu **Pre-Review Discussions** sebelumnya hanya placeholder
+(tanpa handler/tujuan). Kini tombol membuka **modal Add Discussion**, dan diskusi yang ditambahkan
+disimpan ke submission serta tampil di tabel.
+
+### Fitur
+- Tombol **Add Discussion** (`id=btn-add-discussion-pre`, onclick `openPreDiscussionModal()`) di
+  header kartu membuka modal `#pre-discussion-overlay` (centered, gaya OJS 3.5, prefiks CSS `prd-`,
+  header biru `#006798`).
+- Modal berisi form (subject wajib + message wajib) yang **POST** ke route baru
+  `POST /dashboard/editorial/:id/discussion` (`EditorController.add_discussion/2`, dengan guard
+  editor). CSRF + `currentViewId` + `workflowMenuKey` dikirim sebagai hidden input, sehingga
+  redirect kembali ke halaman workflow yang sama.
+- Nama author diskusi diambil dari `current_user` (given + family name), fallback "Editor".
+- Tabel **Pre-Review Discussions** kini merender kolom `Name | From | Last Reply | Replies | Closed`:
+  - Baris **"Comments for The editor"** tetap tampil bila `editor_comments_present?(submission)`
+    true (Name = "Comments for The editor", From = `author_username`, kolom lain "—").
+  - Setiap diskusi tersimpan ditampilkan sebagai baris (Name = subject, From = author, Last Reply /
+    Replies / Closed dari `discussion_last_reply/1`, `discussion_replies_count/1`,
+    `discussion_closed_label/1` — helper yang sama dengan Review Discussions).
+  - Jika tidak ada komentar maupun diskusi, `.wf-empty` menampilkan "No Items".
+- Tutup modal: tombol &times; di header, tombol Cancel, klik backdrop, atau tombol Escape.
+
+### Perbaikan bug: `KeyError key :discussions not found`
+- **Gejala:** setelah field `:discussions` ditambahkan di struct, halaman workflow_1 error
+  `KeyError key :discussions not found in: %OjsLanding.Submission{...}` karena server dev
+  menyimpan struct submission yang dibuat **sebelum** penambahan field (hot-reload tidak
+  memigrasi data struct lama di Agent store in-memory).
+- **Perbaikan:** akses menjadi defensif — template memakai `Map.get(@submission, :discussions) ||
+  []`, dan `Submission.add_discussion/2` membaca dengan `Map.get(current, :discussions)` lalu
+  menulis dengan `Map.put(current, :discussions, ...)`. Dengan begitu tetap berfungsi walau
+  struct lama masih ada di store tanpa perlu restart server.
+
+### File yang diubah
+- `lib/ojs_landing/submission.ex` — field `discussions` pada struct (default `[]` di `create/2`),
+  fungsi `add_discussion/2`, private helper `next_discussion_id/1`.
+- `lib/ojs_landing_web/router.ex` — route `post "/dashboard/editorial/:id/discussion"`.
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — aksi `add_discussion/2`.
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — tombol `btn-add-discussion-pre`
+  + tabel diskusi + modal `#pre-discussion-overlay`; akses `discussions` via `Map.get`.
+- `assets/js/app.js` — `openPreDiscussionModal/closePreDiscussionModal` (toggle class `prd-open`),
+  klik backdrop & Escape untuk menutup.
+- `assets/css/app.css` — section `.prd-*` (overlay, panel, header, body, input/textarea, footer,
+  tombol `prd-btn-secondary`/`prd-btn-primary`).
+
+### Verifikasi
+- End-to-end pada server berjalan: GET workflow_1 200, POST discussion sukses, baris diskusi
+  tampil setelah redirect (tanpa restart server, data submission 16 lama tetap aman).
+- `mix precommit` lulus: 155 test, 0 failures.
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Submission Files (`workflow_1`): tombol Upload + More Information/Delete dikembalikan untuk view editor
+
+Kartu **Submission Files** di `workflow_1` sebelumnya menampilkan tampilan yang sama persis untuk
+editor dan author (tanpa tombol Upload, dropdown titik-tiga hanya berisi Edit) karena perubahan
+"author read-only workflow" diterapkan ke template bersama tanpa guard mode. Kini kartu bersifat
+**mode-aware** (`@mode`):
+
+### Editor (`/dashboard/editorial?workflowSubmissionId=<id>&workflowMenuKey=workflow_1`)
+- Tombol **Upload** (`wf-btn-link`, id `btn-upload-submission-file`) muncul kembali di header
+  kartu dan membuka modal upload yang sudah ada (`openUploadRevisionModal()`).
+- Dropdown titik-tiga kembali menampilkan **Edit**, **More Information**, dan **Delete**
+  (`wf-file-menu-danger`); More Information & Delete adalah placeholder
+  (hanya `closeFileMenu`), pola sama seperti Revisions Uploaded / Files for Review di `workflow_3_1`.
+
+### Author (`/submission/:id/workflow?workflowMenuKey=workflow_1`)
+- Tetap read-only: tanpa tombol Upload, dropdown titik-tiga hanya berisi **Edit** (rename via modal).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — tombol Upload dibungkus
+  `<%= if @mode != :author do %>` di header kartu, dan item More Information/Delete ditambahkan di
+  dropdown dengan guard yang sama.
+
+### Status
+- `mix precommit` lulus: 155 test, 0 failures.
+
+## Pre-Review Discussions (`workflow_1`): tabel Name/From/Last Reply/Replies/Closed dari komentar author
+
+Pada halaman workflow (`/submission/:id/workflow?workflowMenuKey=workflow_1`), kartu
+**Pre-Review Discussions** kini menampilkan tabel berkolom `Name | From | Last Reply | Replies |
+Closed` (reuse `.wf-table`, sama seperti Review Discussions di `workflow_3_1`).
+
+### Perilaku
+- Jika author mengisi **Comments for the editor** (field `editor_comments` dari tab Editors wizard,
+  atau `comments_to_editor` dari form `/submission/new`), tabel dirender dengan satu baris:
+  - **Name** = "Comments for The editor"
+  - **From** = `@submission.author_username`
+  - **Last Reply / Replies / Closed** = kosong
+- Jika tidak ada isi sama sekali, div `.wf-empty` menampilkan teks **"No Items"**
+  (menggantikan teks lama "No discussions have been started yet.").
+
+### Catatan penting
+- Field yang diisi author lewat wizard tab **Editors** ("Add any comments for the editor") adalah
+  `editor_comments`, BUKAN `comments_to_editor`. Keduanya dicek oleh helper
+  `EditorHTML.editor_comments_present?/1` supaya tabel muncul pada kedua kasus.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — kondisi `editor_comments_present?/1`
+  menggantikan `<div class="wf-empty">No discussions have been started yet.</div>` di kartu
+  Pre-Review Discussions (baris ±327–350).
+- `lib/ojs_landing_web/controllers/editor_html.ex` — helper baru `editor_comments_present?/1`.
+
+## Workflow author (`/submission/:id/workflow`): modal Edit File dengan rename tersimpan + badge Type biru
+
+Pada workflow read-only author (`workflowMenuKey=workflow_1`), kartu **Submission Files** disesuaikan
+dan menu tiga titik kini benar-benar berfungsi untuk mengganti nama file.
+
+### Submission Files: tanpa tombol Upload, kolom aksi tiga titik, badge Type biru
+- Tombol **Upload** di header kartu **Submission Files** dihapus.
+- Tiap baris file kini memiliki kolom aksi di ujung kanan tabel (`wf-table-col-actions`) berisi
+  tombol **tiga titik horizontal** (⋯) yang membuka dropdown.
+- Dropdown hanya berisi **Edit** (item "More Information" & "Delete" dihapus).
+- Kolom Type menampilkan **badge biru** bertuliskan **"Article Text"** (`.wf-file-type-badge`,
+  `#006798`, putih) — konsisten dengan tabel Files for Review.
+
+### Modal "Edit a File" (slide-in kanan→kiri)
+- Klik **Edit** pada dropdown membuka modal `#edit-file-overlay` yang menyusup dari kanan
+  (`translateX(100%) → 0`, reuse `.ar-overlay`/`.ar-panel`, lebar panel 560px via `.ef-panel`).
+- Header biru `#006798`: tombol **panah kiri** (tutup modal) + judul **"Edit a File"** di tengah.
+- Body berisi label **"Name the file (e.g., Manuscript; Table 1)"** dengan **tanda `*` merah**
+  (`.ef-required`, `#c0392b`) menandakan field wajib, input teks (`.ef-input`) yang **terisi nama
+  file yang sedang di-upload**, dan hint *"Current file: <nama>"*.
+- Footer kanan-bawah: tombol **Cancel** dan **Save**.
+- Validasi required: bila field kosong saat Save, input diberi border merah
+  (`.ef-input-error`) + pesan "The file name is required." (`.ef-hint-error`).
+
+### Save benar-benar menyimpan rename
+- Tombol **Save** melakukan `fetch` POST ke endpoint baru **`POST /submission/:id/edit-file`**
+  (`AuthorController.edit_file/2`) dengan JSON `{file_id, name}` + header `X-CSRF-Token`.
+- Endpoint memanggil `Submission.rename_file/3` yang mencocokkan file berdasarkan `id` file
+  (fallback ke posisi 1-based di daftar) dan memperbarui `filename` di store in-memory
+  (`{:error, :invalid_name}` → 422 bila nama kosong).
+- Setelah sukses, sel nama file di tabel (`#submission-file-name-<id>`) diperbarui via JS tanpa
+  reload, lalu modal ditutup.
+
+### Perbaikan bug: `KeyError :reviewers` saat mode author
+- Modal **Add Reviewer** (editor-only, memakai `@reviewers`) sebelumnya dirender tanpa guard
+  sehingga author mengalami `KeyError key :reviewers not found`. Kini seluruh modal dibungkus
+  `<%= if @mode != :author do %>`.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — kartu Submission Files
+  (hapus Upload, kolom aksi tiga titik, badge biru, dropdown Edit only), modal `#edit-file-overlay`
+  di akhir template, id `submission-file-name-<idx>` pada sel file, guard modal Add Reviewer.
+- `lib/ojs_landing_web/controllers/author_controller.ex` — action baru `edit_file/2`.
+- `lib/ojs_landing_web/router.ex` — route `post "/submission/:id/edit-file"`.
+- `lib/ojs_landing/submission.ex` — fungsi baru `rename_file/3`.
+- `assets/js/app.js` — `openEditFileModal(id, name)`, `closeEditFileModal()`, `saveEditFile()`
+  (fetch + validasi + update DOM), klik backdrop untuk menutup.
+- `assets/css/app.css` — `.ef-panel`, `.ef-label`, `.ef-input`, `.ef-input-error`,
+  `.ef-required`, `.ef-hint`, `.ef-hint-error`.
+
+### Status
+- `mix precommit` lulus: 155 test, tanpa warning.
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Add Reviewer Modal: Statistics Panel di dropdown, sidebar filter di kiri, dan penyegaran pencarian
+
+Penyempurnaan pada **Add Reviewer Modal** (dibuka dari tombol **Add reviewers** di kartu
+**Reviewers**, `/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`).
+
+### Tombol Filters pindah ke kanan + Search diperbesar
+- Urutan kontrol "Locate a Reviewer" kini **Search box → Search button → Filters** (sebelumnya
+  Filters di paling kiri sebelum search). Tombol **Filters** berada di ujung kanan.
+- **Tombol Search biru dihapus** — input pencarian kini memfilter langsung saat mengetik
+  (`oninput="arFilterReviewers()"`), tidak perlu klik tombol.
+- Search box diperbesar: `flex: 1` (max-width `420px`), padding `12px 16px`, ikon & font lebih
+  besar (18px / 17px).
+
+### Sidebar filter muncul di kiri, list reviewer bergeser ke kanan
+- Filters sidebar + daftar reviewer dibungkus `.ar-content-wrap` (`display: flex`).
+- Sidebar filter (`240px`) ditampilkan di **kiri** saat tombol Filters diklik; daftar reviewer
+  (`flex: 1`) **bergeser ke kanan** mengisi ruang yang tersisa.
+- Klik tombol Filters lagi akan menutup sidebar dan daftar reviewer **kembali ke posisi awal**.
+- Ada animasi fade + `translateX(-12px)` saat sidebar terbuka; tombol Filters mendapat state
+  aktif `.is-open` (biru) via `arToggleFilters`.
+
+### Tombol dropdown arrow (▼) di samping "Select Reviewer"
+- Di samping kanan tombol **Select Reviewer** kini ada tombol **panah ke bawah** (▼,
+  `.ar-select-reviewer-arrow`) yang menyatu sebagai split button (`border-right-left` digabung,
+  radius kanan dibuat ujung kanan). Kedua tombol memanggil `arToggleDropdown(this)` yang sama
+  (cari `.ar-reviewer-select-wrap` via `closest`), sehingga dropdown terbuka dari salah satunya.
+
+### Reviewer Statistics Panel di dalam dropdown
+- Saat dropdown dibuka, muncul panel **Reviewer Statistics Panel** (`.ar-dropdown-stat-panel`,
+  `min-width: 300px`) berisi enam baris statistik:
+  **Active reviews currently assigned**, **Reviews Completed**, **Review requests declined**,
+  **Review requests cancelled**, **Days since last review assigned**,
+  **Average days to complete review**, plus bagian **Reviewing Interests**.
+- Data statistik ditambahkan ke payload `reviewer_json/1` di `EditorController`:
+  `active_reviews` (status `action_required`/`in_progress`), `reviews_completed`
+  (`completed`/`published`), `reviews_declined` (`declined`), `reviews_cancelled` (0),
+  `days_since_last_review` (selisih `Date.utc_today()` dengan `date_assigned` terbaru),
+  `avg_days_to_complete` (rata-rata `Date.diff(submitted_at, date_assigned)`),
+  `reviewing_interests` (turunan dari affiliation + role).
+- Di bawah panel tetap ada item aksi **Select Reviewer** dan **Cancel** seperti sebelumnya.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — urutan Filters/search;
+  wrapper `.ar-content-wrap`; tombol arrow ▼; dropdown berisi `.ar-dropdown-stat-panel`.
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — field statistik baru di
+  `reviewer_json/1` (`active_reviews`, `reviews_completed`, `reviews_declined`,
+  `reviews_cancelled`, `days_since_last_review`, `avg_days_to_complete`, `reviewing_interests`).
+- `assets/js/app.js` — `arToggleFilters` ikut men-toggle `.is-open` pada tombol Filters.
+- `assets/css/app.css` — `.ar-content-wrap`, sidebar filter `flex` di kiri, `.ar-reviewer-list`
+  `flex: 1`, `.ar-select-reviewer-arrow`, `.ar-select-dropdown-wide`,
+  `.ar-dropdown-stat-*`, `.ar-dropdown-interests-*`.
+
+### Status
+- `mix compile --warnings-as-errors` bersih; `mix assets.build` sukses (perlu hard-refresh
+  Ctrl+F5).
+
+## Kartu Reviewers (`workflow_3_1`): Add Reviewer menjadi Slide-in Modal "Locate a Reviewer"
+
+Pada halaman workflow review round 1 (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`),
+tombol **Add reviewers** pada kartu **Reviewers** tidak lagi men-toggle form assign inline,
+melainkan membuka **Add Reviewer Modal** yang muncul menyusup dari kanan ke kiri (slide-in,
+`translateX(100%) → 0`, animasi 0.3s) bergaya OJS 3.5.
+
+### Fitur
+- **Header** biru `#006798` dengan tombol **panah kiri** (tutup) di kiri dan judul **"Add Reviewer"**
+  di tengah, panel lebar `900px`.
+- **"Locate a Reviewer"** heading di kiri, sejajar di kanan dengan tombol **Filters** dan kolom
+  pencarian **Search** + tombol **Search**.
+- **Tombol Filters** membuka sidebar filter berisi opsi dengan tombol **+**:
+  **Rated at least**, **Reviews completed**, **Days since last review assigned**,
+  **Active reviews currently assigned**, **Average days to complete review**. Setiap opsi punya
+  deskripsi singkat; klik **+** menambahkan filter aktif dengan input nilai, didukung counter
+  "n filters", tombol **Reset**, dan tombol hapus per filter.
+- **Daftar reviewer**: hanya **user ber-role `:reviewer`** (filter dari `@reviewers` assign).
+  Tiap kartu menampilkan:
+  - **username** (kiri atas) dengan kotak **Select Reviewer** + dropdown (kiri-bawah
+    *affiliation*).
+  - Di bawahnya tiga kolom statistik: **Review Count**, **Last Review**, **Status**
+    (badge Available hijau / Busy merah).
+  - Tombol **Select Reviewer** membuka dropdown berisi "Select Reviewer" dan "Cancel". Memilih
+    mensubmit form tersembunyi `POST /dashboard/editorial/:id/assign-reviewer` (dengan `reviewer_name`
+    = username terpilih) sehingga benar-benar menugaskan reviewer.
+- **Footer** kanan bawah: tombol **Create New Reviewer** dan **Enroll Existing User** (placeholder).
+- Navigasi: tutup via panah kiri, klik backdrop, atau tombol **Escape**; dropdown menutup saat klik
+  di luar.
+
+### Data reviewer
+`EditorController.reviewer_json/1` menghasilkan payload (username, affiliation, review_count,
+last_review, status) dari `OjsLanding.User` + `ReviewerAssignment`. Daftar `@reviewers` dikirim ke
+template workflow dengan memfilter `&(&1.role == :reviewer)` dari `OjsLanding.User.all()`,
+sehingga admin/author/editor tidak muncul.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — modal `#add-reviewer-overlay`
+  (markup `.ar-*`) di akhir template; tombol Add reviewers memanggil `arOpenAddReviewerModal()`;
+  daftar reviewer `@reviewers`; sidebar filters + dropdown Select Reviewer.
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — render workflow menambahkan assign
+  `reviewers` (filter role `:reviewer` + `reviewer_json`).
+- `assets/js/app.js` — `arOpenAddReviewerModal`/`closeAddReviewerModal`, `arToggleFilters`,
+  `arAddFilter`/`removeArActiveFilter`/`arResetFilters`/`arUpdateFilterCount`,
+  `arToggleDropdown`/`arCloseAllDropdowns`/`arSelectReviewer`, handler klik backdrop + Escape.
+- `assets/css/app.css` — section `.ar-*` (overlay slide-in, header, Locate a Reviewer, sidebar
+  filters, daftar reviewer, dropdown Select Reviewer, footer tombol).
+
+### Perbaikan bug
+- Tombol modal sempat memanggil `openAddReviewerModal()` sementara fungsi JS bernama
+  `arOpenAddReviewerModal()` (ganti nama saat fitur filters ditambahkan) — keduanya kini konsisten.
+
+### Status
+- `mix precommit` lulus: 155 test, tanpa warning.
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Dialog "Review File Selection" (`workflow_3_1`): pemilihan file review + filter semua tahap workflow
+
+Pada halaman workflow review round 1 (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`),
+tombol **Upload/Select Files** pada kartu **Files for Review** kini membuka **Review File Selection
+Dialog** yang muncul menyusup dari sisi kanan ke kiri (slide-in, `translateX(100%) → 0`, animasi
+0.3s) — gaya OJS 3.5.
+
+### Fitur
+- Header biru `#006798` dengan tombol **panah kiri** (tutup dialog) di kiri dan judul di tengah:
+  **"Current Review Files For Round 1"**.
+- Section header **"Review Files"** di kiri, sejajar dengan tombol **Upload Review Files** di
+  kanan (membuka drawer **Upload Review File** yang sudah ada).
+- Di bawahnya opsi filter bertuliskan **"Show files from all accessible workflow stages"**.
+- Daftar file per tahap:
+  - Default (filter mati): hanya section **Review** berisi baris-baris file review (`has_revisions
+    != true`) — tiap baris: dropdown **arrow chevron** (kanan saat tertutup → bawah saat terbuka,
+    berisi menu **More Information**), **checkbox** pilihan, lalu **nama file** + badge type
+    "Article Text".
+  - Saat filter **dicentang**: muncul empat section berurutan **Submission** (semua file), **Review**
+    (file review), **Copyediting** dan **Production** (keduanya menampilkan teks **"No Items"**
+    karena submission belum mencapai tahap tersebut).
+- Footer kanan bawah: tombol **Cancel** dan **Ok** (keduanya menutup dialog).
+
+### Perbaikan perilaku
+- Dropdown tidak lagi terpotong: `.rfs-file-list` memakai `overflow: visible` (sebelumnya `hidden`
+  memotong menu yang muncul di bawah baris).
+- `openFileMenu/1` kini bersifat **toggle** — menu yang sudah terbuka dapat ditutup dengan klik
+  tombol panah yang sama (sebelumnya selalu tetap terbuka).
+- ID menu dibedakan antar daftar (`rfs-file-menu-s-*`, `-sub-*`, `-arev-*`) agar tidak bentrok.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — dialog `#review-file-selection-overlay`
+  (markup `.rfs-*`) di akhir template; tombol `#btn-upload-review-files` memanggil
+  `openReviewFileSelection()`; dua mode daftar (`#rfs-single-stages` / `#rfs-all-stages`) ditoggle
+  via `onchange="toggleRfsStages()"` pada checkbox filter.
+- `assets/js/app.js` — `openReviewFileSelection/closeReviewFileSelection`,
+  `toggleRfsStages` (toggle mode single vs semua tahap); `openFileMenu` diubah menjadi toggle;
+  handler klik area gelap untuk menutup dialog.
+- `assets/css/app.css` — section `.rfs-*` (overlay/backdrop, dialog slide, header, body, section
+  head, filter, baris file, tombol `rfs-btn-cancel`/`rfs-btn-ok`), `.rfs-stages-hidden`,
+  `.rfs-stage-group`, arrow chevron `.rfs-menu-arrow` + rotasi 90° saat `wf-open`.
+
+### Status
+- `mix precommit` lulus: 155 test, tanpa warning.
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Kartu Reviewers (`workflow_3_1`): empty state di dalam tabel
+
+Pada halaman workflow review round 1 (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`),
+kartu **Reviewers** kini **selalu** merender tabel dengan header
+`REVIEWERS | REVIEWER STATUS | TYPE | ACTIONS` — termasuk saat belum ada reviewer yang
+ditugaskan.
+
+### Detail
+- Sebelumnya, saat `@review_assignments == []`, kartu merender `<div class="wf-empty">` di luar
+  tabel sehingga muncul seperti baris "No Items" dengan kolom STATUS/TYPE/ACTIONS kosong.
+- Sekarang tabel selalu dirender. Saat belum ada assignment, satu baris `colspan="4"` berkelas
+  `.wf-table-empty` menampilkan teks "No reviewers have been assigned yet." — konsisten dengan
+  kartu *Revisions Uploaded* (colspan 5) dan *Review Discussions* (colspan 5).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — tabel Reviewers selalu
+  dirender; empty state menjadi `<tr>` dengan `colspan="4"` + `.wf-table-empty`.
+
+### Status
+- `mix compile` lulus (perlu hard-refresh Ctrl+F5).
+
+## Workflow `workflow_3_1`: tombol aksi tiga titik (horizontal) di tabel file
+
+Pada halaman workflow review round 1 (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`),
+kedua kartu file — **Revisions Uploaded** dan **Files for Review** — kini memiliki kolom aksi di
+**ujung kanan tabel** berisi tombol **tiga titik horizontal** (⋯). Klik tombol membuka dropdown
+dengan opsi **Edit**, **More Information**, dan **Delete** (Delete berwarna merah di baris
+terbawah). Menutup dropdown terjadi saat memilih salah satu opsi atau klik di luar dropdown.
+
+### Detail
+- Kolom TYPE tetap menampilkan genre file (mis. "Manuscript"); tombol tiga titik dipindah ke
+  kolom terpisah `.wf-table-col-actions` (lebar 48px, rata kanan) di ujung kanan, bukan lagi di
+  samping teks genre.
+- Header tabel bertambah satu `<th class="wf-table-col-actions">` kosong; baris kosong (empty
+  state) memperbarui `colspan` menjadi 5.
+- Ikon titik tiga dibuat **horizontal** (⋯, tiga lingkaran sebaris) melalui SVG `circle` dengan
+  `cx` berbeda dan `cy` sama.
+- Dropdown `.wf-file-menu-dropdown` dibuka dengan class `wf-open`, diposisikan rata kanan di
+  bawah tombol, `min-width: 168px`, border `#ddd` + shadow, item hover biru muda. Opsi Delete
+  (`wf-file-menu-danger`) berwarna merah `#c0392b` + separator atas.
+- Auto-close: klik di luar `.wf-file-menu` menutup semua dropdown (`closeAllFileMenus`).
+- Kode diulang di kedua tabel (Revisions Uploaded & Files for Review) dengan id menu yang
+  disegment (`file-menu-revision-N` / `file-menu-review-N`).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — kolom aksi kanan + tombol
+  tiga titik + dropdown pada tabel Revisions Uploaded & Files for Review.
+- `assets/js/app.js` — `openFileMenu(id)`, `closeFileMenu(id)`, `closeAllFileMenus()`, dan
+  listener klik global untuk auto-close.
+- `assets/css/app.css` — `.wf-table-col-actions`, `.wf-file-menu`, `.wf-file-menu-btn`,
+  `.wf-file-menu-dropdown`, `.wf-file-menu-item`, `.wf-file-menu-danger`.
+
+### Status
+- `mix precommit` lulus: 155 test, tanpa warning.
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Drawer "Upload Review File" (`workflow_3_1`): penyesuaian ukuran, stepper klik, dan tombol "Add Another File"
+
+Penyempurnaan pada drawer **Upload Review File** yang terbuka dari tombol **Upload** di kartu
+**Revision Uploaded** (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`).
+
+### Ukuran & spasi
+- Modal (`.urf-modal`) diubah dari `max-width: 660px` menjadi **`width: 900px; max-width: 95%`**
+  (lebih lebar, tetap menyesuaikan layar kecil).
+- Padding diseragamkan: header `16px 20px`, body `20px`, footer `16px 20px`.
+- Dropdown Article Component (`.urf-select`) kini `width: 100%` dengan `padding: 8px 12px`.
+- Tombol-tombol (`.urf-btn-upload`, `.urf-btn-change-file`, `.urf-btn-cancel`,
+  `.urf-btn-continue`) diseragamkan `padding: 8px 20px`.
+
+### Stepper bisa diklik (setelah melewati langkah sebelumnya)
+- Step stepper kini **dapat diklik** (`.urf-step-clickable`, cursor pointer, hover biru) namun
+  hanya untuk langkah **yang sudah dicapai** (`step <= urfStep`).
+- Sebelum mencapai tahap 3, langkah 2 dan 3 **tidak bisa** diklik — pengguna wajib maju secara
+  berurutan lewat tombol **Continue** dari Step 1. Setelah sampai di Step 3, semua langkah
+  1–3 dapat diklik untuk navigasi balik.
+- Fungsi baru `urfGoToStep(step)` menolak lompatan ke depan (`step > urfStep` dan step 3 saat
+  belum di step 3).
+
+### Step 3 (Confirm): "File Added" + "Add Another File"
+- Teks dikonfirmasi menjadi **"File Added"** (ikon ceklis hijau dihapus) di tengah kotak
+  konfirmasi, dengan tombol **Add Another File** (`.urf-btn-upload`, id `urf-btn-add-another`)
+  di bawahnya.
+- Klik **Add Another File** menyimpan file yang sudah dikonfirmasi ke daftar sementara
+  (`urfAddedFiles`), lalu mengembalikan ke Step 1 untuk memilih file berikutnya — file lama
+  **tidak hilang**.
+- Daftar file yang sudah ditambah ditampilkan di Step 1 sebagai counter "Added files (n)" +
+  chip (komponen — nama file) pada `.urf-added-files`.
+- Tombol footer **Confirm Upload** (Step 3) juga menyimpan file terakhir sebelum menutup
+  drawer.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — stepper dengan
+  `onclick="urfGoToStep(...)"`, step 3 confirm box ("File Added" + tombol Add Another File),
+  container `.urf-added-files` di Step 1.
+- `assets/js/app.js` — `urfAddedFiles`, `urfStoreCurrentFile/0`, `renderUrfAddedFiles/0`,
+  `urfGoToStep/1`, `urfAddAnotherFile/0` (simpan file lalu reset ke Step 1); `showUrfStep`
+  mengatur kelas `urf-step-clickable`; `resetUploadRevision` mengosongkan daftar.
+- `assets/css/app.css` — `.urf-modal` (`900px`/`95%`), padding header/body/footer,
+  `.urf-select` full-width, padding tombol `8px 20px`, `.urf-step-clickable`,
+  `.urf-added-files` & `.urf-added-file-chip`.
+
+### Status
+- `mix compile` bersih; `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Send for Review Step 1: daftar template di bawah kotak "Find Template" dihapus
+
+Pada `GET /dashboard/editorial/:id/send-to-review` (Step 1 Notify Authors), daftar
+**Email Templates** yang tampil di bawah kotak pencarian **Find Template** (beserta hint
+"Select a template to fill the subject and message body.") dihapus. Kotak pencarian beserta
+header panel tetap dipertahankan; kolom Subject/message rich text editor diisi manual.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/send_to_review_email.html.heex` — blok
+  `<ul class="enr-template-list">` (iterasi `@email_templates`) dan hint dihapus.
+- Controller (`EditorController.send_to_review_email/2`) tidak diubah — `@email_templates`
+  tetap dikirim tapi kini tidak dirender.
+
+### Status
+- Template dikompilasi ulang (perlu hard-refresh Ctrl+F5).
+
+## Workflow `workflow_3_1`: tombol "Upload" Revision Uploaded membuka drawer "Upload Review File"
+
+Pada halaman workflow review round 1 (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`),
+tombol **Upload** pada kartu **Revision Uploaded** kini membuka **Upload Review File drawer** yang
+muncul menyusup dari kanan ke kiri (slides in from right), bukan pop-up modal di tengah layar.
+
+### Fitur
+- Drawer muncul dari sisi kanan layar (`.urf-modal` `translateX(100%) → 0`, animasi 0.3s), lebar
+  `max-width: 660px`, tinggi penuh, dengan backdrop gelap di belakangnya.
+- Header berjudul **Upload Review File**; tombol close berupa **panah kiri** (`.urf-back`, ikon
+  chevron kiri) — karena drawer datang dari kanan. Klik panah/Cancel/area gelap akan menggeser
+  drawer kembali ke kanan lalu me-reset state.
+- Stepper 3 langkah: **1. Upload File** · **2. Review Details** · **3. Confirm** (nomor lingkaran +
+  connector, aktif biru `#006798`, selesai hijau).
+- **Step 1 — Upload File**: field **Article Component** (dropdown "Select article component" dengan
+  opsi Article Text, Research Instrument, Research Materials, Research Results, Transcripts, Data
+  Analysis, Data Set, Source Text, Other). Setelah memilih salah satu opsi, muncul tombol **Upload
+  File** di sebelah kanannya; setelah file dipilih tombol berubah menjadi **Change file** dan nama +
+  ukuran file ditampilkan.
+- **Step 2 — Review Details**: ringkasan Article Component / File Name / File Size.
+- **Step 3 — Confirm**: pemberitahuan "Your file is ready to be uploaded."
+- Footer aksi: **Cancel** (tutup drawer) dan **Continue** — hanya dapat diklik pada Step 1 bila
+  Article Component sudah dipilih **dan** file sudah di-upload; label menjadi "Confirm Upload" pada
+  Step 3.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — tombol Upload memanggil
+  `openUploadRevisionModal()`; markup drawer `#upload-revision-overlay` (header panah kiri, stepper,
+  3 step body, footer aksi) di akhir template.
+- `assets/js/app.js` — `openUploadRevisionModal/closeUploadRevisionModal` (toggle class `urf-open`),
+  `onArticleComponentChange`, `onFileSelected`, `urfNextStep`, `updateUrfContinue`, `showUrfStep`,
+  `formatUrfBytes`, `resetUploadRevision` (semua fungsi yang dipakai inline handler di-attach ke
+  `window` karena `app.js` adalah ES module).
+- `assets/css/app.css` — section `.urf-*` ditulis sebagai drawer kanan (overlay `justify-content:
+  flex-end`, modal `translateX`, `.urf-back`, `.urf-step-*`, `.urf-btn-*`).
+
+### Status
+- `mix compile` bersih; `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Workflow: kartu Participants di sidebar kiri disembunyikan untuk `workflow_1` & `workflow_3_1`
+
+Pada halaman workflow editor, kartu **Participants** yang tadinya selalu tampil di **sidebar kiri**
+kini **disembunyikan** saat menu aktif `workflow_1` (Submission) maupun `workflow_3_1` (Review Round
+1), karena kedua view tersebut sudah menampilkan kartu Participants di **kolom kanan**
+(`wf-col-side`) — menghindari duplikasi peserta (author/editor) di kiri dan kanan sekaligus.
+
+### Fitur
+- Kondisi sidebar Participants kini `@mode != :author and @active_menu not in ["workflow_1",
+  "workflow_3_1"]` di `workflow.html.heex`.
+- Pada `workflow_1` dan `workflow_3_1`, daftar peserta hanya tampil di kolom kanan bawah Action
+  Panel (mode editor); sidebar kiri hanya berisi menu Workflow/Publication.
+- View lain (workflow_4, workflow_5, publikasi) tetap menampilkan Participants di sidebar kiri.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — blok sidebar Participants
+  ditambah guard `@active_menu not in ["workflow_1", "workflow_3_1"]`.
+
+### Status
+- `mix compile` bersih.
+
+## Workflow `workflow_3_1`: kartu "Files for Review" di atas Reviewers
+
+Pada halaman workflow review round 1 (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`),
+ditambahkan kartu baru **Files for Review** tepat di atas kartu **Reviewers** di kolom kiri.
+
+### Fitur
+- Kartu `.wf-card` berjudul **Files for Review** dengan subtitle *"These files will be sent to the
+  reviewers to review."* (`.wf-card-subtitle`) tepat di bawah judul.
+- Sejajar dengan judul, di kanan header terdapat tombol **Upload/Select Files** (`.wf-btn-link`,
+  id `btn-upload-review-files`, ber-ikon upload) — konsisten dengan tombol Upload pada kartu lain.
+- Body menampilkan tabel file (kolom # / File Name / Date Uploaded / Type) untuk file non-revisi
+  (`Enum.filter(@submission.files || [], &(&1[:has_revisions] != true))`). Jika tidak ada file:
+  *"No files have been uploaded for review yet."*
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — kartu **Files for Review**
+  disisipkan di antara kartu Revision Uploaded dan Reviewers pada blok `workflow_3_1`.
+- `assets/css/app.css` — rule baru `.wf-card-subtitle` (font-size 0.8125rem, warna #666).
+
+### Status
+- `mix precommit` lulus: 155 test, tanpa warning.
+
+## Workflow `workflow_3_1`: kartu Participants dipindah ke kolom kanan bawah Action Panel
+
+Pada halaman workflow review round 1 (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`),
+kartu **Participants** kini ditampilkan di kolom kanan (`.wf-col-side`) tepat di bawah kartu
+**Action Panel** (mode editor), bukan lagi hanya di sidebar kiri.
+
+### Fitur
+- Kartu `.wf-card` berjudul **Participants** dengan tombol **Assign** (`.wf-btn-link`, id
+  `btn-assign-participant-review`, ber-ikon user-plus) di kanan header.
+- Daftar `.wf-participants-list` menampilkan author/contributor (dengan primary contact) lalu
+  editor (`@submission.editors`) berlabel "Editor" — struktur sama seperti kartu Participants pada
+  `workflow_1`.
+- Ditampilkan untuk mode editor (`@mode != :author`) pada kolom kanan; kartu ini selalu muncul di
+  bawah Action Panel (tidak bergantung pada `@row.status`).
+- Mode author tetap menampilkan kartu **Review Progress** di kolom kanan (tanpa Participants).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — kartu **Participants** baru
+  pada blok `workflow_3_1`, kolom kanan setelah Action Panel.
+
+### Status
+- `mix precommit` lulus: 155 test, tanpa warning.
+
+## Workflow `workflow_3_1` (External Review Round 1): redesign tata letak + Action Panel pindah ke kanan
+
+Halaman workflow review round 1 (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`)
+dirombak dari satu kartu "Review Round 1" menjadi layout dua kolom bergaya OJS 3.5
+(`.wf-two-col-layout`, sama seperti `workflow_1`).
+
+### Header & Kolom Kiri (`.wf-col-main`)
+- Header baru `.wf-page-heading` berjudul **"WORKFLOW: REVIEW (ROUND 1)"** di atas konten
+  (garis kiri oranye `#e08914`, teks uppercase biru).
+- **Status Info** — kartu berisi kotak `.wf-status-box` dengan judul **Round 1 Status**:
+  - "Waiting for reviewers to be assigned." saat `@review_assignments == []`.
+  - "{n} reviewer assignment(s) in this round." bila sudah ada assignment.
+- **Revision Uploaded** — kartu dengan tombol **Upload** (`.wf-btn-link`, id `btn-upload-revision`)
+  sejajar judul di header; menampilkan tabel file yang `has_revisions == true` (kolom # / File
+  Name / Date Uploaded / Type). Jika tidak ada file revisi: pesan *"No revisions have been
+  uploaded. These files are submitted by the author after revisions were requested."*
+- **Reviewers** — kartu dengan tombol **Add reviewers** (`.wf-btn-link`, id `btn-add-reviewers`)
+  di kanan header (hanya untuk editor, `@mode != :author`); tombol men-toggle form assign inline
+  (`#assign-reviewer-inline`, class `.wf-inline-assign` + `.wf-hidden`) yang POST ke
+  `/dashboard/editorial/:id/assign-reviewer`. Tabel reviewer (Reviewer / Round / Status / Due
+  Date / Recommendation / Action → "Open") ditampilkan bila assignment ada, else *"No reviewers
+  have been assigned yet."*
+- **Review Discussions** — kartu dengan tombol **Add Discussion** (`btn-add-discussion-review`)
+  di kanan header; body *"No discussions have been started yet."*
+
+### Kolom Kanan (`.wf-col-side`)
+- **Action Panel** (editor saja, `@mode != :author`, dan `@row.status not in [:declined,
+  :published, :scheduled]`) berisi tombol `.wf-btn-action` selebar penuh:
+  - **Request Revisions** (form POST `/request-revisions`, id `btn-request-revisions`).
+  - **Accept Submission** (form POST `/accept`, id `btn-accept-submission`).
+  - **Create New Review Round** (placeholder, id `btn-create-new-review-round`).
+  - **Cancel Review Round** (placeholder, id `btn-cancel-review-round`).
+  - **Decline Submission** (form POST `/decline` + konfirmasi, id `btn-decline-review`).
+- Untuk mode author, kolom kanan menampilkan kartu **Review Progress** read-only alih-alih
+  Action Panel.
+
+### Catatan teknis HEEx
+- **Bug unik:** `<% if %>` (non-output) yang bersarang di dalam `<% else %>` dari `<%= if %>`
+  TIDAK dirender oleh HEEx (konten hilang tanpa error, menyisakan `<div>` kosong). Solusinya:
+  gunakan `<%= if %>` (output) untuk blok dalam — pola yang sama dipakai kode lama.
+- `Enum.filter(@submission.files || [], &(&1[:has_revisions] == true))` memilih file revisi.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — blok `workflow_3_1`
+  ditulis ulang (heading, 4 kartu kiri, Action Panel kanan).
+- `assets/css/app.css` — `.wf-page-heading`, `.wf-page-stage-label`, `.wf-status-box` (+ title/
+  text), `.wf-inline-assign`, `.wf-hidden`, `.wf-action-form`.
+- `test/ojs_landing_web/controllers/editor_controller_test.exs` — describe baru
+  "workflow_3_1 external review layout" yang memeriksa seluruh elemen baru di atas.
+
+### Status
+- `mix precommit` lulus: 155 test, tanpa warning.
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Send for Review (Step 1 & Step 2): toolbar rich text, tombol aksi Select Files, kolom Date
+
+Penyesuaian tampilan pada wizard **Send for Review** Step 1 (Notify Authors) dan Step 2
+(Select Files).
+
+### Step 1 — Toolbar rich text editor (`send_to_review_email.html.heex`)
+- Toolbar `.enr-message-toolbar` diubah dari Bold/Italic/Underline/Bullet menjadi:
+  **B** (bold), **I** (italic), **X** superscript, **X** subscript, **insert/edit link**,
+  **Attach file**, dan **Insert Content**.
+- Superscript/subscript ditampilkan sebagai "X" dengan posisi naik/turun
+  (`.enr-toolbar-super` / `.enr-toolbar-sub`); Attach file & Insert Content memakai ikon
+  (paperclip / document) + label teks (`.enr-toolbar-btn-text`).
+- Fungsional via `initRichtextEditors()` di `assets/js/app.js` (sudah mengenali perintah
+  `superscript`, `subscript`, dan `createLink`); tombol Attach file & Insert Content bersifat
+  visual.
+
+### Step 2 — Select Files (`send_to_review_files.html.heex`)
+- Tombol submit **"Send for Review"** diubah menjadi **"Record Decision"** (tetap POST ke
+  `POST /dashboard/editorial/:id/send-to-review`).
+- Tombol **Go Back** dihapus; diganti **Previous** (kembali ke Step 1) dan **Cancel** (kembali
+  ke workflow_1) — semua tombol kini berjajar rapat di kanan footer aksi
+  (`.enr-actions-file { justify-content: flex-end }`).
+- Header tabel (Select / File Name / Date / Type) dihapus — tabel langsung menampilkan baris file.
+- Kolom **Date** menampilkan `Uploaded by {author_username} on {YYYY-MM-DD}`; jika `date` file
+  kosong, fallback ke `submission.date_submitted`/`submission.created_at`
+  (`DateTime.to_date() |> Date.to_string()`).
+- Halaman diberi kelas `.enr-page-wide` (`.enr-page` `max-width: 1080px`, `width: 100%`) agar
+  kartu Submission Files lebih lebar.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/send_to_review_email.html.heex` — toolbar baru.
+- `lib/ojs_landing_web/controllers/editor_html/send_to_review_files.html.heex` — Record Decision,
+  Previous/Cancel, tanpa header tabel, kolom Date ber-uploader.
+- `assets/css/app.css` — `.enr-toolbar-btn-text`, `.enr-toolbar-super`/`.enr-toolbar-sub`,
+  `.enr-page-wide`, `.enr-actions-file { justify-content: flex-end }`.
+
+### Status
+- `mix compile --warnings-as-errors` bersih.
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Send for Review: Email Notification Page — penyegaran tampilan (UI polish)
+
+Penyegaran visual menyeluruh pada halaman wizard "Send for Review" agar lebih rapi
+(`GET /dashboard/editorial/:id/send-to-review` dan `GET .../send-to-review/select-files`).
+Perilaku fungsional tidak berubah — tombol **Send for Review** tetap POST
+(`POST /dashboard/editorial/:id/send-to-review`), serta alur Continue/Cancel/Go Back tetap sama.
+Semua DOM id dan atribut data yang dipakai JS (`enr-template-search`, `enr-template-list`,
+`enr-to`, `enr-subject`, `enr-message`, `enr-message-editor`, `enr-message-toolbar`,
+`[data-enr-template-select]`, `.enr-template-item[data-search]`, dst.) dipertahankan.
+
+### Perubahan tampilan Step 1 (Notify Authors)
+- **Ringkasan submission** (`enr-summary`) di bawah subtitle: ID submission, judul, author
+  (dari `@row.author`), dan pill stage warna-warni (`stage_label`/`stage_color` editor).
+- **Stepper** didesain ulang dengan lingkaran nomor + garis penghubung (connector): step aktif
+  biru `#006798` dengan shadow, step selesai hijau.
+- **Panel Email Templates**: header ber-icon + badge jumlah, input pencarian dengan ikon dan
+  *focus ring* biru, tiap template ber-icon amplop + deskripsi + indikator radio; item terpilih
+  (default "Submission Sent for Review") diberi highlight biru muda.
+- **Panel Kompose Email**: header "Email Message" + hint "Step 1 of 2", field To/Subject dengan
+  *focus ring*, rich text editor dengan *focus-within*, footer aksi dengan hint teks + tombol
+  **Cancel** / **Continue** (ber-icon panah).
+- Kartu putih seragam dengan `border-radius: 6px`, border `#e2e7ea`, shadow halus; tombol
+  `enr-btn` dengan efek hover/shadow; transisi halus di hover/focus.
+
+### Perubahan tampilan Step 2 (Select Files)
+- Stepper menunjukkan Step 1 selesai (✓ hijau) dengan connector hijau dan Step 2 aktif.
+- Layout tabel files dibungkus `.enr-files-body`; header card + badge jumlah file; genre file
+  sebagai pill rounded; baris tabel dengan hover.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/send_to_review_email.html.heex` — markup baru:
+  summary strip, stepper connector, template item (icon + radio + selected), compose header,
+  footer actions dengan hint.
+- `lib/ojs_landing_web/controllers/editor_html/send_to_review_files.html.heex` — stepper
+  connector done; wrapper `.enr-files-body`.
+- `assets/js/app.js` — `initEmailNotification/0`: klik template kini juga men-toggle kelas
+  `enr-template-selected` (satu pilihan aktif pada satu waktu).
+- `assets/css/app.css` — section `.enr-*` ditulis ulang (warna `#006798`, radius 6px,
+  focus ring, shadow, pill, stepper connector, responsive).
+
+### Status
+- `mix compile` & `mix assets.build` sukses.
+- `mix precommit` lulus: 154 test, tanpa warning (perlu hard-refresh Ctrl+F5).
+
+## Send for Review: Email Notification Page (wizard 2 langkah "Notify Authors" → "Select Files")
+
+Tombol **Send For Review** pada Action Panel workflow_1 (`workflowMenuKey=workflow_1`) tidak lagi
+langsung memindahkan submission ke tahap review, melainkan membuka **Email Notification Page**
+(wizard 2 langkah ala OJS 3.5) sebelum transisi benar-benar terjadi.
+
+### Fitur
+- **Step 1 – Send for Review: Notify Authors** (`GET /dashboard/editorial/:id/send-to-review`,
+  `EditorController.send_to_review_email/2`, template `send_to_review_email.html.heex`):
+  - Breadcrumb: **Dashboard / (author), (judul submission) / Send for review** (author diambil
+    dari primary contact contributor, judul dari submission; tautan author kembali ke workflow_1).
+  - Page title **`# Send for Review: Notify authors`** + deskripsi *"This submission is ready to be
+    sent for peer review."*.
+  - Stepper **1. Notify Authors** (aktif) · **2. Select Files**.
+  - Kiri: card **Email Templates** berisi kotak pencarian **Find Template** (memfilter daftar
+    template secara client-side) + daftar template; mengklik template mengisi kolom **Subject**
+    dan isi rich text editor via JS (`applyPredefinedMessage`-style, lebih tepatnya handler
+    `[data-enr-template-select]`).
+  - Kanan: kolom **To** (read-only, nama primary contact via `EditorController.primary_contact/1`),
+    kolom **Subject** (default *"Your submission has been sent for review"*), rich text editor
+    `.enr-richtext[data-target]` (toolbar bold/italic/underline/bullet, disinkronkan oleh
+    `initRichtextEditors()` di `app.js` yang kini juga mengenali `.enr-richtext`).
+  - Aksi kanan bawah: **Cancel** (kembali ke `workflow_1`) dan **Continue** (ke Step 2).
+- **Step 2 – Send for Review: Select Files** (`GET .../send-to-review/select-files`,
+  `EditorController.send_to_review_files/2`, template `send_to_review_files.html.heex`):
+  - Stepper menandai Step 1 selesai (✓ hijau) dan Step 2 aktif.
+  - Tabel **Submission Files** dengan checkbox tercentang per file (kolom Select / File Name /
+    Date / Type; genre file sebagai badge).
+  - Aksi: **Go Back** (kembali ke Step 1) dan tombol **Send for Review** yang mem-POST ke
+    `POST /dashboard/editorial/:id/send-to-review`.
+- **Transisi**: `POST /dashboard/editorial/:id/send-to-review` (`send_to_review/2`) tetap
+  menjalankan transisi (status `:active`, stage `:external_review`) — kini hanya diakses dari
+  Step 2 wizard, bukan lagi langsung dari Action Panel.
+- CSS baru di `assets/css/app.css` dengan prefiks `enr-` (halaman, breadcrumb, stepper, layout
+  grid `300px 1fr`, templates card, compose card, rich text editor, tombol aksi, tabel files),
+  gaya mengikuti OJS 3.5 PKP (`#006798`, Noto Sans, `border-radius: 2px`).
+
+### File yang diubah
+- `lib/ojs_landing_web/router.ex` — route GET baru `send-to-review` & `send-to-review/select-files`.
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — aksi `send_to_review_email/2` &
+  `send_to_review_files/2`; helper `primary_contact/1`, `recipient_text/1`,
+  `send_to_review_templates/0`.
+- `lib/ojs_landing_web/controllers/editor_html/send_to_review_email.html.heex` (baru) — Step 1.
+- `lib/ojs_landing_web/controllers/editor_html/send_to_review_files.html.heex` (baru) — Step 2.
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — tombol **Send For Review**
+  diubah dari form POST menjadi link (anchor) ke Step 1 wizard.
+- `assets/js/app.js` — selector `initRichtextEditors` diperluas ke `.enr-richtext`; IIFE baru
+  `initEmailNotification` (pilihan template mengisi subject+pesan, pencarian template client-side).
+- `assets/css/app.css` — section `.enr-*` untuk Email Notification Page.
+- `test/ojs_landing_web/controllers/editor_controller_test.exs` — test Step 1, Step 2, dan
+  POST send-to-review masih men-transisi ke `:external_review`.
+
+### Status
+- `mix precommit` lulus: 154 test, tanpa warning.
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Editorial Dashboard & Workflow: Timing "Assign Reviewers", label "Review (Round 1)", dan komponen rendering stage/workflow
+
+### 1. Tombol "Assign Reviewers" hanya muncul setelah "Send for Review"
+- **Sebelum:** `EditorHTML.editorial_actions/1` memeriksa `stage in [:initial_review, :external_review] and not row.has_reviewers`. Karena submission langsung ber-stage `:initial_review` saat di-submit author, tombol **Assign Reviewers** muncul segera setelah editor ditugaskan — sebelum alur send-to-review terjadi.
+- **Sesudah:** Kondisi diubah menjadi `stage == :external_review and not row.has_reviewers`. Sekarang:
+  - Setelah assign editor (stage `:initial_review`/Submission), kolom EDITORIAL ACTIVITY **kosong**.
+  - Setelah editor meng-klik **Send for Review** di workflow view (stage berubah ke `:external_review`), barulah tombol **Assign Reviewers** muncul.
+
+### 2. Kolom EDITORIAL ACTIVITY kosong setelah editor ditugaskan
+- **Sebelum:** Setelah editor ditugaskan, cabang fallback `true ->` di `editorial_actions/1` mengembalikan aksi spesifik stage (mis. "Send for Review").
+- **Sesudah:** Cabang `true ->` mengembalikan `nil`, sehingga setelah has_editor=true kolom EDITORIAL ACTIVITY kosong (kecuali kondisi lain yang lebih awal terpenuhi: Assign Editor, Complete Submission, atau Assign Reviewers saat `:external_review`). Fungsi `next_action_for_stage/1` yang kini tidak terpakai dihapus (hindari warning unused).
+
+### 3. Label stage & menu workflow "External Review" → "Review (Round 1)"
+- `EditorHTML.stage_label(:external_review)` diubah dari `"External Review"` menjadi `"Review (Round 1)"` — berdampak konsisten pada kolom **STAGE** dashboard editorial, workflow page, dan activity page.
+- Label tab workflow menu `workflow_3_1` diubah dari `"External Review"` menjadi `"Review Round 1"` (menyamakan judul kartu "Review Round 1" pada `workflow.html.heex`) di `EditorController` dan `AuthorController`.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html.ex` — `editorial_actions/1` (kondisi `stage == :external_review`, cabang `true -> nil`), `stage_label/1` ("Review (Round 1)"), hapus `next_action_for_stage/1`.
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — label menu `workflow_3_1` → "Review Round 1".
+- `lib/ojs_landing_web/controllers/author_controller.ex` — label menu `workflow_3_1` → "Review Round 1".
+
+### Status
+- `mix precommit` lulus: 151 test, tanpa warning.
+
+## Editorial Dashboard: EDITORIAL ACTIVITY kolom kosong setelah Assign Editor
+
+### Bug
+- Pada `/dashboard/editorial?currentViewId=active`, setelah editor ditugaskan ke submission, kolom **EDITORIAL ACTIVITY** menjadi kosong (tidak ada tombol **Assign Reviewers** maupun aksi lain).
+- Sebelum perbaikan: `has_reviewers?/1` membandingkan status assignment (`:action_required`, `:in_progress`, `:completed`) sebagai atom, tapi data mungkin disimpan sebagai string; dan `editorial_actions/1` memeriksa `row.stage in [:initial_review, :external_review]` yang gagal jika stage berupa string.
+
+### Perbaikan
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — `has_reviewers?/1` menormalkan status ke atom via `normalize_status/1` (handle atom & string).
+- `lib/ojs_landing_web/controllers/editor_html.ex` — `editorial_actions/1` menormalkan stage ke atom via `normalize_stage/1` sebelum membandingkan dengan daftar atom stage.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — helper `normalize_status/1` + `has_reviewers?/1`.
+- `lib/ojs_landing_web/controllers/editor_html.ex` — helper `normalize_stage/1` + `editorial_actions/1`.
+
+### Status
+- `mix precommit` lulus: 151 test, tanpa warning.
+
+## Editorial Dashboard: Assign Editor & Participants di Workflow Page
+
+### 1. Kolom EDITORIAL ACTIVITY: "Assign Editor" hilang setelah editor ditugaskan
+- **Sebelum:** Penugasan editor tidak mempengaruhi tampilan kolom **EDITORIAL ACTIVITY** — tombol **Assign Editor** tetap tampil meski editor sudah ditambahkan.
+- **Sesudah:** `EditorHTML.editorial_actions/1` memeriksa `not row.has_editor` sebagai kondisi **pertama** (terlepas dari stage). Setelah `Submission.assign_editor/2` menambahkan editor ke `submission.editors`, `has_editor?` mengembalikan `true` sehingga tombol **Assign Editor** **tidak lagi tampil**, dan kolom menampilkan aksi selanjutnya yang sesuai (Complete Submission, Assign Reviewers, atau aksi spesifik stage).
+
+### 2. Workflow Page: Participants menampilkan editor yang ditugaskan
+- **Sidebar** (`workflow.html.heex` lines 121–144) & **Panel Participants** (lines 415–426): sebelumnya hanya menampilkan author + `@user` (pengguna login). Kini mengiterasi `@submission.editors || []` sehingga **semua editor yang ditugaskan** tampil dengan label "Editor" (avatar biru, nama, role).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html.ex` — `editorial_actions/1`: kondisi Assign Editor jadi `not row.has_editor`.
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — dua section Participants (sidebar + main content) menampilkan `@submission.editors`.
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — render workflow dengan `mode: :editor` (fix KeyError `@mode`).
+
+### Status
+- `mix precommit` lulus: 145 test, tanpa warning.
+- `mix assets.build` sukses.
+
+## Stepper wizard submission: perbaikan logika warna status step
+
+Perbaikan pada stepper wizard submission (`/submission/wizard/:id?tab=...`) terkait penentuan
+step mana yang tampil **hijau** (`is-done`) vs **biru** (`is-current`).
+
+### Bug 1: step aktif (current) ikut berwarna hijau
+- **Gejala:** step yang sedang dibuka (mis. Contributors) tampil hijau padahal masih aktif,
+  tidak biru.
+- **Penyebab:** template menambahkan class `is-done` ke semua step yang `wizard_step_done?`
+  mengembalikan `true`, termasuk step yang sedang aktif. Karena CSS `is-done` didefinisikan
+  setelah `is-current`, warna hijau menimpa biru.
+- **Perbaikan:** di `edit_submission.html.heex`, class `is-done` kini hanya diterapkan bila step
+  **bukan** tab aktif: `elem(tab, 0) != @current_tab && wizard_step_done?(...)`.
+
+### Bug 2: step Review sudah hijau meski belum sampai ke sana
+- **Gejala:** step Review tampil hijau padahal submission belum disubmit.
+- **Penyebab:** `tab_done?("review", ...)` sebelumnya hanya mengecek apakah details + files +
+  contributors sudah terisi data — artinya hijau begitu tiga step awal lengkap, tanpa menunggu
+  submission benar-benar disubmit.
+- **Perbaikan:** `tab_done?("review", ...)` kini memakai `submission.status != :incomplete`,
+  sehingga hanya hijau setelah author menekan **Submit to Journal**.
+
+### Bug 3: step For the Editor tetap abu meski sudah diisi
+- **Gejala:** step For the Editor tidak pernah hijau walaupun komentar sudah diketik.
+- **Penyebab:** `tab_done?("editors", ...)` salah memeriksa `length(submission.editors || []) > 0`
+  — daftar editor yang diisi oleh **editor**, bukan field `editor_comments` yang diisi author
+  di tab ini.
+- **Perbaikan:** `tab_done?("editors", ...)` kini memeriksa `submission.editor_comments`.
+  Catatan: komentar untuk editor bersifat opsional, sehingga step ini baru hijau jika komentar
+  terisi (tidak akan hijau bila sengaja dikosongkan).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/author_html/edit_submission.html.heex` — class `is-done`
+  hanya untuk step non-aktif.
+- `lib/ojs_landing_web/controllers/author_html.ex` — `tab_done?("review", ...)` berbasis
+  `submission.status`; `tab_done?("editors", ...)` memakai `editor_comments`.
+
+### Status
+- `mix compile` bersih.
+
+## Edit Contributor kini dibuka lewat Modal Window + tombol panah urutan contributor berfungsi
+
+### "Edit Contributor" membuka Modal Window
+Pada wizard submission (`/submission/wizard/:id?tab=contributors`), klik **Edit** pada baris
+contributor sebelumnya membuka form edit **inline** di atas daftar (`view=edit&contributor_id=...`).
+Kini form edit ditampilkan sebagai **Modal Window** (`#contributor-edit-modal`) berisi seluruh field
+profil contributor (given name, family name, preferred public name, email, country, affiliation,
+bio statement, role, primary contact, include in public list).
+
+- Modal terbuka **otomatis** saat halaman dirender dengan `editing_contributor` (mengikuti
+  parameter `view=edit`), lalu mem-focus field Given name.
+- Form modal me-*submit* ke handler yang sama (`handle_contributor_edit/5` → PUT
+  `/submission/wizard/:id?tab=contributors` dengan `submission[contributor_edit_id]` dan
+  `submission[contributor_edit][...]`), lalu redirect kembali ke tab contributors.
+- Modal dapat ditutup lewat tombol `×`, **Cancel**, klik area overlay, atau **Escape**; `body`
+  diberi class `ojs-modal-open` untuk mengunci scroll.
+
+### Perbaikan: tombol panah (↑/↓) urutan contributor dapat diklik
+Pada mode order (`/submission/wizard/:id?tab=contributors&view=order`), tombol **↑/↓** sebelumnya
+di-hardcode dengan atribut `disabled` sehingga tidak dapat diklik dan reorder tidak berfungsi.
+
+Perbaikan: tombol panah kini menjadi form POST terpisah (masing-masing membawa
+`submission[move_contributor_id]` dan `submission[move_dir]` = `up`/`down`) yang memanggil
+`Submission.move_contributor/3` untuk menukar posisi contributor di daftar, lalu redirect kembali
+ke mode order. Tombol **↑** dinonaktifkan pada contributor pertama dan **↓** pada contributor
+terakhir (batas daftar).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/author_html/edit_submission.html.heex` — form edit contributor
+  dipindah dari inline card atas daftar menjadi modal `#contributor-edit-modal`; JS buka otomatis +
+  tutup (close, cancel, overlay, Escape); tombol panah order menjadi form POST dengan
+  `move_contributor_id`/`move_dir`.
+- `lib/ojs_landing_web/controllers/author_controller.ex` — klausa dispatch baru
+  `handle_contributor_move/4` di `update_submission/2` yang memanggil `Submission.move_contributor/3`
+  lalu redirect ke `?tab=contributors&view=order`.
+- `lib/ojs_landing/submission.ex` — fungsi baru `move_contributor/3` untuk menukar posisi
+  contributor (dir `up`/`down`) dan menyimpannya ke store.
+- `assets/css/app.css` — `.ojs-contributor-order form { display: flex; margin: 0 }` agar form
+  pembungkus tombol tidak merusak layout tombol 30×30.
+
+### Status
+- `mix compile` bersih.
+- `mix precommit` lolos (151 test, 0 failure).
+
+## Add Contributor kini dibuka lewat Modal Window + perbaikan kontributor tertimpa
+
+### "Add Contributor" membuka modal
+Pada wizard submission (`/submission/wizard/:id?tab=contributors`), tombol **Add Contributor**
+sebelumnya merupakan link navigasi yang membuka halaman edit contributor sebaris
+(`view=edit&contributor_id=...`). Kini tombol tersebut menjadi `<button type="button">` yang
+membuka **Modal Window** (`#contributor-modal`) berisi form tambahan contributor lengkap (given
+name, family name, preferred public name, email, country, affiliation, bio statement, role,
+primary contact, include in public list).
+
+- Form modal me-*submit* ke handler yang sama (`handle_contributor_edit/5` → PUT
+  `/submission/wizard/:id?tab=contributors` dengan `submission[contributor_edit_id]` dan
+  `submission[contributor_edit][...]`), lalu redirect kembali ke tab contributors.
+- Modal dapat ditutup lewat tombol `×`, tombol **Cancel**, klik area overlay, atau tombol
+  **Escape**. `body` diberi class `ojs-modal-open` untuk mengunci scroll saat modal terbuka.
+- `<.form>` di dalam modal tidak menggunakan `<.input>`, melainkan input biasa dengan
+  `name="submission[contributor_edit][...]"` mengikuti pola form edit contributor yang sudah ada.
+
+### Perbaikan: role contributor lain berubah saat menambah contributor
+Gejala: ketika menambah contributor, contributor lain yang tadinya **author** ikut berubah menjadi
+**translator**.
+
+Akar masalah: saat submission **belum punya contributor tersimpan**, daftar menampilkan
+contributor "default" (penulis yang sedang login) secara **virtual** — dengan **id sama dengan
+`user.id`**. Contributo virtual ini tidak benar-benar tersimpan, sehingga:
+1. Ketika satu contributor sungguhan ditambahkan, contributor default penulis itu **hilang/
+   tergantikan** (karena daftar tersimpan menjadi tidak kosong).
+2. Id contributor default (`user.id`) bisa **bentrok** dengan id contributor yang sudah ada, dan
+   `Submission.update_contributor/3` mencocokkan berdasarkan id → contributor lama **ditimpa**
+   (termasuk `role`-nya) alih-alih menambah yang baru.
+
+Perbaikan di `AuthorController.handle_contributor_edit/5`: ditambahkan `ensure_default_contributor/2`
+yang, jika submission belum punya contributor tersimpan, **mempatuhkan penulis yang sedang login
+sebagai contributor primary (role author)** sebelum edit/add dijalankan. Hasilnya penulis utama
+tetap author + primary dan tidak lagi hilang/berubah, sedangkan contributor baru ditambahkan
+sebagai entri terpisah.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/author_html/edit_submission.html.heex` — tombol Add Contributor
+  menjadi `<button>` pembuka modal; markup modal `#contributor-modal` (form tambah contributor);
+  JavaScript buka/tutup modal (tombol close, cancel, overlay, Escape).
+- `lib/ojs_landing_web/controllers/author_controller.ex` — `ensure_default_contributor/2` dipanggil
+  dari `handle_contributor_edit/5`.
+- `assets/css/app.css` — style modal contributor (`ojs-modal-*`) dengan desain OJS 3.5 PKP
+  (`--ojs-primary: #006798`, font Noto Serif), termasuk `.ojs-modal-overlay[hidden] { display: none }`
+  agar atribut `hidden` tidak ditimpa oleh `display: flex`.
+
+### Status
+- `mix compile` bersih.
+- Test `author_controller_test.exs` lolos (31 test, 0 failure).
+
 ## My Submissions: tombol "View" membuka workflow read-only untuk author
 
 Tombol **View** pada `/dashboard/mySubmissions` sebelumnya membuka **editor workflow page**
