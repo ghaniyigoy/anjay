@@ -753,7 +753,7 @@ window.arResetFilters = function() {
   arFilterReviewers();
 };
 
-function arUpdateFilterCount() {
+window.arUpdateFilterCount = function() {
   var count = document.getElementById('ar-filters-count');
   var n = document.querySelectorAll('#ar-active-filters .ar-active-filter').length;
   if (count) count.textContent = n ? n + ' filter' + (n > 1 ? 's' : '') : '';

@@ -173,10 +173,14 @@ defmodule OjsLandingWeb.EditorController do
         ap_submissions_json:
           filtered_submissions
           |> Enum.map(fn row ->
+            sub = OjsLanding.Submission.get(row.id)
+
             %{
               "id" => row.id,
               "title" => row.title,
-              "author" => row.author
+              "author" => row.author,
+              "username" => author_username(sub),
+              "affiliation" => author_affiliation(sub)
             }
           end)
           |> Jason.encode!()
@@ -721,6 +725,38 @@ defmodule OjsLandingWeb.EditorController do
       Enum.any?(assignments, &(&1.status in [:action_required, :in_progress])) -> "Busy"
       Enum.any?(assignments, &(&1.status == :completed)) -> "Available"
       true -> "Available"
+    end
+  end
+
+  # Username author (akun yang mengirim submission). Fallback ke username kontributor.
+  defp author_username(submission) do
+    case primary_contact(submission) do
+      nil ->
+        Map.get(submission, :author_username) || ""
+
+      contributor ->
+        Map.get(contributor, :username) || Map.get(submission, :author_username) || ""
+    end
+  end
+
+  # Afiliasi author diambil dari primary contact contributor, lalu fallback ke akun user.
+  defp author_affiliation(submission) do
+    case primary_contact(submission) do
+      nil ->
+        account_affiliation(submission)
+
+      contributor ->
+        case Map.get(contributor, :affiliation) do
+          aff when aff in [nil, ""] -> account_affiliation(submission)
+          aff -> aff
+        end
+    end
+  end
+
+  defp account_affiliation(submission) do
+    case OjsLanding.User.find_by_username(Map.get(submission, :author_username)) do
+      nil -> ""
+      user -> user.affiliation || ""
     end
   end
 

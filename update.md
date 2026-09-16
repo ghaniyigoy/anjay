@@ -2,6 +2,161 @@
 
 Catatan perubahan terbaru pada aplikasi.
 
+## Editorial Dashboard: perbaikan tombol "Assign Reviewers" yang tidak membuka drawer
+
+### Bug
+- Tombol **Assign Reviewers** pada kolom **EDITORIAL ACTIVITY** di `/dashboard/editorial` tidak
+  berfungsi (klik tidak menampilkan apa-apa).
+
+### Penyebab
+- `assets/js/app.js` di-bundle oleh esbuild menjadi IIFE, sehingga fungsi tingkat-atas
+  `function arUpdateFilterCount()` tersaring ke dalam scope bundle dan **tidak** terpasang pada
+  `window`.
+- Skrip inline `editorial.html.heex` (`renderArReviewerCards`) memanggil `arUpdateFilterCount()`,
+  yang memicu `ReferenceError: arUpdateFilterCount is not defined` — eksekusi berhenti sebelum
+  `overlay.classList.add('ar-open')`, sehingga drawer Add Reviewer tidak pernah terbuka.
+
+### Perbaikan
+- `assets/js/app.js` — `arUpdateFilterCount` kini diekspos ke global:
+  `window.arUpdateFilterCount = function() {...}` (sejalan dengan helper `ar*` lain yang sudah
+  memakai `window.`).
+- `mix assets.build` dijalankan ulang agar bundle baru tersaji; pengguna perlu hard-refresh
+  (Ctrl+F5).
+
+### Status
+- Drawer **Add Reviewer** (slide-in kanan ke kiri) kini terbuka, merender kartu reviewer, dan
+  tombol **Select Reviewer** dapat mengirim `POST /dashboard/editorial/:id/assign-reviewer`.
+
+## Editorial Dashboard: "Assign Reviewers" menjadi Add Reviewer Page (slide-in kanan ke kiri)
+
+Tombol **Assign Reviewers** pada kolom **EDITORIAL ACTIVITY** di
+`/dashboard/editorial?currentViewId=assigned-to-me` kini membuka **Add Reviewer Page** berupa
+drawer yang menyusup dari **kanan ke kiri** (`translateX(100%) → 0`, animasi 0.3s, backdrop gelap)
+— menggantikan modal centered lama (`ar-modal-overlay`). Drawer memakai pola slide-in yang sama
+dengan Add Reviewer di workflow `workflow_3_1` (`ar-overlay`/`ar-panel`) sehingga tampilannya
+konsisten di kedua halaman.
+
+### Tampilan
+- **Header** biru `#006798`: tombol **panah kiri** (tutup) + judul terpusat **"Add Reviewer"**
+  (spacer di kanan agar judul seimbang).
+- Section **Submission Author List**: kotak berisi **avatar inisial + `username - affiliation`**
+  (diisi dari submission yang sedang diproses; fallback ke nama author bila username kosong).
+- Heading **Locate a Reviewer** di kiri, sejajar di kanan: **Search box** (memfilter langsung saat
+  mengetik via `arFilterReviewers()`) + tombol **Filters**.
+- **Sidebar Filters** (slide di kiri): opsi bertombol **+** (Rated at least, Reviews completed,
+  Days since last review assigned, Active reviews currently assigned, Average days to complete
+  review) dengan counter "n filters", tombol **Reset**, dan tombol hapus per filter.
+- **Daftar reviewer**: kartu `.ar-reviewer-card` yang di-render **client-side** ke `#ar-reviewer-list`
+  dari `window.__arReviewers` (`@ap_users_json`), menampilkan username, affiliation, dan statistik
+  Review Count / Last Review / Status. Tombol **Select Reviewer** langsung mensubmit hidden form
+  `#assign-reviewer-form` → `POST /dashboard/editorial/:id/assign-reviewer`.
+- **Footer**: **Create New Reviewer** dan **Enroll Existing User** (placeholder, alert "coming soon").
+- Navigasi tutup: panah kiri, klik backdrop, atau tombol **Escape** (reuse handler global di
+  `assets/js/app.js`).
+
+### Data
+- `EditorController.editorial/2` (klausa dashboard) kini mengirim `ap_submissions_json` dengan field
+  tambahan `username` dan `affiliation` per submission — diambil dari **primary contact contributor**
+  (fallback `author_username` / akun user) melalui helper baru `author_username/1` + `author_affiliation/1`.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — `ap_submissions_json` kini menyertakan
+  `username` + `affiliation`; helper baru `author_username/1`, `author_affiliation/1`,
+  `account_affiliation/1`.
+- `lib/ojs_landing_web/controllers/editor_html/editorial.html.heex` — markup Add Reviewer diganti
+  dari centered modal `ar-modal-overlay` menjadi slide-in drawer `ar-overlay`/`ar-panel` (header
+  panah kiri, Submission Author List, Locate a Reviewer + Search + Filters, sidebar filters, kartu
+  reviewer client-side, footer); JS `openAddReviewerModal`/`renderArReviewerCards`/`selectArReviewer`
+  memakai class `ar-open` dan reuses yang global di app.js.
+
+### Status
+- `mix precommit` lulus: 159 test, 0 failures.
+
+## Workflow `workflow_3_1` (editor): perbaikan interaksi kartu Files for Review, Participants, Review Discussions, dan modal Add Reviewer
+
+Serangkaian perbaikan pada halaman workflow editor di
+`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`.
+
+### Upload Review File tidak lagi muncul di belakang dialog Current Review Files
+- Saat tombol **Upload Review Files** diklik dari dialog **Current Review Files For Round 1**
+  (dibuka lewat **Upload/Select Files** pada kartu **Files for Review**), modal upload kini tampil
+  di depan. Penyebabnya `.ufr-overlay`/`.urf-overlay` ber-`z-index: 10000`, lebih rendah dari
+  `.rfs-overlay` (10010), sehingga modal upload tergambar di belakang dialog.
+- `assets/css/app.css` — `.urf-overlay` dinaikkan menjadi **`z-index: 10015`** (di atas rfs 10010,
+  tetap di bawah overlay lain: ar 10020, apd 10025, prd 10030, udf 10040).
+
+### Tombol Assign pada kartu Participants berfungsi kembali
+- Tombol **Assign** di kartu **Participants** (`#btn-assign-participant-review`) sebelumnya tidak
+  punya `onclick` sehingga drawer Assign Participant tidak pernah terbuka.
+- `workflow.html.heex` — ditambahkan `onclick="openAssignParticipantDrawer()"` (sama dengan tombol
+  Assign di `workflow_1`), sehingga membuka drawer `.apd-*` yang sama.
+
+### Tombol Add Discussion pada kartu Review Discussions berfungsi kembali
+- Tombol **Add Discussion** di kartu **Review Discussions** (`#btn-add-discussion-review`) tidak
+  punya `onclick`, padahal tombol serupa di Pre-Review Discussions sudah memanggil
+  `openPreDiscussionModal()`.
+- `workflow.html.heex` — ditambahkan `onclick="openPreDiscussionModal()"` untuk membuka modal
+  **Add discussion** (`.prd-*`) instance yang sama.
+
+### Modal Add Reviewer: daftar author tanpa dropdown + pemilihan reviewer langsung
+- Modal **Add Reviewer** (slide-in `.ar-overlay`) kini menampilkan panel **Submission Author List**
+  di bagian atas sebagai daftar statis: avatar inisial + nama + afiliasi setiap kontributor
+  submission — **tanpa dropdown** (sebelumnya pemilihan mengandalkan dropdown `(username) - (affiliation)`).
+- Pemilihan reviewer diubah dari dropdown (tombol **Select Reviewer** + panah membuka panel
+  `ar-select-dropdown` berisi statistik) menjadi **tombol langsung**: klik **Select Reviewer**
+  langsung mengirim form assignment (`arSelectReviewer('ar-assign-form-<id>')`). Tombol panah dan
+  seluruh markup `.ar-select-dropdown` dihapus.
+
+### File yang diubah
+- `assets/css/app.css` — `.urf-overlay` `z-index` 10000 → 10015.
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — `#btn-assign-participant-review`
+  + `#btn-add-discussion-review` memakai onclick yang benar; modal Add Reviewer: panel static
+  **Submission Author List** + tombol **Select Reviewer** langsung submit assignment.
+
+### Status
+- `mix precommit` lulus: 159 test, tanpa warning.
+
+## Editorial Dashboard: "Assign Editor" diubah menjadi Assign Participant Drawer (slide-in kanan)
+
+Tombol **Assign Editor** pada kolom **EDITORIAL ACTIVITY** di `/dashboard/editorial` kini membuka
+**Assign Participant page** berupa **drawer yang menyusup dari kanan ke kiri** (`translateX(100%) → 0`,
+animasi 0.3s, backdrop gelap) — menggantikan modal lama (`ap-` prefix). Drawer memakai pola slide-in
+yang sama dengan drawer Assign Participant di `workflow_1` (prefix `.apd-*`), sehingga tampilan kini
+konsisten di kedua halaman.
+
+### Tampilan
+- **Header** biru `#006798`: tombol **panah kiri** (tutup) + judul terpusat **"Assign Participant"**
+  (spacer di kanan agar judul seimbang).
+- Section **Locate a User** (heading besar `.apd-heading`):
+  - Dropdown role (`#ap-role-filter`, class `.apd-select`) dengan opsi **Journal Editor**,
+    **Section Editor**, **Guest Editor**, **Funding coordinator**, **Author**, **Translator**.
+  - Di kanan dropdown, kotak **pencarian** (ikon magnifier + input `#ap-search-name`) yang memfilter
+    tabel langsung saat mengetik (`oninput="filterAssignEditorUsers()"`).
+- Heading **Search User By Name** (`.apd-search-heading`, label uppercase di bawah baris Locate a User).
+- **Tabel user** (`#ap-users-table`, header **Name | Assignments | Affiliation | Reviewing Interest**)
+  di-render client-side ke `#ap-users-tbody` dari `window.__apUsers` (`@ap_users_json`); kolom
+  Assignments = `reviews_completed`, Reviewing Interest = `reviewing_interests`. Baris terpilih
+  ter-highlight `.apd-user-selected`; empty-state **"No users found."** (`#ap-no-results`).
+- **Bagian Message**: instruksi "Choose a predefined message to use, or fill out the form below." +
+  dropdown **Predefined Message** (Discussion (Submission) / Assign Editor) + editor rich-text
+  (B/I/U/Bullet via `execCommand`), toolbar tetap memakai class `ap-richtext-*`.
+- **Footer**: **Cancel** (tutup drawer) + **Send** (submit hidden form `#assign-editor-form` →
+  `POST /dashboard/editorial/assign-editor`; alert "Please select a user first." bila belum ada user
+  terpilih).
+- Navigasi tutup: panah kiri, Cancel, klik backdrop, atau **Escape**.
+- `openAssignEditorModal(submissionId)` kini men-toggle class **`apd-open`** pada `#assign-editor-overlay`
+  (bukan `style.display`), dan user filter/select memakai class `.apd-user-row` / `.apd-user-selected`.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/editorial.html.heex` — markup modal lama diganti
+  drawer `.apd-*` (overlay `#assign-editor-overlay`, panel, header, locate row, heading
+  "Search User By Name", tabel `#ap-users-table`, message section, footer Cancel/Send); JS
+  open/close memakai toggle class `apd-open`; `filterAssignEditorUsers()` memperbarui class baris
+  menjadi `apd-user-row`/`apd-user-selected` dan kolom Assignments/Reviewing Interest dari
+  `u.reviews_completed`/`u.reviewing_interests`. Hidden form `#assign-editor-form` tidak berubah.
+- `assets/css/app.css` — tambah class **`.apd-search-heading`** (label "Search User By Name").
+- `AGENTS.md` — deskripsi "Assign Editor modal" diperbarui menjadi "Assign Editor drawer".
+
 ## Workflow `workflow_1` (editor): drawer "Assign Participant" di-redesign dengan tabel user + bagian Message + tombol Cancel/OK
 
 Pada halaman workflow editor (`/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_1`),

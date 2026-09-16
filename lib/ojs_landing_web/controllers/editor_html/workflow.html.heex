@@ -848,7 +848,12 @@
             <section class="wf-card">
               <div class="wf-card-header">
                 <h2 class="wf-card-title">Review Discussions</h2>
-                <button type="button" class="wf-btn-link" id="btn-add-discussion-review">
+                <button
+                  type="button"
+                  class="wf-btn-link"
+                  id="btn-add-discussion-review"
+                  onclick="openPreDiscussionModal()"
+                >
                   <svg
                     width="16"
                     height="16"
@@ -998,7 +1003,12 @@
               <section class="wf-card">
                 <div class="wf-card-header">
                   <h2 class="wf-card-title">Participants</h2>
-                  <button type="button" class="wf-btn-link" id="btn-assign-participant-review">
+                  <button
+                    type="button"
+                    class="wf-btn-link"
+                    id="btn-assign-participant-review"
+                    onclick="openAssignParticipantDrawer()"
+                  >
                     <svg
                       width="16"
                       height="16"
@@ -1924,6 +1934,31 @@
       </div>
 
       <div class="ar-body">
+        <%!-- Submission Author List (plain list, no dropdown) --%>
+        <div class="ar-author-panel">
+          <div class="ar-panel-heading">Submission Author List</div>
+          <% ar_contributors = @submission.contributors || [] %>
+          <%= if ar_contributors == [] do %>
+            <div class="ar-author-entry">
+              <span class="ar-author-avatar">—</span>
+              <div class="ar-author-info">
+                <strong>No authors listed</strong>
+              </div>
+            </div>
+          <% else %>
+            <%= for ar_c <- ar_contributors do %>
+              <% ar_info = contributor_display(ar_c) %>
+              <div class="ar-author-entry">
+                <span class="ar-author-avatar">{contributor_initials(ar_info.name)}</span>
+                <div class="ar-author-info">
+                  <strong>{ar_info.name}</strong>
+                  <span class="ar-author-title">{ar_c[:affiliation] || ar_c[:email] || "Author"}</span>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+
         <%!-- Locate a Reviewer --%>
         <div class="ar-locate-head">
           <h3 class="ar-section-title">Locate a Reviewer</h3>
@@ -2068,30 +2103,6 @@
                     <div class="ar-reviewer-topline">
                       <span class="ar-reviewer-name">{reviewer["username"] || "—"}</span>
                       <span class="ar-reviewer-select-wrap">
-                        <button
-                          type="button"
-                          class="ar-select-reviewer-btn"
-                          onclick="arToggleDropdown(this)"
-                        >
-                          Select Reviewer
-                        </button>
-                        <button
-                          type="button"
-                          class="ar-select-reviewer-arrow"
-                          onclick="arToggleDropdown(this)"
-                          aria-label="Toggle dropdown"
-                        >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2.5"
-                          >
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                          </svg>
-                        </button>
                         <form
                           method="POST"
                           action={"/dashboard/editorial/#{@submission.id}/assign-reviewer"}
@@ -2110,69 +2121,13 @@
                             value={reviewer["username"] || ""}
                           />
                         </form>
-                        <div
-                          class="ar-select-dropdown ar-select-dropdown-wide"
-                          id={"ar-select-dropdown-#{reviewer["id"]}"}
-                          onclick="event.stopPropagation()"
+                        <button
+                          type="button"
+                          class="ar-select-reviewer-btn"
+                          onclick={"arSelectReviewer('ar-assign-form-#{reviewer["id"]}')"}
                         >
-                          <div class="ar-dropdown-stat-panel">
-                            <div class="ar-dropdown-stat-title">Reviewer Statistics Panel</div>
-                            <div class="ar-dropdown-stat-grid">
-                              <div class="ar-dropdown-stat">
-                                <span class="ar-dropdown-stat-label">Active reviews currently assigned</span>
-                                <span class="ar-dropdown-stat-value">{reviewer["active_reviews"] ||
-                                  0}</span>
-                              </div>
-                              <div class="ar-dropdown-stat">
-                                <span class="ar-dropdown-stat-label">Reviews Completed</span>
-                                <span class="ar-dropdown-stat-value">{reviewer[
-                                  "reviews_completed"
-                                ] || 0}</span>
-                              </div>
-                              <div class="ar-dropdown-stat">
-                                <span class="ar-dropdown-stat-label">Review requests declined</span>
-                                <span class="ar-dropdown-stat-value">{reviewer["reviews_declined"] ||
-                                  0}</span>
-                              </div>
-                              <div class="ar-dropdown-stat">
-                                <span class="ar-dropdown-stat-label">Review requests cancelled</span>
-                                <span class="ar-dropdown-stat-value">{reviewer[
-                                  "reviews_cancelled"
-                                ] || 0}</span>
-                              </div>
-                              <div class="ar-dropdown-stat">
-                                <span class="ar-dropdown-stat-label">Days since last review assigned</span>
-                                <span class="ar-dropdown-stat-value">{reviewer[
-                                  "days_since_last_review"
-                                ] || 0}</span>
-                              </div>
-                              <div class="ar-dropdown-stat">
-                                <span class="ar-dropdown-stat-label">Average days to complete review</span>
-                                <span class="ar-dropdown-stat-value">{reviewer[
-                                  "avg_days_to_complete"
-                                ] || 0}</span>
-                              </div>
-                            </div>
-                            <div class="ar-dropdown-interests">
-                              <span class="ar-dropdown-interests-label">Reviewing Interests</span>
-                              <span class="ar-dropdown-interests-value">{reviewer[
-                                "reviewing_interests"
-                              ]}</span>
-                            </div>
-                          </div>
-                          <div
-                            class="ar-select-dropdown-item"
-                            onclick={"arSelectReviewer('ar-assign-form-#{reviewer["id"]}')"}
-                          >
-                            Select Reviewer
-                          </div>
-                          <div
-                            class="ar-select-dropdown-item"
-                            onclick="arCloseAllDropdowns()"
-                          >
-                            Cancel
-                          </div>
-                        </div>
+                          Select Reviewer
+                        </button>
                       </span>
                     </div>
                     <div class="ar-reviewer-affiliation">

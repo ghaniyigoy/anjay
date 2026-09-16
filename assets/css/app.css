@@ -15837,7 +15837,7 @@ body.ojs-modal-open {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0);
-  z-index: 10000;
+  z-index: 10015;
   display: flex;
   justify-content: flex-end;
   pointer-events: none;
@@ -17639,6 +17639,17 @@ body.ojs-modal-open {
   font-size: 19px;
   font-weight: 600;
   color: #333;
+  font-family: "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* --- "Search User By Name" section label (below Locate a User row) --- */
+.apd-search-heading {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   font-family: "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
