@@ -2,6 +2,432 @@
 
 Catatan perubahan terbaru pada aplikasi.
 
+## Reviewer (`/review/:id`): "Upload File" di Attached Files membuka Upload Discussion File Modal (drawer kanan→kiri) + label "Attached Files" di luar kotak dihapus
+
+Pada drawer **Add Discussion**, dihapus label **"Attached Files"** yang berada **di luar** kotak
+(di antara `.prd-form-error` dan `.prd-attach-box`) — yang ditampilkan hanya judul di dalam kotak
+(`.prd-attach-title`).
+
+Tombol **Upload File** (`#rd-btn-upload-file`) di kotak Attached Files tidak lagi membuka file
+picker langsung, melainkan membuka **Upload Discussion File Modal** — drawer ala OJS 3.5 yang
+menyusup dari **kanan ke kiri** (`translateX(100%) → 0`, animasi 0.3s, backdrop gelap).
+
+### Fitur
+- **Header** biru `#006798`: tombol **panah kiri** (tutup) di kiri + judul terpusat
+  **"Upload a Discussion File"** (spacer di kanan agar judul seimbang).
+- **Stepper 3 langkah**: **1. Upload File** · **2. Review Details** · **3. Confirm** (nomor
+  lingkaran + connector, aktif biru, selesai hijau; step tercapai dapat diklik `rdudGoToStep`).
+- **Step 1 — Upload File**:
+  - Field wajib **Article Component** (`*` merah `.rdud-required`) dengan dropdown
+    **"Select article component"** dan opsi Article Text, Research Instrument, Research Materials,
+    Research Results, Transcript, Data Analysis, Data Set, Source Text, Other.
+  - Setelah memilih komponen, baris upload (`#rdud-upload-row`) muncul: Selected File Item
+    (drop zone klik/drag & drop, reuse `.rup-selected-item*`) di kiri + tombol **Upload File**
+    di kanan (`.urf-btn-upload`). Setelah file dipilih, tombol berubah menjadi **Change File**
+    (`.urf-btn-change-file`), nama + ukuran file tampil di box.
+  - **Continue** nonaktif (disabled) sampai komponen + file terisi (`rdudUpdateContinue`).
+- **Step 2 — Review Details**: menampilkan File Name, File Size, dan Article Component dari file
+  terpilih.
+- **Step 3 — Confirm**: teks **"File Added"** + nama file siap ditambahkan ke diskusi; tombol
+  **Upload** menambahkan file ke `rdAttachedFiles` dan men-render `renderReviewDiscussionAttachments()`
+  pada modal Add Discussion, lalu menutup drawer.
+- Footer rata kiri (`.rup-footer`): **Cancel** dan **Continue** (label: Continue → Continue →
+  Upload).
+- Navigasi tutup: panah kiri, Cancel, klik backdrop, atau **Escape** (handler sendiri agar tidak
+  bentrok dengan drawer Add Discussion).
+- Layering: overlay diberi class tambahan `.rdud-overlay` ber-`z-index: 10040` sehingga tampil di
+  atas drawer Add Discussion (`.prd-overlay` 10030); tanpa CSS tersebut modul tampil di belakang.
+- File picker lama (`#rd-file-input` multiple + `onReviewDiscussionFilesSelected`) dihapus.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — hapus label
+  `<label class="prd-label">Attached Files</label>` di luar kotak; tombol `#rd-btn-upload-file`
+  kini `onclick="openReviewDiscussionUploadModal()"`; input `#rd-file-input` + fungsi
+  `onReviewDiscussionFilesSelected` dihapus; markup drawer `#review-discussion-upload-overlay`
+  (header, stepper 3 step, field Article Component, upload row, footer); JS `rdud-*`:
+  `rdudReset`, `rdudOnComponentChange`, `rdudOnFileSelected`, `rdudRemoveFile`,
+  `rdudUpdateContinue`, `rdudShowStep`, `rdudGoToStep`, `rdudNextStep`, `rdudCommitUpload`,
+  `rdudBindDropzone`, `open/closeReviewDiscussionUploadModal`; wiring di `initReviewerFilesExtras`
+  (dropzone, overlay close, Escape).
+- `assets/css/app.css` — section `.rdud-*`: `.rdud-overlay` (z-index 10040), `.rdud-required`
+  (merah), `.rdud-upload-row` (margin atas).
+
+### Status
+- `mix compile` bersih; `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+- `mix precommit` lulus: 163 test, 0 failure.
+
+## Reviewer Review Page (`/review/:id`): tombol "Add Discussion" membuka slide-in drawer ala OJS (Participants + Subject + Message + Attached Files)
+
+Tombol **Add Discussion** di kotak **Review Discussions** (step 3 Download & Review dan panel
+Completion/step 4) sebelumnya membuka **modal centered** sederhana (`rp-modal-overlay`) dengan
+label Subject + textarea Message. Kini membuka **drawer yang menyusup dari kanan ke kiri**
+(`translateX(100%) → 0`, reuse pola `.prd-overlay`/`.prd-panel` workflow editor, width `720px`)
+lengkap ala OJS 3.5.
+
+### Fitur
+- **Header** biru `#006798`: tombol **panah kiri** (tutup) + judul **"Add Discussion"**.
+- **Participants** — section dengan baris checkbox (checked default) berisi user yang
+  berpartisipasi pada submission: **Reviewer** (dari `assignment.reviewer_name`, fallback nama
+  user login) dan **Author** (dari `assignment.author`), via helper baru `review_participants/2`.
+- **Subject** — input teks (`review-discussion-subject`, required).
+- **Message** — rich-text editor lengkap: toolbar **B / I / U / bullet list**
+  (`.prd-toolbar`/`.prd-richtext`, di-bind otomatis oleh `initRichtextEditors()` di `app.js`),
+  disinkronkan ke hidden input `message`. Saat submit, pesan divalidasi client-side — bila kosong
+  menampilkan `.prd-form-error` "A message is required to start the discussion." dan fokus ke editor.
+- **Attached Files** — kotak (`.prd-attach-box`) dengan judul + dua tombol kanan:
+  - **Search** (`.prd-btn-outline`) — toggle search bar inline yang memfilter file ter-attach.
+  - **Upload File** — membuka file picker (`#rd-file-input`, multiple); file terpilih dirender
+    sebagai chip (`.prd-attach-file-chip`) + tombol hapus (×) dan diserialisasi ke hidden
+    `attached_files` (JSON). Empty state "No files are attached to this discussion."
+- **Footer rata kanan**: tombol **Cancel** (menutup) dan **OK** (submit form →
+  `POST /review/:id/discussion`, `add_discussion/2`).
+- Navigator tutup: panah kiri, Cancel, backdrop, atau **Escape**.
+- Form di-reset setiap drawer dibuka (`resetReviewDiscussionForm`: subject/message/attach kosong).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — dua modal `rp-modal-overlay`
+  (step 3 & step 4) dihapus, diganti satu drawer `#review-discussion-overlay` di level halaman;
+  inline script: `openReviewDiscussionModal`/`closeReviewDiscussionModal`, `resetReviewDiscussionForm`,
+  `onReviewDiscussionFilesSelected`, `renderReviewDiscussionAttachments`, `toggleReviewDiscussionSearch`,
+  `filterReviewDiscussionAttachments`; binding semua tombol `#btn-add-discussion` via
+  `querySelectorAll` + validasi submit; handler Escape + overlay click.
+- `lib/ojs_landing_web/controllers/reviewer_html.ex` — helper baru `review_participants/2`
+  (+ `participant_user_name/1`).
+- `assets/css/app.css` — rule baru `.prd-form-error`, `.rd-file-input-hidden`, `.rd-attach-search*`,
+  `.rd-attach-file-row`, `.rd-remove-btn`.
+
+### Status
+- `mix format`, `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+- `mix precommit` lulus: 163 test, 0 failure.
+
+## Reviewer Review Page (`/review/:id`): kotak Review Discussions menampilkan tabel Name/From/Last Reply/Replies/Closed
+
+Kotak **Review Discussions** pada halaman review (`/review/:id`, step 3 Download & Review) sebelumnya
+merender diskusi sebagai daftar kartu `.rp-discussion` (subject + author + message + replies).
+Kini panel menampilkan **tabel** dengan kolom **Name | From | Last Reply | Replies | Closed**
+(reuse gaya `review-discussions-table` yang sama dengan panel Completion/step 4):
+
+### Fitur
+- Panel Review Discussions (step 3) kini selalu merender tabel — termasuk saat belum ada diskusi,
+  tabel tetap tampil dengan header kolom dan satu baris kosong `colspan=5` berisi
+  "No discussions yet." (`.rp-empty-state-cell`, bukan lagi empty-state terpisah).
+- Kolom: **Name** (link subject), **From** (author diskusi), **Last Reply**
+  (`last_reply_date/1`), **Replies** (jumlah reply), **Closed** (checkbox disabled).
+- Panel Completion (step 4) juga disesuaikan: tabel selalu dirender dengan row kosong
+  "No discussions have been started yet." bila belum ada diskusi.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — blok `rp-discussion-list`
+  di step 3 diganti tabel `#step3-discussions-table`; blok `review-discussions-empty` di step 4
+  diganti row empty `colspan=5`.
+- `assets/css/app.css` — rule baru `.review-discussions-table .rp-empty-state-cell`.
+
+### Status
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Reviewer Upload Drawer (`/review/:id`): drop zone menjadi Selected File Item + tombol berubah menjadi "Change File"
+
+Pada drawer **Upload File** (tombol Upload File di panel Reviewer Files), Step 1 di-redesign:
+
+### Fitur
+- Kotak drop zone (`.rup-dropzone`) diganti menjadi **Selected File Item** (`.rup-selected-item`):
+  box persegi panjang ber-icon file, nama file, dan meta (ukuran), plus tombol **Remove** (ikon
+  tong sampah, muncul hanya saat ada file terpilih). Saat kosong menampilkan placeholder
+  "No file selected" + petunjuk "Drag & drop a file here, or click to browse".
+- Fungsi drag & drop dan klik-untuk-browse tetap berjalan (id `#rup-dropzone` dipertahankan;
+  class state diganti `rup-selected-item-active`/`rup-selected-item-has-file`).
+- Tombol **Upload File** di ujung kanan berubah menjadi **Change File** saat file terpilih
+  (label + styling `urf-btn-change-file` putih/outline biru), dan kembali menjadi
+  "Upload File" saat file dihapus/di-reset. Status ukuran file pindah ke dalam box selected item.
+- Helper inline baru `rupRemoveFile/1` untuk membersihkan pilihan tanpa keluar drawer.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — markup Step 1: `.rup-dropzone`
+  + `#rup-upload-status` diganti `.rup-selected-item` (icon/info/remove) dan tombol
+  `#rup-btn-upload` + label `#rup-btn-upload-label`; JS `rupReset`/`rupOnFileSelected`/
+  `rupBindDropzone` memakai class baru + toggle label tombol.
+- `assets/css/app.css` — class `.rup-dropzone*` (kecuali overlay/drawer) dan `.rup-upload-status`
+  dihapus, diganti `.rup-selected-item*` (box, icon, info, name/meta, remove button; state
+  active/has-file), `.rup-upload-side` tanpa border (button di ujung kanan).
+
+### Status
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+
+## Reviewer (`/review/:id`): tombol "Upload File" di Reviewer Files membuka slide-in drawer berstepper
+
+Tombol **Upload File** di kotak **Reviewer Files** sebelumnya membuka modal centered sederhana
+(`rp-modal-overlay`) berisi label file + dropdown type. Kini membuka **drawer yang menyusup dari
+kanan ke kiri** (`translateX(100%) → 0`, reuse pola `.urf-overlay`/`.urf-modal`, width `720px`)
+dengan wizard 3 langkah ala OJS 3.5.
+
+### Fitur
+- **Header** biru `#006798`: tombol **panah kiri** (tutup) di kiri + judul terpusat **"Upload File"**
+  (spacer di kanan agar judul seimbang).
+- **Stepper 3 langkah**: **1. Upload File · 2. Review Details · 3. Confirm** (nomor lingkaran +
+  connector; step tercapai dapat diklik `rupGoToStep`, aktif biru, selesai hijau).
+- **Step 1 — Upload File**:
+  - **Drop zone** di kiri (`.rup-dropzone`, dashed border) dengan teks
+    **"Drag and drop a file here to begin upload"** + *"or click to browse files"* — mendukung
+    drag & drop (via `DataTransfer`) maupun klik untuk membuka file picker; border menjadi hijau
+    setelah file terpilih.
+  - Di kanan drop zone, kotak berisi tombol **Upload File** (`.urf-btn-upload`) + status nama &
+    ukuran file yang dipilih (`.rup-upload-status`).
+- **Footer rata kiri** (`.rup-footer`): tombol **Cancel** (menutup drawer) dan **Continue**
+  (`#rup-btn-continue`) — **nonaktif** (disabled) sampai file dipilih; label & alur:
+  Continue (Step 1) → Continue (Step 2) → **Upload** (Step 3).
+- **Step 2 — Review Details**: tampil File Name + File Size (dari file terpilih).
+- **Step 3 — Confirm**: teks **"File Added"** + nama file siap di-upload; tombol **Upload**
+  mensubmit `#rup-upload-form` (multipart) → **`POST /review/:id/file`**
+  (`ReviewerController.add_reviewer_file/2`, CSRF token hidden), sehingga file muncul di panel
+  Reviewer Files setelah redirect.
+- Navigator tutup: panah kiri, Cancel, atau klik backdrop (`bindModalOverlayClose`).
+- Semua logika drawer (reset, stepper, drop zone, submit) ada di inline script
+  `review.html.heex` (prefix `rup-*`), tidak menyentuh helper `urf-*` workflow editor.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — modal centered lama diganti
+  drawer `.urf-overlay`/`.rup-*`; inline script: `rupReset`, `rupOnFileSelected`, `rupShowStep`,
+  `rupGoToStep`, `rupNextStep`, `rupBindDropzone`, `open/closeUploadFileModal` memakai class
+  `urf-open`.
+- `assets/css/app.css` — section baru `.rup-*` (`.rup-modal` 720px, `.rup-dropzone`(+active/has-file),
+  `.rup-upload-side`, `.rup-upload-status`, `.rup-confirm-sub`, `.rup-footer`, responsif < 640px).
+
+### Status
+- `mix assets.build` sukses (perlu hard-refresh Ctrl+F5).
+- `mix precommit` lulus: 163 test, 0 failure.
+
+## Reviewer Review Page (`/review/:id`): panel Upload hanya teks tanpa kotak
+
+Panel **Upload** di step-review author (isi
+"Upload any files you wish to share with the author or editor. Files you upload will appear in the
+Reviewer Files panel below.") sebelumnya berupa kartu `.rp-panel` ber-border/background seperti
+panel lain. Kini **kotak dihilangkan** — judul "Upload" dan teks bantuan tetap tampil sebagai teks
+polos tanpa border, via class modifier baru `.rp-panel-plain` (transparent, tanpa border/shadow,
+margin, radius).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — panel Upload memakai
+  `class="rp-panel rp-panel-plain"`.
+- `assets/css/app.css` — rule `.rp-panel.rp-panel-plain` (transparan) + override header/body/help-text-nya.
+
+### Status
+- `mix assets.build` sukses; `mix precommit` lulus: 163 test, 0 failure.
+
+## Perbaikan: `KeyError key :name not found` saat membuka `/review/:id` (files assignment dari submission asli)
+
+### Bug
+- Saat reviewer membuka `/review/8` (assignment yang dibuat runtime oleh
+  `EditorController.assign_reviewer/2`), halaman error:
+  `KeyError: key :name not found in: %{id: 1, size: "387.6 KB", date: "", filename: "...pdf", genre: "Article Text"}`.
+
+### Penyebab
+- `EditorController.assign_reviewer/2` mengisi `"files" => submission.files` — file submission
+  dinormalisasi sebagai map `%{id:, filename:, size:, date:, genre:}` (dari JSON wizard author).
+- Template `reviewer_html/review.html.heex` membaca key **`file.name`** / **`file.type`** (shape
+  seed assignment `%{name:, type:, ...}`) → KeyError di semua tabel file (Review Files panel +
+  tabel filter step 3).
+- `reviewer_files`/`galley_files` memakai shape `name`/`type`, sehingga dua shape berbeda bercampur.
+
+### Perbaikan
+- `lib/ojs_landing_web/controllers/reviewer_html.ex` — helper baru **`file_name/1`** dan
+  **`file_type/1`** yang toleran terhadap kedua shape (`filename`/`genre` maupun `name`/`type`,
+  fallback `""`/`"Other"`).
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — semua akses `file.name`/
+  `file.type` diganti `file_name(file)`/`file_type(file)` (tampilan, `data-name`, `data-type`,
+  `file_type_class`).
+
+### Status
+- `mix precommit` lulus: 163 test, 0 failure.
+
+## Perbaikan: halaman Editorial "Assigned to me" menampilkan submission yang belum di-assign editor
+
+### Bug
+- Di `/dashboard/editorial?currentViewId=assigned-to-me`, submission yang baru saja dikirim author
+  (belum ada editor yang di-assign) tetap muncul pada view **Assigned to me**.
+
+### Penyebab
+- `EditorController.to_editorial_row/1` meng-hardcode `assigned_to: "editor"` untuk setiap baris,
+  sedangkan username editor seed memang `"editor"`. Filter view `assigned-to-me`
+  (`s.assigned_to == user.username`) membandingkan string hardcode tersebut dengan username editor,
+  sehingga **semua** submission lolos filter tanpa mengecek assignment editor yang sebenarnya.
+
+### Perbaikan
+- `lib/ojs_landing_web/controllers/editor_html.ex` — helper publik `assigned_to_user?/2`:
+  submission dikategorikan "Assigned to me" hanya bila user saat ini benar-benar terdaftar di
+  `submission.editors` (cocok via `username` atau `email`).
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — filter view `assigned-to-me` memakai
+  `OjsLandingWeb.EditorHTML.assigned_to_user?/2` (bukan `assigned_to` hardcode).
+- `lib/ojs_landing_web/controllers/editor_html/editorial.html.heex` — badge/jumlah sidebar
+  `assigned-to-me` ikut memakai `assigned_to_user?/2`, sehingga angka sesuai daftar nyata.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html.ex`
+- `lib/ojs_landing_web/controllers/editor_controller.ex`
+- `lib/ojs_landing_web/controllers/editor_html/editorial.html.heex`
+- `test/ojs_landing_web/controllers/editor_controller_test.exs` — 2 test regresi: submission baru
+  tanpa editor tidak muncul; setelah `assign_editor`, muncul di Assigned to me.
+
+### Status
+- `mix precommit` lulus: 163 test, 0 failure.
+
+## Perbaikan: wizard submission — step Contributors tidak hijau setelah dilewati
+
+### Bug
+- Setelah sebelumnya step 3 (Contributors) hijau terlalu dini (langsung hijau saat di tab
+  Upload Files), setelah diperbaiki menjadi kebalikannya: saat author melewati tab Contributors dan
+  masuk ke tahap berikutnya, step 3 tidak pernah hijau.
+
+### Penyebab
+- Tombol **Continue** di tab Contributors adalah `<a>` link polos ke `?tab=editors`, bukan form
+  submit. Akibatnya `handle_generic_update/5` (yang memanggil `ensure_default_contributor/2` untuk
+  menyimpan author sebagai contributor) tidak pernah berjalan, sehingga `submission.contributors`
+  tetap kosong dan `tab_done?("contributors", ...)` selalu `false`.
+
+### Perbaikan
+- `lib/ojs_landing_web/controllers/author_html/edit_submission.html.heex` — tombol Continue di tab
+  Contributors diubah menjadi `<button type="submit">` ke `#submission-contributors-form` dengan
+  `name="action" value="continue"` (konsisten dengan tab lain), sehingga `handle_generic_update`
+  berjalan, default contributor tersimpan, dan step 3 berwarna hijau setelah dikerjakan.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/author_html/edit_submission.html.heex`
+- `test/ojs_landing_web/controllers/author_controller_test.exs` — test regresi: Continue dari
+  contributors men-seed author sebagai contributor dan menandai step 3 hijau.
+
+### Status
+- `mix precommit` lulus: 161 test, 0 failure.
+
+## Perbaikan: wizard submission — step 3 Contributors hijau di tahap 2 Upload Files
+
+### Bug
+- Di `/submission/wizard/:id?tab=files`, step **3. Contributors** sudah tampil hijau (`is-done`)
+  padahal author baru sampai tahap 2 (Upload Files).
+
+### Penyebab
+- Pada setiap simpan wizard, `handle_generic_update/5` memanggil `ensure_default_contributor/2`
+  yang langsung menambahkan author ke `submission.contributors` begitu author menekan Continue di
+  tab Details. Karena `tab_done?("contributors", ...)` hanya mengecek `length(contributors) > 0`,
+  step 3 langsung dianggap selesai padahal belum dikerjakan.
+
+### Perbaikan
+- `lib/ojs_landing_web/controllers/author_controller.ex` — `ensure_default_contributor/2` kini hanya
+  dipanggil saat `tab == "contributors"`, sehingga default contributor (author) tidak ter-seed
+  sebelum author benar-benar mengerjakan step Contributors.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/author_controller.ex`
+- `test/ojs_landing_web/controllers/author_controller_test.exs` — test regresi: Continue details
+  tidak men-seed contributor, dan step-contributors tidak bergaya `is-done` saat di tab files.
+
+### Status
+- `mix precommit` lulus: 160 test, 0 failure.
+
+## Perbaikan: FunctionClauseError `Date.to_string/1` saat membuka `/review/:id`
+
+### Bug
+- Saat reviewer mengklik **Respond to request** di `/dashboard/reviewAssignments`, halaman
+  `/review/:id` (id hasil buatan runtime, mis. 8) error:
+  `FunctionClauseError: no function clause matching in Date.to_string/1`.
+
+### Penyebab
+- `EditorController.assign_reviewer/2` mengirim `"due_date"` sebagai **string**
+  (`Date.add(Date.utc_today(), 14) |> Date.to_string()`), sedangkan seed assignment memakai
+  `~D[...]` (struct Date).
+- `ReviewerAssignment.create/1` menyimpan verbatim `due_date: params["due_date"]` → kolom jadi string.
+- `reviewer_html/review.html.heex` memanggil `Date.to_string(@assignment.due_date)` (3 titik:
+  subtitle header, Editor's Request, Response/Review Due Date) — `Date.to_string/1` tidak punya
+  klausa untuk binary → crash di `GET /review/8`.
+
+### Perbaikan
+- `lib/ojs_landing/reviewer_assignment.ex` — `create/1` kini menormalisasi `due_date` via helper
+  privat `normalize_date/1` (`%Date{}`, `%DateTime{}`, string ISO `"YYYY-MM-DD"`, fallback
+  `Date.utc_today()`), sehingga semua assignment konsisten bertipe `%Date{}`.
+- `lib/ojs_landing_web/controllers/reviewer_html.ex` — tambah helper toleran `format_date/1`
+  (menangani `%Date{}`, `%DateTime{}`, string, `nil` → `"—"`).
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — 3 pemanggilan
+  `Date.to_string(...)` diganti `format_date(...)`.
+- `lib/ojs_landing_web/controllers/editor_controller.ex` — `assign_reviewer/2` kini mengirim
+  `Date.add(Date.utc_today(), 14)` langsung (struct Date), bukan string.
+
+### Status
+- `mix precommit` lulus: 159 test, 0 failure.
+
+## Perbaikan: editor muncul dobel di kotak Participants (`workflow_1`)
+
+### Bug
+- Di `/dashboard/editorial?workflowSubmissionId=<id>&currentViewId=assigned-to-me&workflowMenuKey=workflow_1`,
+  kotak **Participants** (sidebar maupun kartu Participants) menampilkan editor yang sama dua kali.
+
+### Penyebab
+- `Submission.assign_editor/2` selalu melakukan `editors ++ [editor_info]` tanpa cek duplikat.
+  Jika editor yang sama di-assign lebih dari satu kali (mis. double-click tombol OK di drawer,
+  atau di-assign via drawer dashboard Assign Editor + drawer Assign Participant workflow), daftar
+  `editors` menumpuk entri kembar, dan semua lokasi render (`workflow.html.heex` baris 133 & 521)
+  menampilkannya apa adanya.
+
+### Perbaikan
+- `lib/ojs_landing/submission.ex` — `assign_editor/2` kini idempoten: mengecek `user_id`/`username`
+  pada daftar `editors` yang sudah ada; jika sudah ter-assign, entri tidak ditambahkan lagi.
+  Berlaku untuk semua panel render Participants (sidebar, kartu, production, copyediting).
+
+### Status
+- `mix precommit` lulus: 159 test, 0 failure.
+- Server di-restart agar data in-memory ter-reseed dan kode baru termuat.
+
+## Perbaikan: contributor default tidak muncul di dashboard editor jika tidak di-edit
+
+### Bug
+- Di tahap **Contributors** wizard (`/submission/wizard/:id?tab=contributors`), jika author **tidak
+  meng-edit** contributor (langsung Continue dan Submit to Journal), contributor bawaan tersebut
+  **tidak muncul** di sisi editor (mis. Participants card / daftar author pada workflow page,
+  `@submission.contributors` kosong). Setelah contributor di-edit baru muncul.
+
+### Penyebab
+- Row contributor bawaan (penulis yang sedang login) ditampilkan secara **virtual** lewat
+  `display_contributors/2` → `default_contributor/1`, dan **hanya dipersist** ketika author meng-edit
+  contributor (`handle_contributor_edit/5` → `ensure_default_contributor/2`).
+- Tombol **Continue** di tab Contributors hanyalah `<a>` link (tanpa POST), sehingga submission yang
+  mengalir tanpa edit contributor tetap menyimpan `contributors: []`.
+
+### Perbaikan
+- `AuthorController.handle_generic_update/5` kini memanggil
+  `ensure_default_contributor(id, conn.assigns.current_user)` sebelum `Submission.update/2`, sehingga
+  setiap save/continue/submit di wizard controller otomatis **mem-persist penulis utama sebagai
+  contributor primary (role author)**. Editor pun melihat penulis meski contributor tidak pernah
+  di-edit.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/author_controller.ex` — `handle_generic_update/5` memanggil
+  `ensure_default_contributor/2`.
+
+### Status
+- `mix compile` bersih.
+- `mix test author_controller_test.exs editor_controller_test.exs` — 42 tests, 0 failure.
+
+## Git: gabung kerjaan teman + commit & push perubahan lokal
+
+### Menarik perubahan remote (merge `origin/main`)
+- Remote `github.com/ghaniyigoy/anjay` sudah maju via PR **reviewer**:
+  `2fe54cb..9f95d00` (merge `f5c6852` + `277a295 feat(reviewer): align filtering & 4-step wizard
+  with OJS PKP`).
+- Cabang `origin/reviewer` dibangun **di atas commit lokal** (`2fe54cb` = HEAD saat itu), sehingga
+  tidak divergen — merge dilakukan **fast-forward** tanpa konflik.
+- Perubahan teman hanya menyentuh **5 file reviewer** (`lib/ojs_landing/reviewer_assignment.ex`,
+  `reviewer_controller.ex`, `reviewer_html/review.html.heex`,
+  `reviewer_html/review_assignments.html.heex`, `reviewer_controller_test.exs`) — **tidak overlap**
+  dengan perubahan lokal (file editor/assets/update.md).
+- Cabang **`origin/editor` dilewati** — versi lama yang berbeda total (merge-base `78a9d99`),
+  mengubah 55 file; tidak diambil agar tidak menimpa kerjaan lokal.
+
+### Commit & push perubahan lokal
+- Perubahan lokal (7 file) dikomit sebagai `0aae886`
+  **Enhance editorial dashboard Assign Reviewer/Editor drawers and fix drawer JS scope**
+  dan di-push ke `origin/main` (`9f95d00..0aae886`).
+- File untracked `[^` di working tree tidak diikutkan.
+
+### Status
+- `main` lokal = `origin/main` = `0aae886`, up to date.
+
 ## Editorial Dashboard: perbaikan tombol "Assign Reviewers" yang tidak membuka drawer
 
 ### Bug

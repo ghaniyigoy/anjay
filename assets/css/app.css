@@ -9126,6 +9126,14 @@ tr.is-open .doi-row-actions {
 .review-discussions-table td {
   padding: 9px 14px;
 }
+.review-discussions-table .rp-empty-state-cell {
+  text-align: center;
+  font-style: italic;
+  font-size: 13px;
+  color: #b0b8c1;
+  padding: 1.25rem 1rem !important;
+  border-bottom: none !important;
+}
 .review-discussion-closed-state {
   display: inline-flex;
   align-items: center;
@@ -9272,6 +9280,29 @@ tr.is-open .doi-row-actions {
 
 .rp-panel + .rp-panel {
   margin-top: 20px;
+}
+
+.rp-panel.rp-panel-plain {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.rp-panel.rp-panel-plain .rp-panel-header {
+  background: transparent;
+  border-bottom: none;
+  padding: 0 0 4px 0;
+  min-height: 0;
+}
+
+.rp-panel.rp-panel-plain .rp-panel-body {
+  padding: 0;
+}
+
+.rp-panel.rp-panel-plain .rp-help-text {
+  margin: 0;
 }
 
 .rp-panel-header {
@@ -16203,6 +16234,169 @@ body.ojs-modal-open {
 }
 
 /* ==========================================
+   Reviewer Upload File Drawer (rp- / rup-)
+   ========================================== */
+.rup-modal {
+  width: 720px;
+}
+
+.rup-file-input-hidden {
+  display: none;
+}
+
+.rup-upload-layout {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.rup-selected-item {
+  flex: 1;
+  min-height: 76px;
+  border: 1px solid #dde2e5;
+  border-radius: 6px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.rup-selected-item:hover {
+  border-color: #006798;
+  box-shadow: 0 0 0 2px rgba(0, 103, 152, 0.12);
+}
+
+.rup-selected-item-active {
+  border-color: #006798;
+  background: #eef5fa;
+}
+
+.rup-selected-item-has-file {
+  border-color: #006798;
+  background: #f4fafd;
+}
+
+.rup-selected-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: #e6f0f7;
+  color: #006798;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rup-selected-item-has-file .rup-selected-icon {
+  background: #d8eaf4;
+}
+
+.rup-selected-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rup-selected-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rup-selected-meta {
+  font-size: 12px;
+  color: #8a8f94;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rup-selected-remove {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #c0392b;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.rup-selected-remove:hover {
+  background: #fbe9e7;
+  color: #a93226;
+}
+
+.rup-selected-item-has-file .rup-selected-remove {
+  display: inline-flex;
+}
+
+.rup-upload-side {
+  width: auto;
+  min-width: 170px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.rup-confirm-sub {
+  font-size: 14px;
+  color: #777;
+  margin: 0;
+  text-align: center;
+}
+
+.rup-footer {
+  justify-content: flex-start;
+}
+
+@media (max-width: 640px) {
+  .rup-upload-layout {
+    flex-direction: column;
+  }
+
+  .rup-upload-side {
+    width: 100%;
+  }
+}
+
+/* ==========================================
+   Upload Discussion File Drawer (reviewer)
+   Slides in from the RIGHT, layered above the Add Discussion drawer
+   ========================================== */
+.rdud-overlay {
+  z-index: 10040;
+}
+
+.rdud-required {
+  color: #a93226;
+}
+
+.rdud-upload-row {
+  margin-top: 20px;
+}
+
+/* ==========================================
    Upload Discussion File Drawer (workflow_1)
    Slides in from the RIGHT
    ========================================== */
@@ -18403,6 +18597,80 @@ body.ojs-modal-open {
 .prd-btn-primary:hover {
   background: #00567e;
   border-color: #00567e;
+}
+
+/* ==========================================
+   Review Discussion slide-in (review page)
+   ========================================== */
+.prd-form-error {
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  border: 1px solid #c5221f;
+  border-left-width: 4px;
+  background: #fce8e6;
+  color: #a50e0e;
+  font-size: 13.5px;
+  font-weight: 500;
+  border-radius: 3px;
+  font-family: "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.rd-file-input-hidden {
+  display: none;
+}
+
+.rd-attach-search {
+  padding: 8px 14px;
+  border-bottom: 1px solid #dde1e5;
+  background: #fff;
+}
+
+.rd-attach-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 1px solid #c5c9cc;
+  border-radius: 3px;
+  font-size: 13px;
+  font-family: "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: rgba(0, 0, 0, 0.85);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.rd-attach-search-input:focus {
+  outline: none;
+  border-color: #006798;
+  box-shadow: 0 0 0 2px rgba(0, 103, 152, 0.15);
+}
+
+.rd-attach-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.rd-attach-file-row:last-child {
+  border-bottom: none;
+}
+
+.rd-remove-btn {
+  border: none;
+  background: transparent;
+  color: #a50e0e;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.rd-remove-btn:hover {
+  background: #fdecea;
 }
 
 /* ==========================================

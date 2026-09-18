@@ -175,6 +175,23 @@ defmodule OjsLandingWeb.EditorHTML do
 
   defp normalize_stage(_), do: :submission
 
+  # A submission row counts as "Assigned to me" only when the current user is
+  # actually listed among the submission's assigned editors (by username or email).
+  def assigned_to_user?(row, user) do
+    case OjsLanding.Submission.get(Map.get(row, :id)) do
+      nil -> false
+      submission -> user_in_submission_editors?(submission, user)
+    end
+  end
+
+  defp user_in_submission_editors?(submission, user) do
+    Enum.any?(submission.editors || [], fn editor ->
+      (Map.get(editor, "username") not in [nil, ""] and
+         Map.get(editor, "username") == user.username) or
+        (Map.get(editor, "email") not in [nil, ""] and Map.get(editor, "email") == user.email)
+    end)
+  end
+
   def workflow_status_class(status) when status in [:scheduled, :published], do: "wf-status-ok"
   def workflow_status_class(:declined), do: "wf-status-danger"
   def workflow_status_class(_status), do: "wf-status-info"

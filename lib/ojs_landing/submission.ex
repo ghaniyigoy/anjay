@@ -940,7 +940,22 @@ defmodule OjsLanding.Submission do
     if is_nil(current) do
       {:error, :not_found}
     else
-      editors = (current.editors || []) ++ [editor_info]
+      existing = current.editors || []
+
+      already_assigned =
+        Enum.any?(existing, fn editor ->
+          (Map.get(editor_info, "id") not in [nil, ""] and editor["id"] == editor_info["id"]) or
+            (Map.get(editor_info, "username") not in [nil, ""] and
+               editor["username"] == editor_info["username"])
+        end)
+
+      editors =
+        if already_assigned do
+          existing
+        else
+          existing ++ [editor_info]
+        end
+
       updated = %{current | editors: editors}
 
       Agent.update(__MODULE__, fn subs ->

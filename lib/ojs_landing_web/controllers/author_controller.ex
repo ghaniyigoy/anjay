@@ -673,6 +673,10 @@ defmodule OjsLandingWeb.AuthorController do
   end
 
   defp handle_generic_update(conn, id, submission_params, tab, action) do
+    if tab == "contributors" do
+      ensure_default_contributor(id, conn.assigns.current_user)
+    end
+
     case Submission.update(id, submission_params) do
       {:ok, _submission} ->
         cond do

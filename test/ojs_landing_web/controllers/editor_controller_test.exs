@@ -53,6 +53,26 @@ defmodule OjsLandingWeb.EditorControllerTest do
 
       assert html =~ "Ahmad Fauzi"
     end
+
+    test "newly submitted submissions without an assigned editor do not appear in Assigned to me",
+         %{conn: conn} do
+      submission = Submission.create("author1", "Naskah Belum Diassign Editor")
+      Submission.set_status(submission.id, :active)
+
+      html = get(conn, "/dashboard/editorial?currentViewId=assigned-to-me") |> html_response(200)
+
+      refute html =~ "Naskah Belum Diassign Editor"
+    end
+
+    test "submissions appear in Assigned to me once an editor is assigned", %{conn: conn} do
+      submission = Submission.create("author1", "Naskah Sudah Diassign Editor")
+      Submission.set_status(submission.id, :active)
+      Submission.assign_editor(submission.id, %{"username" => "editor", "role" => "editor"})
+
+      html = get(conn, "/dashboard/editorial?currentViewId=assigned-to-me") |> html_response(200)
+
+      assert html =~ "Naskah Sudah Diassign Editor"
+    end
   end
 
   describe "send to review email notification wizard" do

@@ -42,9 +42,9 @@
               "badge",
               badge_class(
                 "assigned-to-me",
-                Enum.count(@all_submissions, fn s -> s.assigned_to == @user.username end)
+                Enum.count(@all_submissions, &assigned_to_user?(&1, @user))
               )
-            ]}>{Enum.count(@all_submissions, fn s -> s.assigned_to == @user.username end)}</span>
+            ]}>{Enum.count(@all_submissions, &assigned_to_user?(&1, @user))}</span>
             Assigned to me
           </a>
         </li>

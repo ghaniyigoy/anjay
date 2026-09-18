@@ -110,7 +110,9 @@ defmodule OjsLandingWeb.EditorController do
       filtered_submissions =
         case view_id do
           "assigned-to-me" ->
-            Enum.filter(all_submissions, fn s -> s.assigned_to == user.username end)
+            Enum.filter(all_submissions, fn s ->
+              OjsLandingWeb.EditorHTML.assigned_to_user?(s, user)
+            end)
 
           "active" ->
             Enum.filter(all_submissions, fn s -> s.status in [:active, :under_review] end)
@@ -486,7 +488,7 @@ defmodule OjsLandingWeb.EditorController do
               "section" => submission.section || "",
               "language" => submission.language || "",
               "keywords" => submission.keywords || "",
-              "due_date" => Date.add(Date.utc_today(), 14) |> Date.to_string(),
+              "due_date" => Date.add(Date.utc_today(), 14),
               "round" => 1,
               "files" => submission.files || []
             })

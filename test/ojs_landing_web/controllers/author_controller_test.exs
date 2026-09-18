@@ -340,6 +340,60 @@ defmodule OjsLandingWeb.AuthorControllerTest do
       assert updated.references == "1. Author. (2026). Title."
     end
 
+    test "PUT details continue does not seed a default contributor early", %{conn: conn} do
+      submission = Submission.create("author1")
+
+      conn =
+        put(
+          conn,
+          "/submission/wizard/#{submission.id}?tab=details",
+          %{
+            "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+            "action" => "continue",
+            "submission" => %{
+              "title" => "Judul Lanjut",
+              "abstract" => "Abstrak lanjut.",
+              "keywords" => ""
+            }
+          }
+        )
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=files"
+
+      assert Submission.get(submission.id).contributors in [nil, []]
+
+      html = get(conn, "/submission/wizard/#{submission.id}?tab=files") |> html_response(200)
+      assert html =~ ~s(id="step-contributors")
+      refute html =~ ~s(class="ojs-progress-step is-done" id="step-contributors")
+    end
+
+    test "PUT /submission/wizard/:id action=continue from contributors seeds the author and advances",
+         %{
+           conn: conn
+         } do
+      submission = Submission.create("author1")
+
+      conn =
+        put(
+          conn,
+          "/submission/wizard/#{submission.id}?tab=contributors",
+          %{
+            "_csrf_token" => Plug.CSRFProtection.get_csrf_token(),
+            "action" => "continue",
+            "submission" => %{"contributors_count" => "0"}
+          }
+        )
+
+      assert redirected_to(conn) == "/submission/wizard/#{submission.id}?tab=editors"
+
+      [contributor] = Submission.get(submission.id).contributors
+      assert contributor.primary == true
+      assert contributor.email == "author1@informatika.ac.id"
+
+      html = get(conn, "/submission/wizard/#{submission.id}?tab=editors") |> html_response(200)
+      assert html =~ ~s(class="ojs-progress-step is-done" id="step-contributors")
+    end
+
     test "PUT /submission/wizard/:id with action=continue blocks blank abstract", %{conn: conn} do
       submission = Submission.create("author1")
 

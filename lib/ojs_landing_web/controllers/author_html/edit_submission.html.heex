@@ -1036,13 +1036,16 @@
             >
               Save for Later
             </button>
-            <a
-              href={submission_form_action(@submission, "editors")}
+            <button
+              type="submit"
+              form="submission-contributors-form"
+              name="action"
+              value="continue"
               class="btn-ojs-primary"
               id="btn-continue"
             >
               Continue
-            </a>
+            </button>
           </div>
         </div>
       <% @current_tab == "editors" -> %>

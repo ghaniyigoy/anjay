@@ -13,9 +13,10 @@
       </h1>
 
       <p class="review-page-subtitle">
-        Round {@assignment.round} · Due {Date.to_string(@assignment.due_date)}
+        Round {@assignment.round} · Due {format_date(@assignment.due_date)}
       </p>
     </div>
+
     <span class={[
       "review-status-pill",
       if(@assignment.status == :published,
@@ -33,8 +34,7 @@
       {4, "Completion"}
     ] do %>
       <li class={["rr-step", wizard_step_class(@assignment, num)]}>
-        <span class="rr-step-num">{num}</span>
-        <span class="rr-step-label">{label}</span>
+        <span class="rr-step-num">{num}</span> <span class="rr-step-label">{label}</span>
       </li>
     <% end %>
   </ol>
@@ -57,16 +57,19 @@
               <dl class="rr-meta-list">
                 <div class="rr-meta-item">
                   <dt>Article Title</dt>
+
                   <dd>{@assignment.title}</dd>
                 </div>
 
                 <div class="rr-meta-item">
                   <dt>Abstract</dt>
+
                   <dd>{@assignment.abstract}</dd>
                 </div>
 
                 <div class="rr-meta-item">
                   <dt>Review Type</dt>
+
                   <dd>Round {to_string(@assignment.round)}</dd>
                 </div>
               </dl>
@@ -75,6 +78,7 @@
             <section class="rr-section">
               <div class="rr-files-header">
                 <h2 class="rr-files-title">Review Files</h2>
+
                 <div class="rr-files-search">
                   <svg
                     width="15"
@@ -85,6 +89,7 @@
                     stroke-width="2"
                   >
                     <circle cx="11" cy="11" r="8"></circle>
+
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                   </svg>
                   Search
@@ -105,31 +110,36 @@
                       >
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
                         </path>
+
                         <polyline points="14 2 14 8 20 8"></polyline>
                       </svg>
                       Files
                     </th>
+
                     <th class="rr-files-col-date">Date</th>
+
                     <th class="rr-files-col-type">Type</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   <%= for file <- @assignment.files do %>
                     <tr class="rr-file-row">
                       <td class="rr-files-col-name">
-                        <a href="#" class="rr-file-link">{file.name}</a>
+                        <a href="#" class="rr-file-link">{file_name(file)}</a>
                       </td>
+
                       <td class="rr-files-col-date">{file.date}</td>
+
                       <td class="rr-files-col-type">
-                        <span class={["rr-file-type", file_type_class(file.type)]}>
-                          {file.type}
+                        <span class={["rr-file-type", file_type_class(file_type(file))]}>
+                          {file_type(file)}
                         </span>
                       </td>
                     </tr>
                   <% end %>
                 </tbody>
               </table>
-
               <a href="#" class="rr-view-all">View All Submission Details</a>
             </section>
 
@@ -140,19 +150,21 @@
                 <div class="rr-schedule-item">
                   <span class="rr-schedule-label">Editor's Request</span>
                   <span class="rr-schedule-value">
-                    {Date.to_string(@assignment.date_assigned)}
+                    {format_date(@assignment.date_assigned)}
                   </span>
                 </div>
+
                 <div class="rr-schedule-item">
                   <span class="rr-schedule-label">Response Due Date</span>
                   <span class="rr-schedule-value">
-                    {Date.to_string(@assignment.due_date)}
+                    {format_date(@assignment.due_date)}
                   </span>
                 </div>
+
                 <div class="rr-schedule-item">
                   <span class="rr-schedule-label">Review Due Date</span>
                   <span class="rr-schedule-value">
-                    {Date.to_string(@assignment.due_date)}
+                    {format_date(@assignment.due_date)}
                   </span>
                 </div>
               </div>
@@ -186,6 +198,7 @@
                     Decline Review Request
                   </button>
                 </form>
+
                 <%= if @assignment.status == :in_progress do %>
                   <form
                     method="POST"
@@ -238,9 +251,13 @@
 
                 <ul class="rr-guideline-list">
                   <li>Evaluate the originality and contribution of the research.</li>
+
                   <li>Assess the soundness of the methodology and analysis.</li>
+
                   <li>Provide clear, specific, and actionable feedback.</li>
+
                   <li>Keep your comments professional and constructive.</li>
+
                   <li>Do not share the manuscript or its contents.</li>
                 </ul>
 
@@ -269,6 +286,7 @@
                     Go Back
                   </button>
                 </form>
+
                 <form
                   method="POST"
                   action={"/review/#{@assignment.id}/step"}
@@ -300,10 +318,12 @@
                       stroke-width="2"
                     >
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+
                       <polyline points="14 2 14 8 20 8"></polyline>
                     </svg>
                     Review Files
                   </h2>
+
                   <button type="button" class="rp-btn-search" id="btn-search-review-files">
                     <svg
                       width="14"
@@ -314,11 +334,13 @@
                       stroke-width="2"
                     >
                       <circle cx="11" cy="11" r="8"></circle>
+
                       <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                     Search
                   </button>
                 </div>
+
                 <div class="rp-search-bar" id="search-review-files-bar" style="display:none">
                   <input
                     type="text"
@@ -328,26 +350,32 @@
                     data-target-table="review-files-table"
                   />
                 </div>
+
                 <div class="rp-panel-body">
                   <table class="rp-files-table" id="review-files-table">
                     <thead>
                       <tr>
                         <th>File</th>
+
                         <th>Date</th>
+
                         <th>Type</th>
                       </tr>
                     </thead>
+
                     <tbody>
                       <%= for file <- @assignment.files do %>
                         <tr
-                          data-name={String.downcase(file.name)}
-                          data-type={String.downcase(file.type)}
+                          data-name={String.downcase(file_name(file))}
+                          data-type={String.downcase(file_type(file))}
                         >
-                          <td><a href="#" class="rp-file-link">{file.name}</a></td>
+                          <td><a href="#" class="rp-file-link">{file_name(file)}</a></td>
+
                           <td class="rp-file-date">{file.date}</td>
+
                           <td>
-                            <span class={["rp-file-badge", file_type_class(file.type)]}>
-                              {file.type}
+                            <span class={["rp-file-badge", file_type_class(file_type(file))]}>
+                              {file_type(file)}
                             </span>
                           </td>
                         </tr>
@@ -356,12 +384,12 @@
                   </table>
                 </div>
               </div>
-
               <%!-- Review Form Section --%>
               <div class="rp-panel">
                 <div class="rp-panel-header">
                   <h2 class="rp-panel-title">Review</h2>
                 </div>
+
                 <div class="rp-panel-body">
                   <p class="rp-help-text">
                     Enter (or paste) your review of this submission into the form below.
@@ -372,9 +400,7 @@
                       type="hidden"
                       name="_csrf_token"
                       value={Plug.CSRFProtection.get_csrf_token()}
-                    />
-
-                    <%!-- For Author and Editor --%>
+                    /> <%!-- For Author and Editor --%>
                     <div class="rp-field">
                       <label class="rp-label">For Author and Editor</label>
                       <div class="rp-richtext-wrapper">
@@ -412,21 +438,26 @@
                               stroke-width="2"
                             >
                               <line x1="8" y1="6" x2="21" y2="6"></line>
+
                               <line x1="8" y1="12" x2="21" y2="12"></line>
+
                               <line x1="8" y1="18" x2="21" y2="18"></line>
+
                               <line x1="3" y1="6" x2="3.01" y2="6"></line>
+
                               <line x1="3" y1="12" x2="3.01" y2="12"></line>
+
                               <line x1="3" y1="18" x2="3.01" y2="18"></line>
                             </svg>
                           </button>
                         </div>
+
                         <input
                           type="hidden"
                           name="comments_author"
                           id="rp-comments-author"
                           value=""
-                        />
-                        <div
+                        /> <div
                           id="rp-comments-author-editor"
                           class="rp-richtext"
                           data-target="rp-comments-author"
@@ -435,7 +466,6 @@
                         ></div>
                       </div>
                     </div>
-
                     <%!-- For Editor --%>
                     <div class="rp-field">
                       <label class="rp-label">For Editor</label>
@@ -474,21 +504,26 @@
                               stroke-width="2"
                             >
                               <line x1="8" y1="6" x2="21" y2="6"></line>
+
                               <line x1="8" y1="12" x2="21" y2="12"></line>
+
                               <line x1="8" y1="18" x2="21" y2="18"></line>
+
                               <line x1="3" y1="6" x2="3.01" y2="6"></line>
+
                               <line x1="3" y1="12" x2="3.01" y2="12"></line>
+
                               <line x1="3" y1="18" x2="3.01" y2="18"></line>
                             </svg>
                           </button>
                         </div>
+
                         <input
                           type="hidden"
                           name="comments_editor"
                           id="rp-comments-editor"
                           value=""
-                        />
-                        <div
+                        /> <div
                           id="rp-comments-editor-editor"
                           class="rp-richtext"
                           data-target="rp-comments-editor"
@@ -500,12 +535,12 @@
                   </form>
                 </div>
               </div>
-
               <%!-- Upload Section --%>
-              <div class="rp-panel">
+              <div class="rp-panel rp-panel-plain">
                 <div class="rp-panel-header">
                   <h2 class="rp-panel-title">Upload</h2>
                 </div>
+
                 <div class="rp-panel-body">
                   <p class="rp-help-text">
                     Upload any files you wish to share with the author or editor. Files you
@@ -513,11 +548,11 @@
                   </p>
                 </div>
               </div>
-
               <%!-- Reviewer Files Section --%>
               <div class="rp-panel">
                 <div class="rp-panel-header">
                   <h2 class="rp-panel-title">Reviewer Files</h2>
+
                   <div class="rp-header-actions">
                     <button
                       type="button"
@@ -533,10 +568,12 @@
                         stroke-width="2"
                       >
                         <circle cx="11" cy="11" r="8"></circle>
+
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                       </svg>
                       Search
                     </button>
+
                     <button
                       type="button"
                       class="rp-btn-sm rp-btn-primary"
@@ -551,13 +588,16 @@
                         stroke-width="2"
                       >
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+
                         <polyline points="17 8 12 3 7 8"></polyline>
+
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                       </svg>
                       Upload File
                     </button>
                   </div>
                 </div>
+
                 <div class="rp-search-bar" id="search-reviewer-files-bar" style="display:none">
                   <input
                     type="text"
@@ -567,6 +607,7 @@
                     data-target-table="reviewer-files-table"
                   />
                 </div>
+
                 <div class="rp-panel-body rp-file-list" id="reviewer-files-list">
                   <%= if reviewer_files(@assignment.reviewer_files) == [] do %>
                     <div class="rp-empty-state" id="reviewer-files-empty">
@@ -577,24 +618,29 @@
                       <thead>
                         <tr>
                           <th>File</th>
+
                           <th>Date</th>
+
                           <th>Type</th>
                         </tr>
                       </thead>
+
                       <tbody>
                         <%= for file <- reviewer_files(@assignment.reviewer_files) do %>
                           <tr
-                            data-name={String.downcase(file.name)}
-                            data-type={String.downcase(file.type)}
+                            data-name={String.downcase(file_name(file))}
+                            data-type={String.downcase(file_type(file))}
                           >
                             <td>
-                              <a href="#" class="rp-file-link">{file.name}</a>
+                              <a href="#" class="rp-file-link">{file_name(file)}</a>
                               <div class="rp-file-meta">{file.size}</div>
                             </td>
+
                             <td class="rp-file-date">{file.date}</td>
+
                             <td>
-                              <span class={["rp-file-badge", file_type_class(file.type)]}>
-                                {file.type}
+                              <span class={["rp-file-badge", file_type_class(file_type(file))]}>
+                                {file_type(file)}
                               </span>
                             </td>
                           </tr>
@@ -604,7 +650,6 @@
                   <% end %>
                 </div>
               </div>
-
               <%!-- Review Discussions Section --%>
               <div class="rp-panel">
                 <div class="rp-panel-header">
@@ -614,6 +659,7 @@
                       {length(discussions(@assignment.discussions))}
                     </span>
                   </h2>
+
                   <button type="button" class="rp-btn-sm rp-btn-primary" id="btn-add-discussion">
                     <svg
                       width="14"
@@ -624,172 +670,257 @@
                       stroke-width="2"
                     >
                       <line x1="12" y1="5" x2="12" y2="19"></line>
+
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                     Add Discussion
                   </button>
                 </div>
+
                 <div class="rp-panel-body">
-                  <%= if discussions(@assignment.discussions) == [] do %>
-                    <div class="rp-empty-state">
-                      <p>No discussions yet.</p>
-                    </div>
-                  <% else %>
-                    <div class="rp-discussion-list">
-                      <%= for d <- discussions(@assignment.discussions) do %>
-                        <div class="rp-discussion">
-                          <div class="rp-discussion-head">
-                            <span class="rp-discussion-subject">{d.subject}</span>
-                            <span class="rp-discussion-meta">
-                              {d.author} &middot; {d.date}
-                            </span>
-                          </div>
-                          <p class="rp-discussion-message">{d.message}</p>
-                          <%= if d.replies in [nil, []] do %>
-                            <span class="rp-discussion-no-replies">No replies yet</span>
-                          <% else %>
-                            <div class="rp-discussion-replies">
-                              <%= for r <- d.replies do %>
-                                <div class="rp-discussion-reply">
-                                  <span class="rp-discussion-reply-author">{r.author}</span>
-                                  <span class="rp-discussion-reply-date">{r.date}</span>
-                                  <p class="rp-discussion-reply-message">{r.message}</p>
-                                </div>
-                              <% end %>
-                            </div>
-                          <% end %>
-                        </div>
+                  <table
+                    class="rp-files-table review-discussions-table"
+                    id="step3-discussions-table"
+                  >
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+
+                        <th>From</th>
+
+                        <th>Last Reply</th>
+
+                        <th>Replies</th>
+
+                        <th>Closed</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      <%= if discussions(@assignment.discussions) == [] do %>
+                        <tr>
+                          <td colspan="5" class="rp-empty-state-cell">
+                            No discussions yet.
+                          </td>
+                        </tr>
+                      <% else %>
+                        <%= for d <- discussions(@assignment.discussions) do %>
+                          <tr>
+                            <td><a href="#" class="rp-file-link">{d.subject}</a></td>
+
+                            <td>{d.author}</td>
+
+                            <td class="rp-file-date">{last_reply_date(d)}</td>
+
+                            <td>{length(d.replies || [])}</td>
+
+                            <td>
+                              <span class="review-discussion-closed-state">
+                                <input type="checkbox" class="review-discussion-closed" disabled />
+                              </span>
+                            </td>
+                          </tr>
+                        <% end %>
                       <% end %>
-                    </div>
-                  <% end %>
+                    </tbody>
+                  </table>
                 </div>
               </div>
-
-              <%!-- Upload File Modal --%>
-              <div id="upload-reviewer-file-overlay" class="rp-modal-overlay" style="display:none">
-                <div class="rp-modal">
-                  <div class="rp-modal-header">
-                    <h2 class="rp-modal-title">Upload Reviewer File</h2>
+              <%!-- Upload File Slide-in Drawer --%>
+              <div id="upload-reviewer-file-overlay" class="urf-overlay">
+                <div class="urf-modal rup-modal">
+                  <div class="urf-header">
                     <button
                       type="button"
-                      class="rp-modal-close"
+                      class="urf-back"
                       onclick="closeUploadFileModal()"
+                      aria-label="Close"
                     >
-                      &times;
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                      </svg>
                     </button>
+
+                    <h2 class="urf-title">Upload File</h2>
+                    <span class="urf-title-spacer"></span>
                   </div>
+
+                  <div class="urf-stepper">
+                    <div
+                      class="urf-step urf-step-active urf-step-clickable"
+                      id="rup-step-1-indicator"
+                      onclick="rupGoToStep(1)"
+                    >
+                      <span class="urf-step-num">1</span>
+                      <span class="urf-step-label">Upload File</span>
+                    </div>
+
+                    <div class="urf-step-connector"></div>
+
+                    <div class="urf-step" id="rup-step-2-indicator" onclick="rupGoToStep(2)">
+                      <span class="urf-step-num">2</span>
+                      <span class="urf-step-label">Review Details</span>
+                    </div>
+
+                    <div class="urf-step-connector"></div>
+
+                    <div class="urf-step" id="rup-step-3-indicator" onclick="rupGoToStep(3)">
+                      <span class="urf-step-num">3</span>
+                      <span class="urf-step-label">Confirm</span>
+                    </div>
+                  </div>
+
                   <form
                     method="POST"
                     action={"/review/#{@assignment.id}/file"}
                     enctype="multipart/form-data"
-                    id="upload-reviewer-file-form"
+                    id="rup-upload-form"
                   >
                     <input
                       type="hidden"
                       name="_csrf_token"
                       value={Plug.CSRFProtection.get_csrf_token()}
                     />
-                    <div class="rp-modal-body">
-                      <label class="rp-field-label" for="upload-file-input">File</label>
-                      <input
-                        type="file"
-                        name="upload"
-                        id="upload-file-input"
-                        class="rp-file-input"
-                        required
-                      />
-                      <div class="rp-field-row">
-                        <div class="rp-field">
-                          <label class="rp-field-label" for="upload-file-type">Type</label>
-                          <select name="type" id="upload-file-type" class="rp-select">
-                            <option value="PDF">PDF</option>
-                            <option value="Word">Word</option>
-                            <option value="Excel">Excel</option>
-                            <option value="Image">Image</option>
-                            <option value="Other">Other</option>
-                          </select>
+                    <div class="urf-body">
+                      <%!-- Step 1: Upload File --%>
+                      <div class="urf-step-content" id="rup-step-1">
+                        <input
+                          type="file"
+                          name="upload"
+                          id="rup-file-input"
+                          class="rup-file-input-hidden"
+                          onchange="rupOnFileSelected(this)"
+                        />
+                        <div class="rup-upload-layout">
+                          <div class="rup-selected-item" id="rup-dropzone">
+                            <div class="rup-selected-icon">
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                              >
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                                </path>
+
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                              </svg>
+                            </div>
+
+                            <div class="rup-selected-info">
+                              <span class="rup-selected-name" id="rup-selected-name">
+                                No file selected
+                              </span>
+
+                              <span class="rup-selected-meta" id="rup-selected-meta">
+                                Drag &amp; drop a file here, or click to browse
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              class="rup-selected-remove"
+                              id="rup-selected-remove"
+                              onclick="rupRemoveFile(event)"
+                              title="Remove file"
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                              >
+                                <polyline points="3 6 5 6 21 6"></polyline>
+
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                </path>
+                              </svg>
+                            </button>
+                          </div>
+
+                          <div class="rup-upload-side">
+                            <button
+                              type="button"
+                              class="urf-btn-upload"
+                              id="rup-btn-upload"
+                              onclick="document.getElementById('rup-file-input').click()"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                              >
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+
+                                <polyline points="17 8 12 3 7 8"></polyline>
+
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                              </svg>
+                              <span id="rup-btn-upload-label">Upload File</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <%!-- Step 2: Review Details --%>
+                      <div class="urf-step-content urf-step-hidden" id="rup-step-2">
+                        <p class="urf-hint">Review the file details before confirming.</p>
+
+                        <div class="urf-detail-row">
+                          <span class="urf-detail-label">File Name:</span>
+                          <span class="urf-detail-value" id="rup-detail-filename">—</span>
+                        </div>
+
+                        <div class="urf-detail-row">
+                          <span class="urf-detail-label">File Size:</span>
+                          <span class="urf-detail-value" id="rup-detail-filesize">—</span>
+                        </div>
+                      </div>
+                      <%!-- Step 3: Confirm --%>
+                      <div class="urf-step-content urf-step-hidden" id="rup-step-3">
+                        <div class="urf-confirm-box">
+                          <p class="urf-confirm-text">File Added</p>
+
+                          <p class="rup-confirm-sub">
+                            Ready to upload “<span id="rup-confirm-filename">—</span>”.
+                          </p>
                         </div>
                       </div>
                     </div>
-                    <div class="rp-modal-footer">
+
+                    <div class="urf-footer rup-footer">
                       <button
                         type="button"
-                        class="rp-btn rp-btn-secondary"
+                        class="urf-btn-cancel"
                         onclick="closeUploadFileModal()"
                       >
                         Cancel
                       </button>
-                      <button type="submit" class="rp-btn rp-btn-primary" id="btn-upload-confirm">
-                        Upload
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
 
-              <%!-- Add Discussion Modal --%>
-              <div id="add-discussion-overlay" class="rp-modal-overlay" style="display:none">
-                <div class="rp-modal">
-                  <div class="rp-modal-header">
-                    <h2 class="rp-modal-title">Add Discussion</h2>
-                    <button
-                      type="button"
-                      class="rp-modal-close"
-                      onclick="closeDiscussionModal()"
-                    >
-                      &times;
-                    </button>
-                  </div>
-                  <form
-                    method="POST"
-                    action={"/review/#{@assignment.id}/discussion"}
-                    id="add-discussion-form"
-                  >
-                    <input
-                      type="hidden"
-                      name="_csrf_token"
-                      value={Plug.CSRFProtection.get_csrf_token()}
-                    />
-                    <div class="rp-modal-body">
-                      <label class="rp-field-label" for="discussion-subject">Subject</label>
-                      <input
-                        type="text"
-                        name="subject"
-                        id="discussion-subject"
-                        class="rp-text-input"
-                        placeholder="Brief subject line"
-                        required
-                      />
-                      <label class="rp-field-label" for="discussion-message">Message</label>
-                      <textarea
-                        name="message"
-                        id="discussion-message"
-                        class="rp-textarea"
-                        rows="5"
-                        placeholder="Write your message…"
-                        required
-                      ></textarea>
-                    </div>
-                    <div class="rp-modal-footer">
                       <button
                         type="button"
-                        class="rp-btn rp-btn-secondary"
-                        onclick="closeDiscussionModal()"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        class="rp-btn rp-btn-primary"
-                        id="btn-discussion-submit"
-                      >
-                        Add Discussion
-                      </button>
+                        class="urf-btn-continue"
+                        id="rup-btn-continue"
+                        disabled
+                        onclick="rupNextStep()"
+                      >Continue</button>
                     </div>
                   </form>
                 </div>
               </div>
-
               <%!-- Actions for Step 3: Continue to Step 4 (Recommendation moved to Step 4 per OJS 4-step spec) --%>
               <div class="rp-panel">
                 <div class="rp-panel-footer">
@@ -808,10 +939,12 @@
                         Go back
                       </button>
                     </form>
+
                     <div class="rp-actions-right">
                       <button type="button" class="rp-btn rp-btn-secondary" id="rp-btn-save-later">
                         Save For Later
                       </button>
+
                       <button
                         type="submit"
                         form="review-form"
@@ -838,6 +971,7 @@
                 stroke-width="2"
               >
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
               Completion
@@ -855,6 +989,7 @@
                   <%= if @assignment.comments_author not in [nil, ""] do %>
                     <div class="review-meta-item">
                       <dt>Comments to the Author</dt>
+
                       <dd>{@assignment.comments_author}</dd>
                     </div>
                   <% end %>
@@ -862,6 +997,7 @@
                   <%= if @assignment.comments_editor not in [nil, ""] do %>
                     <div class="review-meta-item">
                       <dt>Comments to the Editor</dt>
+
                       <dd>{@assignment.comments_editor}</dd>
                     </div>
                   <% end %>
@@ -884,10 +1020,11 @@
                   name="comments_editor"
                   value={@assignment.comments_editor || ""}
                 />
-
                 <div class="review-field">
                   <span class="review-label">Recommendation <span class="review-req">*</span></span>
-                  <p class="review-help">Select the overall recommendation for this submission.</p>
+                  <p class="review-help">
+                    Select the overall recommendation for this submission.
+                  </p>
 
                   <div class="review-recommendation-options">
                     <label class="review-radio" id="rec-accept">
@@ -897,8 +1034,7 @@
                         value="Accept"
                         required
                         checked={@assignment.recommendation == "Accept"}
-                      />
-                      <span>Accept Submission</span>
+                      /> <span>Accept Submission</span>
                     </label>
 
                     <label class="review-radio" id="rec-revisions">
@@ -908,8 +1044,7 @@
                         value="Revisions Required"
                         required
                         checked={@assignment.recommendation == "Revisions Required"}
-                      />
-                      <span>Revisions Required</span>
+                      /> <span>Revisions Required</span>
                     </label>
 
                     <label class="review-radio" id="rec-resubmit">
@@ -919,8 +1054,7 @@
                         value="Resubmit for Review"
                         required
                         checked={@assignment.recommendation == "Resubmit for Review"}
-                      />
-                      <span>Resubmit for Review</span>
+                      /> <span>Resubmit for Review</span>
                     </label>
 
                     <label class="review-radio" id="rec-decline">
@@ -930,10 +1064,10 @@
                         value="Decline Submission"
                         required
                         checked={@assignment.recommendation == "Decline Submission"}
-                      />
-                      <span>Decline Submission</span>
+                      /> <span>Decline Submission</span>
                     </label>
                   </div>
+
                   <p class="review-help" style="margin-top: 8px; font-size: 12px;">
                     OJS alternatives: Resubmit Elsewhere / See Comments are also accepted if needed.
                   </p>
@@ -955,6 +1089,7 @@
                     Go Back to Review
                   </button>
                 </form>
+
                 <button
                   type="submit"
                   form="completion-submit"
@@ -969,6 +1104,7 @@
             <div class="review-discussions-panel">
               <div class="review-discussions-header">
                 <h3>Review Discussions</h3>
+
                 <button type="button" class="rp-btn-sm rp-btn-primary" id="btn-add-discussion">
                   <svg
                     width="14"
@@ -979,35 +1115,47 @@
                     stroke-width="2"
                   >
                     <line x1="12" y1="5" x2="12" y2="19"></line>
+
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                   </svg>
                   Add discussion
                 </button>
               </div>
 
-              <%= if discussions(@assignment.discussions) == [] do %>
-                <div class="review-discussions-empty">
-                  <p>No discussions have been started yet.</p>
-                </div>
-              <% else %>
-                <div class="review-discussions-list">
-                  <table class="rp-files-table review-discussions-table">
-                    <thead>
+              <div class="review-discussions-list">
+                <table class="rp-files-table review-discussions-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+
+                      <th>From</th>
+
+                      <th>Last Reply</th>
+
+                      <th>Replies</th>
+
+                      <th>Closed</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <%= if discussions(@assignment.discussions) == [] do %>
                       <tr>
-                        <th>Name</th>
-                        <th>From</th>
-                        <th>Last Reply</th>
-                        <th>Replies</th>
-                        <th>Closed</th>
+                        <td colspan="5" class="rp-empty-state-cell">
+                          No discussions have been started yet.
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
+                    <% else %>
                       <%= for d <- discussions(@assignment.discussions) do %>
                         <tr>
                           <td><a href="#" class="rp-file-link">{d.subject}</a></td>
+
                           <td>{d.author}</td>
+
                           <td class="rp-file-date">{last_reply_date(d)}</td>
+
                           <td>{length(d.replies || [])}</td>
+
                           <td>
                             <span class="review-discussion-closed-state">
                               <input type="checkbox" class="review-discussion-closed" disabled />
@@ -1015,72 +1163,9 @@
                           </td>
                         </tr>
                       <% end %>
-                    </tbody>
-                  </table>
-                </div>
-              <% end %>
-            </div>
-
-            <%!-- Add Discussion Modal --%>
-            <div id="add-discussion-overlay" class="rp-modal-overlay" style="display:none">
-              <div class="rp-modal">
-                <div class="rp-modal-header">
-                  <h2 class="rp-modal-title">Add Discussion</h2>
-                  <button
-                    type="button"
-                    class="rp-modal-close"
-                    onclick="closeDiscussionModal()"
-                  >
-                    &times;
-                  </button>
-                </div>
-                <form
-                  method="POST"
-                  action={"/review/#{@assignment.id}/discussion"}
-                  id="add-discussion-form"
-                >
-                  <input
-                    type="hidden"
-                    name="_csrf_token"
-                    value={Plug.CSRFProtection.get_csrf_token()}
-                  />
-                  <div class="rp-modal-body">
-                    <label class="rp-field-label" for="discussion-subject">Subject</label>
-                    <input
-                      type="text"
-                      name="subject"
-                      id="discussion-subject"
-                      class="rp-text-input"
-                      placeholder="Brief subject line"
-                      required
-                    />
-                    <label class="rp-field-label" for="discussion-message">Message</label>
-                    <textarea
-                      name="message"
-                      id="discussion-message"
-                      class="rp-textarea"
-                      rows="5"
-                      placeholder="Write your message…"
-                      required
-                    ></textarea>
-                  </div>
-                  <div class="rp-modal-footer">
-                    <button
-                      type="button"
-                      class="rp-btn rp-btn-secondary"
-                      onclick="closeDiscussionModal()"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      class="rp-btn rp-btn-primary"
-                      id="btn-discussion-submit"
-                    >
-                      Add Discussion
-                    </button>
-                  </div>
-                </form>
+                    <% end %>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -1096,7 +1181,9 @@
                 stroke-width="2"
               >
                 <circle cx="12" cy="12" r="10"></circle>
+
                 <line x1="15" y1="9" x2="9" y2="15"></line>
+
                 <line x1="9" y1="9" x2="15" y2="15"></line>
               </svg>
               Review Declined
@@ -1127,6 +1214,7 @@
                 stroke-width="2"
               >
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
               Published
@@ -1180,6 +1268,7 @@
                 stroke-width="2"
               >
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
               Review Submitted
@@ -1346,105 +1435,1017 @@
       <% end %>
     </div>
   </div>
+  <%!-- Add Discussion Slide-in Drawer --%>
+  <div id="review-discussion-overlay" class="prd-overlay">
+    <div class="prd-panel">
+      <div class="prd-header">
+        <button
+          type="button"
+          class="prd-back"
+          onclick="closeReviewDiscussionModal()"
+          aria-label="Back"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <h2 class="prd-title">Add Discussion</h2>
+      </div>
+
+      <form
+        method="POST"
+        action={"/review/#{@assignment.id}/discussion"}
+        id="review-discussion-form"
+      >
+        <input
+          type="hidden"
+          name="_csrf_token"
+          value={Plug.CSRFProtection.get_csrf_token()}
+        />
+        <div class="prd-body">
+          <section class="prd-section">
+            <h3 class="prd-label">Participants</h3>
+
+            <%= for {participant, idx} <- Enum.with_index(review_participants(@assignment, @user)) do %>
+              <label class="prd-checkbox-row">
+                <input
+                  type="checkbox"
+                  name="participant[]"
+                  id={"review-discussion-participant-#{idx + 1}"}
+                  value={participant.name}
+                  checked
+                /> <span class="prd-checkbox-name">{participant.name}</span>
+                <span class="prd-role">{participant.role}</span>
+              </label>
+            <% end %>
+          </section>
+          <label class="prd-label" for="review-discussion-subject">Subject</label>
+          <input
+            type="text"
+            name="subject"
+            id="review-discussion-subject"
+            class="prd-input"
+            placeholder="Brief subject line"
+            required
+          /> <label class="prd-label">Message</label>
+          <div class="prd-richtext-wrapper">
+            <div id="review-discussion-message-toolbar" class="prd-toolbar">
+              <button type="button" data-cmd="bold" class="prd-toolbar-btn" title="Bold">
+                <b>B</b>
+              </button>
+
+              <button type="button" data-cmd="italic" class="prd-toolbar-btn" title="Italic">
+                <i>I</i>
+              </button>
+
+              <button type="button" data-cmd="underline" class="prd-toolbar-btn" title="Underline">
+                <u>U</u>
+              </button>
+
+              <button
+                type="button"
+                data-cmd="insertUnorderedList"
+                class="prd-toolbar-btn"
+                title="Bullet List"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <input
+              type="hidden"
+              name="message"
+              id="review-discussion-message"
+              value=""
+              required
+            /> <div
+              id="review-discussion-message-editor"
+              class="prd-richtext"
+              data-target="review-discussion-message"
+              data-placeholder="Write your message…"
+              contenteditable="true"
+            ></div>
+          </div>
+
+          <div class="prd-form-error" id="review-discussion-error" style="display:none">
+            A message is required to start the discussion.
+          </div>
+          
+          <div class="prd-attach-box">
+            <div class="prd-attach-head">
+              <h3 class="prd-attach-title">Attached Files</h3>
+
+              <div class="prd-attach-actions">
+                <button type="button" id="rd-btn-search-file" class="prd-btn-outline">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  Search
+                </button>
+
+                <button
+                  type="button"
+                  id="rd-btn-upload-file"
+                  class="prd-btn-outline"
+                  onclick="openReviewDiscussionUploadModal()"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  Upload File
+                </button>
+              </div>
+            </div>
+            
+            <div
+              class="rd-attach-search"
+              id="rd-attach-search-bar"
+              style="display:none"
+            >
+              <input
+                type="text"
+                id="rd-attach-search-input"
+                class="rd-attach-search-input"
+                placeholder="Search attached files…"
+              />
+            </div>
+
+            <div class="prd-attach-body" id="rd-attach-body">
+              <div class="prd-attach-empty">No files are attached to this discussion.</div>
+            </div>
+          </div>
+
+          <input
+            type="hidden"
+            name="attached_files"
+            id="rd-attached-files"
+            value=""
+          />
+        </div>
+
+        <div class="prd-footer">
+          <button
+            type="button"
+            class="prd-btn-secondary"
+            onclick="closeReviewDiscussionModal()"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="prd-btn-primary">OK</button>
+        </div>
+      </form>
+    </div>
+  </div>
+   <%!-- Upload Discussion File Slide-in Drawer --%>
+  <div id="review-discussion-upload-overlay" class="urf-overlay rdud-overlay">
+    <div class="urf-modal rup-modal">
+      <div class="urf-header">
+        <button
+          type="button"
+          class="urf-back"
+          onclick="closeReviewDiscussionUploadModal()"
+          aria-label="Close"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        
+        <h2 class="urf-title">Upload a Discussion File</h2>
+         <span class="urf-title-spacer"></span>
+      </div>
+      
+      <div class="urf-stepper">
+        <div
+          class="urf-step urf-step-active urf-step-clickable"
+          id="rdud-step-1-indicator"
+          onclick="rdudGoToStep(1)"
+        >
+          <span class="urf-step-num">1</span> <span class="urf-step-label">Upload File</span>
+        </div>
+        
+        <div class="urf-step-connector"></div>
+        
+        <div class="urf-step" id="rdud-step-2-indicator" onclick="rdudGoToStep(2)">
+          <span class="urf-step-num">2</span> <span class="urf-step-label">Review Details</span>
+        </div>
+        
+        <div class="urf-step-connector"></div>
+        
+        <div class="urf-step" id="rdud-step-3-indicator" onclick="rdudGoToStep(3)">
+          <span class="urf-step-num">3</span> <span class="urf-step-label">Confirm</span>
+        </div>
+      </div>
+      
+      <div class="urf-body">
+        <%!-- Step 1: Upload File --%>
+        <div class="urf-step-content" id="rdud-step-1">
+          <div class="urf-field-group">
+            <label class="urf-label" for="rdud-component-select">
+              <span class="rdud-required">*</span> Article Component
+            </label>
+            
+            <select
+              id="rdud-component-select"
+              class="urf-select"
+              onchange="rdudOnComponentChange(this)"
+            >
+              <option value="">Select article component</option>
+              
+              <option>Article Text</option>
+              
+              <option>Research Instrument</option>
+              
+              <option>Research Materials</option>
+              
+              <option>Research Results</option>
+              
+              <option>Transcript</option>
+              
+              <option>Data Analysis</option>
+              
+              <option>Data Set</option>
+              
+              <option>Source Text</option>
+              
+              <option>Other</option>
+            </select>
+          </div>
+          
+          <div class="rdud-upload-row" id="rdud-upload-row" style="display:none">
+            <input
+              type="file"
+              id="rdud-file-input"
+              class="rup-file-input-hidden"
+              onchange="rdudOnFileSelected(this)"
+            />
+            <div class="rup-upload-layout">
+              <div class="rup-selected-item" id="rdud-dropzone">
+                <div class="rup-selected-icon">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                  </svg>
+                </div>
+                
+                <div class="rup-selected-info">
+                  <span class="rup-selected-name" id="rdud-selected-name">
+                    No file selected
+                  </span>
+                  
+                  <span class="rup-selected-meta" id="rdud-selected-meta">
+                    Drag &amp; drop a file here, or click to browse
+                  </span>
+                </div>
+                
+                <button
+                  type="button"
+                  class="rup-selected-remove"
+                  id="rdud-selected-remove"
+                  onclick="rdudRemoveFile(event)"
+                  title="Remove file"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                    </path>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="rup-upload-side">
+                <button
+                  type="button"
+                  class="urf-btn-upload"
+                  id="rdud-btn-upload"
+                  onclick="document.getElementById('rdud-file-input').click()"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                   <span id="rdud-btn-upload-label">Upload File</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+         <%!-- Step 2: Review Details --%>
+        <div class="urf-step-content urf-step-hidden" id="rdud-step-2">
+          <p class="urf-hint">Review the file details before confirming.</p>
+          
+          <div class="urf-detail-row">
+            <span class="urf-detail-label">File Name:</span>
+            <span class="urf-detail-value" id="rdud-detail-filename">—</span>
+          </div>
+          
+          <div class="urf-detail-row">
+            <span class="urf-detail-label">File Size:</span>
+            <span class="urf-detail-value" id="rdud-detail-filesize">—</span>
+          </div>
+          
+          <div class="urf-detail-row">
+            <span class="urf-detail-label">Article Component:</span>
+            <span class="urf-detail-value" id="rdud-detail-component">—</span>
+          </div>
+        </div>
+         <%!-- Step 3: Confirm --%>
+        <div class="urf-step-content urf-step-hidden" id="rdud-step-3">
+          <div class="urf-confirm-box">
+            <p class="urf-confirm-text">File Added</p>
+            
+            <p class="rup-confirm-sub">
+              Ready to add “<span id="rdud-confirm-filename">—</span>” to the discussion.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="urf-footer rup-footer">
+        <button
+          type="button"
+          class="urf-btn-cancel"
+          onclick="closeReviewDiscussionUploadModal()"
+        >
+          Cancel
+        </button>
+        
+        <button
+          type="button"
+          class="urf-btn-continue"
+          id="rdud-btn-continue"
+          disabled
+          onclick="rdudNextStep()"
+        >Continue</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-  function openUploadFileModal() {
-    var overlay = document.getElementById('upload-reviewer-file-overlay');
-    if (overlay) {
-      overlay.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-    }
+        var rupFile = null;
+        var rupStep = 1;
+
+        function rupBytes(bytes) {
+          if (!bytes && bytes !== 0) return '';
+          if (bytes < 1024) return bytes + ' B';
+          if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+          return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+    function rupReset() {
+          rupFile = null;
+          rupStep = 1;
+          var input = document.getElementById('rup-file-input');
+          if (input && 'value' in input) input.value = '';
+          var item = document.getElementById('rup-dropzone');
+          if (item) item.classList.remove('rup-selected-item-active', 'rup-selected-item-has-file');
+          var name = document.getElementById('rup-selected-name');
+          if (name) name.textContent = 'No file selected';
+          var meta = document.getElementById('rup-selected-meta');
+          if (meta) meta.textContent = 'Drag & drop a file here, or click to browse';
+          var filename = document.getElementById('rup-confirm-filename');
+          if (filename) filename.textContent = '—';
+          var cont = document.getElementById('rup-btn-continue');
+          if (cont) {
+            cont.disabled = true;
+            cont.textContent = 'Continue';
+          }
+          var btn = document.getElementById('rup-btn-upload');
+          var label = document.getElementById('rup-btn-upload-label');
+          if (btn && label) {
+            label.textContent = 'Upload File';
+            btn.classList.remove('urf-btn-change-file');
+            btn.classList.add('urf-btn-upload');
+          }
+          rupShowStep(1);
+        }
+
+        function rupOnFileSelected(input) {
+          rupFile = input.files && input.files[0];
+          var item = document.getElementById('rup-dropzone');
+          if (item) item.classList.toggle('rup-selected-item-has-file', !!rupFile);
+          var name = document.getElementById('rup-selected-name');
+          var meta = document.getElementById('rup-selected-meta');
+          if (rupFile) {
+            if (name) name.textContent = rupFile.name;
+            if (meta) meta.textContent = rupBytes(rupFile.size) + ' · ready to upload';
+          } else {
+            if (name) name.textContent = 'No file selected';
+            if (meta) meta.textContent = 'Drag & drop a file here, or click to browse';
+          }
+          var btn = document.getElementById('rup-btn-upload');
+          var label = document.getElementById('rup-btn-upload-label');
+          if (btn && label) {
+            label.textContent = rupFile ? 'Change File' : 'Upload File';
+            btn.classList.toggle('urf-btn-change-file', !!rupFile);
+            btn.classList.toggle('urf-btn-upload', !rupFile);
+          }
+          var filename = document.getElementById('rup-confirm-filename');
+          if (filename) filename.textContent = rupFile ? rupFile.name : '—';
+          var cont = document.getElementById('rup-btn-continue');
+          if (cont && rupStep === 1) cont.disabled = !rupFile;
+        }
+
+        function rupRemoveFile(e) {
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          var input = document.getElementById('rup-file-input');
+          if (input) input.value = '';
+          rupOnFileSelected(input);
+        }
+
+        function rupShowStep(step) {
+          rupStep = step;
+          for (var i = 1; i <= 3; i++) {
+            var content = document.getElementById('rup-step-' + i);
+            if (content) content.classList.toggle('urf-step-hidden', i !== step);
+            var indicator = document.getElementById('rup-step-' + i + '-indicator');
+            if (indicator) {
+              indicator.classList.toggle('urf-step-active', i === step);
+              indicator.classList.toggle('urf-step-done', i < step);
+              indicator.classList.toggle('urf-step-clickable', i <= step);
+            }
+          }
+          var cont = document.getElementById('rup-btn-continue');
+          if (cont) {
+            if (step === 1) {
+              cont.textContent = 'Continue';
+              cont.disabled = !rupFile;
+            } else if (step === 2) {
+              cont.textContent = 'Continue';
+              cont.disabled = false;
+            } else if (step === 3) {
+              cont.textContent = 'Upload';
+              cont.disabled = false;
+            }
+          }
+        }
+
+        window.rupGoToStep = function (step) {
+          if (step > rupStep) return;
+          if (step >= 3 && rupStep < 3) return;
+          rupShowStep(step);
+        };
+
+        function rupNextStep() {
+          if (rupStep === 1) {
+            var fn = document.getElementById('rup-detail-filename');
+            if (fn) fn.textContent = rupFile ? rupFile.name : '—';
+            var fs = document.getElementById('rup-detail-filesize');
+            if (fs) fs.textContent = rupFile ? rupBytes(rupFile.size) : '—';
+            rupShowStep(2);
+          } else if (rupStep === 2) {
+            rupShowStep(3);
+          } else if (rupStep === 3) {
+            var form = document.getElementById('rup-upload-form');
+            if (form) form.submit();
+          }
+        }
+
+        function rupBindDropzone() {
+          var dz = document.getElementById('rup-dropzone');
+          var input = document.getElementById('rup-file-input');
+          if (!dz || !input) return;
+          dz.addEventListener('click', function () {
+            input.click();
+          });
+    ['dragenter', 'dragover'].forEach(function (name) {
+            dz.addEventListener(name, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              dz.classList.add('rup-selected-item-active');
+            });
+          });
+          ['dragleave', 'drop'].forEach(function (name) {
+            dz.addEventListener(name, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              dz.classList.remove('rup-selected-item-active');
+            });
+          });
+          dz.addEventListener('drop', function (e) {
+            var files = e.dataTransfer && e.dataTransfer.files;
+            if (files && files.length) {
+              try {
+                var dt = new DataTransfer();
+                dt.items.add(files[0]);
+                input.files = dt.files;
+              } catch (err) {
+                input.files = files;
+              }
+              rupOnFileSelected(input);
+            }
+          });
+        }
+
+        function openUploadFileModal() {
+          var overlay = document.getElementById('upload-reviewer-file-overlay');
+          if (overlay) {
+            overlay.classList.add('urf-open');
+            rupReset();
+          }
+        }
+
+        function closeUploadFileModal() {
+          var overlay = document.getElementById('upload-reviewer-file-overlay');
+          if (overlay) {
+            overlay.classList.remove('urf-open');
+            setTimeout(rupReset, 320);
+          }
+        }
+
+    var rdAttachedFiles = [];
+
+        function openReviewDiscussionModal() {
+          var overlay = document.getElementById('review-discussion-overlay');
+          if (overlay) overlay.classList.add('prd-open');
+          resetReviewDiscussionForm();
+        }
+
+  function closeReviewDiscussionModal() {
+          var overlay = document.getElementById('review-discussion-overlay');
+          if (overlay) overlay.classList.remove('prd-open');
+        }
+
+    var rdudFile = null;
+        var rdudStep = 1;
+
+        function rdudBytes(bytes) {
+          if (!bytes && bytes !== 0) return '';
+          if (bytes < 1024) return bytes + ' B';
+          if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+          return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function rdudReset() {
+          rdudFile = null;
+          rdudStep = 1;
+          var comp = document.getElementById('rdud-component-select');
+          if (comp) comp.value = '';
+          var row = document.getElementById('rdud-upload-row');
+          if (row) row.style.display = 'none';
+          var input = document.getElementById('rdud-file-input');
+          if (input && 'value' in input) input.value = '';
+          var item = document.getElementById('rdud-dropzone');
+          if (item) item.classList.remove('rup-selected-item-active', 'rup-selected-item-has-file');
+          var name = document.getElementById('rdud-selected-name');
+          if (name) name.textContent = 'No file selected';
+          var meta = document.getElementById('rdud-selected-meta');
+          if (meta) meta.textContent = 'Drag & drop a file here, or click to browse';
+          var filename = document.getElementById('rdud-confirm-filename');
+          if (filename) filename.textContent = '—';
+          var btn = document.getElementById('rdud-btn-upload');
+          var label = document.getElementById('rdud-btn-upload-label');
+          if (btn && label) {
+            label.textContent = 'Upload File';
+            btn.classList.remove('urf-btn-change-file');
+            btn.classList.add('urf-btn-upload');
+          }
+          rdudShowStep(1);
+        }
+
+        function rdudUpdateContinue() {
+          var cont = document.getElementById('rdud-btn-continue');
+          if (!cont || rdudStep !== 1) return;
+          var comp = document.getElementById('rdud-component-select');
+          cont.disabled = !(rdudFile && comp && comp.value);
+        }
+
+        function rdudOnComponentChange(sel) {
+          var row = document.getElementById('rdud-upload-row');
+          if (row) row.style.display = sel && sel.value ? 'block' : 'none';
+          rdudUpdateContinue();
+        }
+
+        function rdudOnFileSelected(input) {
+          rdudFile = input.files && input.files[0];
+          var item = document.getElementById('rdud-dropzone');
+          if (item) item.classList.toggle('rup-selected-item-has-file', !!rdudFile);
+          var name = document.getElementById('rdud-selected-name');
+          var meta = document.getElementById('rdud-selected-meta');
+          if (rdudFile) {
+            if (name) name.textContent = rdudFile.name;
+            if (meta) meta.textContent = rdudBytes(rdudFile.size) + ' · ready to upload';
+          } else {
+            if (name) name.textContent = 'No file selected';
+            if (meta) meta.textContent = 'Drag & drop a file here, or click to browse';
+          }
+          var btn = document.getElementById('rdud-btn-upload');
+          var label = document.getElementById('rdud-btn-upload-label');
+          if (btn && label) {
+            label.textContent = rdudFile ? 'Change File' : 'Upload File';
+            btn.classList.toggle('urf-btn-change-file', !!rdudFile);
+            btn.classList.toggle('urf-btn-upload', !rdudFile);
+          }
+          var filename = document.getElementById('rdud-confirm-filename');
+          if (filename) filename.textContent = rdudFile ? rdudFile.name : '—';
+          rdudUpdateContinue();
+        }
+
+        function rdudRemoveFile(e) {
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          var input = document.getElementById('rdud-file-input');
+          if (input) input.value = '';
+          rdudOnFileSelected(input);
+        }
+
+        function rdudShowStep(step) {
+          rdudStep = step;
+          for (var i = 1; i <= 3; i++) {
+            var content = document.getElementById('rdud-step-' + i);
+            if (content) content.classList.toggle('urf-step-hidden', i !== step);
+            var indicator = document.getElementById('rdud-step-' + i + '-indicator');
+            if (indicator) {
+              indicator.classList.toggle('urf-step-active', i === step);
+              indicator.classList.toggle('urf-step-done', i < step);
+              indicator.classList.toggle('urf-step-clickable', i <= step);
+            }
+          }
+          var cont = document.getElementById('rdud-btn-continue');
+          if (cont) {
+            if (step === 1) {
+              cont.textContent = 'Continue';
+              rdudUpdateContinue();
+            } else if (step === 2) {
+              cont.textContent = 'Continue';
+              cont.disabled = false;
+            } else if (step === 3) {
+              cont.textContent = 'Upload';
+              cont.disabled = false;
+            }
+          }
+        }
+
+        window.rdudGoToStep = function (step) {
+          if (step > rdudStep) return;
+          if (step >= 3 && rdudStep < 3) return;
+          rdudShowStep(step);
+        };
+
+        function rdudNextStep() {
+          if (rdudStep === 1) {
+            var fn = document.getElementById('rdud-detail-filename');
+            if (fn) fn.textContent = rdudFile ? rdudFile.name : '—';
+            var fs = document.getElementById('rdud-detail-filesize');
+            if (fs) fs.textContent = rdudFile ? rdudBytes(rdudFile.size) : '—';
+            var dc = document.getElementById('rdud-detail-component');
+            if (dc) {
+              var comp = document.getElementById('rdud-component-select');
+              dc.textContent = comp ? comp.value : '—';
+            }
+            rdudShowStep(2);
+          } else if (rdudStep === 2) {
+            rdudShowStep(3);
+          } else if (rdudStep === 3) {
+            rdudCommitUpload();
+          }
+        }
+
+        function rdudCommitUpload() {
+          if (!rdudFile) return;
+          rdAttachedFiles.push({
+            id: 'rd-' + Date.now() + '-' + Math.floor(Math.random() * 100000),
+            name: rdudFile.name,
+            size: rdudBytes(rdudFile.size)
+          });
+          renderReviewDiscussionAttachments();
+          closeReviewDiscussionUploadModal();
+        }
+
+        function rdudBindDropzone() {
+          var dz = document.getElementById('rdud-dropzone');
+          var input = document.getElementById('rdud-file-input');
+          if (!dz || !input) return;
+          dz.addEventListener('click', function () {
+            input.click();
+          });
+          ['dragenter', 'dragover'].forEach(function (name) {
+            dz.addEventListener(name, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              dz.classList.add('rup-selected-item-active');
+            });
+          });
+          ['dragleave', 'drop'].forEach(function (name) {
+            dz.addEventListener(name, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              dz.classList.remove('rup-selected-item-active');
+            });
+          });
+          dz.addEventListener('drop', function (e) {
+            var files = e.dataTransfer && e.dataTransfer.files;
+            if (files && files.length) {
+              try {
+                var dt = new DataTransfer();
+                dt.items.add(files[0]);
+                input.files = dt.files;
+              } catch (err) {
+                input.files = files;
+              }
+              rdudOnFileSelected(input);
+            }
+          });
+        }
+
+        function openReviewDiscussionUploadModal() {
+          var overlay = document.getElementById('review-discussion-upload-overlay');
+          if (overlay) {
+            rdudReset();
+            overlay.classList.add('urf-open');
+          }
+        }
+
+        function closeReviewDiscussionUploadModal() {
+          var overlay = document.getElementById('review-discussion-upload-overlay');
+          if (overlay) {
+            overlay.classList.remove('urf-open');
+            setTimeout(rdudReset, 320);
+          }
+        }
+
+        function resetReviewDiscussionForm() {
+          var subject = document.getElementById('review-discussion-subject');
+          if (subject) subject.value = '';
+          var editor = document.getElementById('review-discussion-message-editor');
+          var hidden = document.getElementById('review-discussion-message');
+          if (editor) editor.innerHTML = '';
+          if (hidden) hidden.value = '';
+          var error = document.getElementById('review-discussion-error');
+          if (error) error.style.display = 'none';
+          rdAttachedFiles = [];
+          renderReviewDiscussionAttachments();
+          var searchBar = document.getElementById('rd-attach-search-bar');
+          if (searchBar) searchBar.style.display = 'none';
+  var searchInput = document.getElementById('rd-attach-search-input');
+          if (searchInput) searchInput.value = '';
+        }
+
+        function rdFormatBytes(bytes) {
+          if (!bytes && bytes !== 0) return '';
+          if (bytes < 1024) return bytes + ' B';
+          if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+          return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   }
 
-  function closeUploadFileModal() {
-    var overlay = document.getElementById('upload-reviewer-file-overlay');
-    if (overlay) {
-      overlay.style.display = 'none';
-      document.body.style.overflow = '';
-    }
-  }
+        function renderReviewDiscussionAttachments() {
+          var body = document.getElementById('rd-attach-body');
+          var hidden = document.getElementById('rd-attached-files');
+          if (!body) return;
 
-  function openDiscussionModal() {
-    var overlay = document.getElementById('add-discussion-overlay');
-    if (overlay) {
-      overlay.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-    }
-  }
+          body.innerHTML = '';
+          if (rdAttachedFiles.length === 0) {
+            var empty = document.createElement('div');
+            empty.className = 'prd-attach-empty';
+            empty.textContent = 'No files are attached to this discussion.';
+            body.appendChild(empty);
+          } else {
+            rdAttachedFiles.forEach(function (f) {
+              var row = document.createElement('div');
+              row.className = 'rd-attach-file-row';
+              row.setAttribute('data-name', (f.name || '').toLowerCase());
+              var chip = document.createElement('span');
+              chip.className = 'prd-attach-file-chip';
+              chip.textContent = f.name + (f.size ? ' (' + f.size + ')' : '');
+              var remove = document.createElement('button');
+              remove.type = 'button';
+              remove.className = 'rd-remove-btn';
+              remove.textContent = '\u00d7';
+              remove.title = 'Remove file';
+              remove.addEventListener('click', function () {
+                rdAttachedFiles = rdAttachedFiles.filter(function (item) {
+                  return item.id !== f.id;
+                });
+                renderReviewDiscussionAttachments();
+              });
+              row.appendChild(chip);
+              row.appendChild(remove);
+              body.appendChild(row);
+            });
+          }
+          if (hidden) hidden.value = JSON.stringify(rdAttachedFiles);
+        }
 
-  function closeDiscussionModal() {
-    var overlay = document.getElementById('add-discussion-overlay');
-    if (overlay) {
-      overlay.style.display = 'none';
-      document.body.style.overflow = '';
-    }
-  }
+        function toggleReviewDiscussionSearch() {
+          var bar = document.getElementById('rd-attach-search-bar');
+          var input = document.getElementById('rd-attach-search-input');
+          if (!bar) return;
+          var hidden = bar.style.display === 'none' || bar.style.display === '';
+          bar.style.display = hidden ? 'block' : 'none';
+          if (hidden) {
+            if (input) input.focus();
+          } else {
+            filterReviewDiscussionAttachments('');
+          }
+        }
 
-  function bindModalOverlayClose(overlayId, closeFn) {
-    var overlay = document.getElementById(overlayId);
-    if (overlay) {
-      overlay.addEventListener('click', function (e) {
-        if (e.target === overlay) closeFn();
-      });
-    }
-  }
+        function filterReviewDiscussionAttachments(q) {
+          var rows = document.querySelectorAll('#rd-attach-body .rd-attach-file-row');
+          for (var i = 0; i < rows.length; i++) {
+            var name = rows[i].getAttribute('data-name') || '';
+            rows[i].style.display = name.indexOf(q) > -1 ? '' : 'none';
+          }
+        }
 
-  function bindToolbarFieldSearch(btnId, barId, inputId, tableId) {
-    var btn = document.getElementById(btnId);
-    var bar = document.getElementById(barId);
-    var input = document.getElementById(inputId);
-    var table = document.getElementById(tableId);
-    if (!btn || !bar || !input || !table) return;
+        function bindModalOverlayClose(overlayId, closeFn) {
+          var overlay = document.getElementById(overlayId);
+          if (overlay) {
+            overlay.addEventListener('click', function (e) {
+              if (e.target === overlay) closeFn();
+            });
+          }
+        }
 
-    btn.addEventListener('click', function () {
-      var hidden = bar.style.display === 'none' || bar.style.display === '';
-      bar.style.display = hidden ? 'block' : 'none';
-      if (hidden) input.focus();
-    });
+        function bindToolbarFieldSearch(btnId, barId, inputId, tableId) {
+          var btn = document.getElementById(btnId);
+          var bar = document.getElementById(barId);
+          var input = document.getElementById(inputId);
+          var table = document.getElementById(tableId);
+          if (!btn || !bar || !input || !table) return;
 
-    input.addEventListener('input', function () {
-      var q = input.value.trim().toLowerCase();
-      var rows = table.querySelectorAll('tbody tr');
-      for (var i = 0; i < rows.length; i++) {
-        var name = (rows[i].getAttribute('data-name') || '').toLowerCase();
-        var type = (rows[i].getAttribute('data-type') || '').toLowerCase();
-        rows[i].style.display = (name.indexOf(q) > -1 || type.indexOf(q) > -1) ? '' : 'none';
-      }
-    });
-  }
+          btn.addEventListener('click', function () {
+            var hidden = bar.style.display === 'none' || bar.style.display === '';
+            bar.style.display = hidden ? 'block' : 'none';
+            if (hidden) input.focus();
+          });
+
+          input.addEventListener('input', function () {
+            var q = input.value.trim().toLowerCase();
+            var rows = table.querySelectorAll('tbody tr');
+            for (var i = 0; i < rows.length; i++) {
+              var name = (rows[i].getAttribute('data-name') || '').toLowerCase();
+              var type = (rows[i].getAttribute('data-type') || '').toLowerCase();
+              rows[i].style.display = (name.indexOf(q) > -1 || type.indexOf(q) > -1) ? '' : 'none';
+            }
+          });
+        }
 
   function initReviewerFilesExtras() {
-    var uploadBtns = [
-      document.getElementById('btn-upload-reviewer-file')
-    ];
-    uploadBtns.forEach(function (btn) {
-      if (btn) btn.addEventListener('click', openUploadFileModal);
-    });
+          rupBindDropzone();
+          rdudBindDropzone();
 
-    var addBtn = document.getElementById('btn-add-discussion');
-    if (addBtn) addBtn.addEventListener('click', openDiscussionModal);
+          var uploadBtns = [
+            document.getElementById('btn-upload-reviewer-file')
+          ];
+          uploadBtns.forEach(function (btn) {
+            if (btn) btn.addEventListener('click', openUploadFileModal);
+          });
 
-    bindToolbarFieldSearch(
-      'btn-search-reviewer-files',
-      'search-reviewer-files-bar',
-      'search-reviewer-files-input',
-      'reviewer-files-table'
-    );
-    bindToolbarFieldSearch(
-      'btn-search-review-files',
-      'search-review-files-bar',
-      'search-review-files-input',
-      'review-files-table'
-    );
+    var addBtns = document.querySelectorAll('#btn-add-discussion');
+          addBtns.forEach(function (btn) {
+            btn.addEventListener('click', openReviewDiscussionModal);
+          });
 
-    bindModalOverlayClose('upload-reviewer-file-overlay', closeUploadFileModal);
-    bindModalOverlayClose('add-discussion-overlay', closeDiscussionModal);
-  }
+          var searchBtn = document.getElementById('rd-btn-search-file');
+          if (searchBtn) searchBtn.addEventListener('click', toggleReviewDiscussionSearch);
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initReviewerFilesExtras);
-  } else {
-    initReviewerFilesExtras();
-  }
+          var searchInput = document.getElementById('rd-attach-search-input');
+          if (searchInput) {
+            searchInput.addEventListener('input', function () {
+              filterReviewDiscussionAttachments(this.value.trim().toLowerCase());
+            });
+          }
+
+          var discussionForm = document.getElementById('review-discussion-form');
+          if (discussionForm) {
+            discussionForm.addEventListener('submit', function (e) {
+              var editor = document.getElementById('review-discussion-message-editor');
+              var hidden = document.getElementById('review-discussion-message');
+              var error = document.getElementById('review-discussion-error');
+              if (editor && hidden) hidden.value = editor.innerHTML;
+              var div = document.createElement('div');
+              div.innerHTML = hidden ? hidden.value : '';
+              var text = (div.textContent || '').replace(/\u00a0/g, ' ').trim();
+              if (!text) {
+                e.preventDefault();
+                if (editor) editor.focus();
+                if (error) error.style.display = 'block';
+              }
+            });
+          }
+
+          bindToolbarFieldSearch(
+            'btn-search-reviewer-files',
+            'search-reviewer-files-bar',
+            'search-reviewer-files-input',
+            'reviewer-files-table'
+          );
+          bindToolbarFieldSearch(
+            'btn-search-review-files',
+            'search-review-files-bar',
+            'search-review-files-input',
+            'review-files-table'
+          );
+
+  bindModalOverlayClose('upload-reviewer-file-overlay', closeUploadFileModal);
+          bindModalOverlayClose('review-discussion-overlay', closeReviewDiscussionModal);
+          bindModalOverlayClose('review-discussion-upload-overlay', closeReviewDiscussionUploadModal);
+
+          document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            var overlay = document.getElementById('review-discussion-overlay');
+            if (overlay && overlay.classList.contains('prd-open')) {
+              closeReviewDiscussionModal();
+            }
+            var upOverlay = document.getElementById('review-discussion-upload-overlay');
+            if (upOverlay && upOverlay.classList.contains('urf-open')) {
+              closeReviewDiscussionUploadModal();
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initReviewerFilesExtras);
+        } else {
+          initReviewerFilesExtras();
+        }
 </script>

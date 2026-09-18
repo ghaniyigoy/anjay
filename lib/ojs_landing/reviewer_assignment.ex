@@ -90,7 +90,7 @@ defmodule OjsLanding.ReviewerAssignment do
       keywords: params["keywords"] || "",
       status: :action_required,
       date_assigned: Date.utc_today(),
-      due_date: params["due_date"],
+      due_date: normalize_date(params["due_date"]),
       round: params["round"] || 1,
       files: params["files"] || [],
       review_history: [],
@@ -495,6 +495,19 @@ defmodule OjsLanding.ReviewerAssignment do
   end
 
   defp normalize_id(id), do: id
+
+  defp normalize_date(%Date{} = date), do: date
+
+  defp normalize_date(%DateTime{} = datetime), do: DateTime.to_date(datetime)
+
+  defp normalize_date(value) when is_binary(value) do
+    case Date.from_iso8601(value) do
+      {:ok, date} -> date
+      _ -> Date.utc_today()
+    end
+  end
+
+  defp normalize_date(_), do: Date.utc_today()
 
   defp next_id do
     Agent.get(__MODULE__, fn assignments ->

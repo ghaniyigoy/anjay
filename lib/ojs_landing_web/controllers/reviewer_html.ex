@@ -51,6 +51,11 @@ defmodule OjsLandingWeb.ReviewerHTML do
     end
   end
 
+  def format_date(%Date{} = date), do: Calendar.strftime(date, "%Y-%m-%d")
+  def format_date(%DateTime{} = datetime), do: Calendar.strftime(datetime, "%Y-%m-%d")
+  def format_date(value) when is_binary(value), do: value
+  def format_date(_), do: "—"
+
   def file_type_class("PDF"), do: "pdf"
   def file_type_class("CSV"), do: "csv"
   def file_type_class(type) when is_binary(type), do: "other"
@@ -58,6 +63,22 @@ defmodule OjsLandingWeb.ReviewerHTML do
 
   def reviewer_files(nil), do: []
   def reviewer_files(files), do: files
+
+  def file_name(%{filename: name}) when is_binary(name) and name != "", do: name
+  def file_name(%{name: name}) when is_binary(name) and name != "", do: name
+
+  def file_name(file) when is_map(file),
+    do: Map.get(file, :filename) || Map.get(file, :name) || ""
+
+  def file_name(_), do: ""
+
+  def file_type(%{genre: type}) when is_binary(type) and type != "", do: type
+  def file_type(%{type: type}) when is_binary(type) and type != "", do: type
+
+  def file_type(file) when is_map(file),
+    do: Map.get(file, :genre) || Map.get(file, :type) || "Other"
+
+  def file_type(_), do: "Other"
 
   def last_reply_date(discussion) do
     case discussion.replies do
@@ -69,4 +90,30 @@ defmodule OjsLandingWeb.ReviewerHTML do
 
   def discussions(nil), do: []
   def discussions(list), do: list
+
+  def review_participants(assignment, user) do
+    reviewer =
+      case assignment.reviewer_name do
+        name when is_binary(name) and name != "" -> name
+        _ -> participant_user_name(user)
+      end
+
+    author =
+      case assignment.author do
+        name when is_binary(name) and name != "" -> name
+        _ -> "Author"
+      end
+
+    [
+      %{name: reviewer, role: "Reviewer"},
+      %{name: author, role: "Author"}
+    ]
+  end
+
+  defp participant_user_name(%OjsLanding.User{given_name: given, family_name: family}) do
+    String.trim("#{given} #{family}")
+  end
+
+  defp participant_user_name(%{name: name}) when is_binary(name) and name != "", do: name
+  defp participant_user_name(_), do: "Reviewer"
 end
