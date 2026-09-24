@@ -2,6 +2,14 @@
 
 Catatan perubahan terbaru pada aplikasi.
 
+## Git: commit & push semua perubahan lokal ke GitHub
+
+- Commit `e85f7da` **Enhance editorial workflow, review details drawer, and reviewer review page**
+  (12 file, +1297/−54) — mencakup `workflow_3_1` "Read Review" drawer, drawer Review Details,
+  ikon email popover, dan tombol "Submit Review" reviewer.
+- Push ke `origin/main`: `2944b33..e85f7da` (`https://github.com/ghaniyigoy/anjay.git`).
+- `update.md`, `AGENTS.md`, dan `README.md` sudah mutakhir dengan kondisi HEAD.
+
 ## Workflow `workflow_3_1` (editor): tombol "Read Review" membuka Review Details drawer + seksi Recommendation dipindah ke bawah Reviewer Files
 
 ### ACTIONS di kotak Reviewers: "Open" → "Read Review" (drawer, bukan link)
