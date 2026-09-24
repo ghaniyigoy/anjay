@@ -639,12 +639,76 @@ defmodule OjsLandingWeb.EditorController do
       reviews_overdue: false,
       has_editor: has_editor?(submission),
       has_reviewers: has_reviewers?(assignments),
-      needs_submission_complete: needs_submission_complete?(submission)
+      needs_submission_complete: needs_submission_complete?(submission),
+      completed_reviews: completed_reviews(assignments)
     }
   end
 
   defp title_or_placeholder(title) when title in [nil, ""], do: "(Tanpa judul)"
   defp title_or_placeholder(title), do: title
+
+  # Reviewer assignments that have been submitted by the reviewer (status
+  # :completed). Each entry drives the green "Review Completed" notification
+  # popover shown in the EDITORIAL ACTIVITY column.
+  defp completed_reviews(assignments) do
+    assignments
+    |> Enum.filter(&(&1.status == :completed))
+    |> Enum.map(fn a ->
+      history = a.review_history || []
+      last = List.last(history)
+      stamp = a.submitted_at || (last && Map.get(last, :date))
+
+      %{
+        assignment_id: a.id,
+        reviewer: completed_reviewer(a, last),
+        completed_on: normalize_completion_date(stamp),
+        completed_at: format_completed_at(stamp),
+        recommendation:
+          a.recommendation || (last && Map.get(last, :decision)) || "No Recommendation",
+        comments_author: a.comments_author,
+        comments_editor: a.comments_editor,
+        reviewer_files: a.reviewer_files || []
+      }
+    end)
+  end
+
+  defp completed_reviewer(a, last) do
+    if a.reviewer_name not in [nil, ""] do
+      a.reviewer_name
+    else
+      (last && Map.get(last, :reviewer)) || "Reviewer"
+    end
+  end
+
+  defp normalize_completion_date(%DateTime{} = datetime), do: DateTime.to_date(datetime)
+  defp normalize_completion_date(%Date{} = date), do: date
+
+  defp normalize_completion_date(value) when is_binary(value) do
+    case Date.from_iso8601(value) do
+      {:ok, date} -> date
+      _ -> Date.utc_today()
+    end
+  end
+
+  defp normalize_completion_date(_), do: Date.utc_today()
+
+  # Display value for the "Review Details" drawer "Completed" field, e.g.
+  # "2026-08-08 14:32" when the exact submission timestamp is known, otherwise
+  # just the ISO date.
+  defp format_completed_at(%DateTime{} = datetime) do
+    Calendar.strftime(datetime, "%Y-%m-%d %H:%M")
+  end
+
+  defp format_completed_at(%Date{} = date), do: Calendar.strftime(date, "%Y-%m-%d")
+
+  defp format_completed_at(value) when is_binary(value) do
+    case Date.from_iso8601(String.slice(value, 0, 10)) do
+      {:ok, date} -> Calendar.strftime(date, "%Y-%m-%d")
+      _ -> "—"
+    end
+  end
+
+  defp format_completed_at(_), do: "—"
 
   # Build reviewer JSON payload for the "Add Reviewer" modal. Derives reviewer
   # metrics (review count, last review, current status) from the assignment store.

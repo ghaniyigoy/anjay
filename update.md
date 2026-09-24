@@ -2,6 +2,190 @@
 
 Catatan perubahan terbaru pada aplikasi.
 
+## Workflow `workflow_3_1` (editor): tombol "Read Review" membuka Review Details drawer + seksi Recommendation dipindah ke bawah Reviewer Files
+
+### ACTIONS di kotak Reviewers: "Open" → "Read Review" (drawer, bukan link)
+Pada `/dashboard/editorial?workflowSubmissionId=...&workflowMenuKey=workflow_3_1`, kotak **Reviewers**,
+kolom **ACTIONS** sebelumnya menampilkan link "Open" menuju `/review/:id`. Sekarang:
+
+- Label diganti **"Read Review"**.
+- Untuk assignment yang review-nya sudah selesai (`:completed`), "Read Review" adalah
+  `<button data-drawer="review-details-overlay-<submission_id>-<assignment_id>" onclick="openReviewDetailsDrawer(this)">`
+  yang membuka **drawer Review Details yang sama** dengan tombol "View Unread recommendation" di
+  dashboard editorial (header biru, reviewer username, Completed, Reviewer Comments, Reviewer Files,
+  Recommendation, footer Cancel/Confirm). Markup drawer di-render di bagian bawah `workflow.html.heex`
+  dengan iterasi `@row.completed_reviews` (dari `to_editorial_row/1`).
+- Untuk assignment yang belum selesai, "Read Review" tetap link ke `/review/:id` (`.editorial-view-link`).
+
+### Drawer Review Details: seksi Recommendation dipindah ke bawah Reviewer Files
+Di `editorial.html.heex`, drawer Review Details sebelumnya menampilkan `Recommendation: {nilai}`
+sebagai kotak info di atas "Reviewer Comments". Sekarang kotak tersebut dihapus dari atas dan diganti
+seksi di bawah bagian **Reviewer Files**: heading **"Recommendation"** (`.rvd-section-title`) + kotak
+(`.rvd-comment`) berisi hasil rekomendasi reviewer (`review.recommendation`, fallback `"—"`).
+
+### Refactor: JS drawer Review Details pindah dari inline ke `assets/js/app.js`
+`openReviewDetailsDrawer`/`closeReviewDetailsDrawer` + handler backdrop-click/Escape + delegated
+filter `.rvd-search-input` yang sebelumnya inline di `editorial.html.heex` kini di **`assets/js/app.js`**
+(global, dipakai bersama halaman workflow). `openReviewDetailsDrawer` mengecek
+`closeReviewCompletedPopover` via `typeof` agar aman di halaman yang tidak punya popover RC.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/workflow.html.heex` — label "Read Review" +
+  tombol drawer untuk review `:completed`; markup drawer Review Details di bagian bawah.
+- `lib/ojs_landing_web/controllers/editor_html/editorial.html.heex` — seksi Recommendation dipindah
+  ke bawah Reviewer Files; blok JS rvd inline dihapus (pindah ke app.js).
+- `assets/js/app.js` — fungsi + handler drawer Review Details (global).
+- `AGENTS.md` — deskripsi drawer Review Details & kolom ACTIONS `workflow_3_1` diperbarui.
+
+### Status
+- `mix precommit` lulus: **164 test, 0 failure**; `mix assets.build` sukses (hard-refresh Ctrl+F5).
+
+## Editorial Dashboard: "View Unread recommendation" membuka Review Details drawer (slide-in kanan→kiri)
+
+Pada `/dashboard/editorial?currentViewId=assigned-to-me`, tombol **"View Unread recommendation"**
+di dalam popover Review Completed (ikon email hijau, kolom EDITORIAL ACTIVITY) tidak lagi
+menavigasi ke halaman workflow `workflow_3_1`. Tombol kini menjadi `<button>` yang membuka
+**Review Details drawer** — panel yang menyusup dari **kanan ke kiri** (`translateX(100%) → 0`,
+animasi 0.3s, reuse pola `.apd-*`, width `720px`, z-index 10060).
+
+### Tampilan drawer (`.rvd-overlay`/`.rvd-panel`)
+- **Header** biru `#006798`: tombol **panah kiri** (tutup) di kiri + judul terpusat
+  **"Review Details: {title submission}"** (spacer di kanan agar seimbang).
+- **Username reviewer**.
+- Instruksi: *"Once this review has been read, press "Confirm" to record your acknowledgment of
+  this review."*
+- **Kotak info**: **`Completed: {YYYY-MM-DD [HH:MM]}`** — dari `submitted_at` (DateTime) saat
+  tersedia, fallback tanggal ISO dari entri terakhir `review_history`; dan
+  **`Recommendation: {rekomendasi reviewer}`** (dari `recommendation`, fallback
+  `review_history.decision`).
+- Bagian **Reviewer Comments**: dua kotak berlabel **"For author and editor"** (dari
+  `comments_author`) dan **"For editor"** (dari `comments_editor`), dirender via `raw/1`.
+- Bagian **Reviewer Files**: heading di kiri, sejajar di kanan **Search box** (memfilter baris tabel
+  client-side via `data-name`) dan tombol **Upload File**; di bawahnya tabel kolom
+  **File | Date | Type** (dari `reviewer_files`; empty-state "No reviewer files uploaded yet."
+  bila kosong).
+- **Footer**: tombol **Cancel** dan **Confirm** — keduanya menutup drawer via
+  `closeReviewDetailsDrawer(overlayId)` (Confirm belum punya flag "read" di server, hanya menutup).
+- Navigasi tutup: panah kiri, Cancel/Confirm, klik backdrop, atau **Escape**.
+
+### Data & implementasi
+- `EditorController.completed_reviews/1` kini menyertakan `completed_at` (via
+  `format_completed_at/1`: `YYYY-MM-DD HH:MM` untuk DateTime, ISO date untuk lainnya), ditambah
+  `comments_author`, `comments_editor`, dan `reviewer_files` per completed review.
+- `editorial.html.heex` — tombol popover menjadi
+  `<button data-drawer="review-details-overlay-<submission_id>-<assignment_id>">`; markup drawer
+  dirender per completed review; JS `openReviewDetailsDrawer`/`closeReviewDetailsDrawer` +
+  delegated filter `.rvd-search-input` (close backdrop/Escape, body scroll lock).
+- `assets/css/app.css` — section `.rvd-*` baru (overlay, panel, header, reviewer, instruksi, info
+  box, komentar, files head/table/badge, footer, tombol cancel/confirm).
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_controller.ex`
+- `lib/ojs_landing_web/controllers/editor_html/editorial.html.heex`
+- `assets/css/app.css`
+- `AGENTS.md` — deskripsi popover Review Completed diperbarui (tombol → drawer Review Details).
+
+### Status
+- `mix precommit` lulus: **164 test, 0 failure**; `mix assets.build` sukses (hard-refresh Ctrl+F5).
+
+## Editorial Dashboard: ikon "Review Completed" diganti ikon email + perbaikan popover tidak muncul saat diklik
+
+Pada `/dashboard/editorial?currentViewId=assigned-to-me`, tombol notifikasi **Review Completed**
+yang sebelumnya berbentuk **lonceng** kini diganti **ikon email (amplop)** (lucide "mail"),
+tetap memakai class `.btn-review-completed` (lingkaran hijau `#27ae60`).
+
+### Perbaikan: popover tidak muncul saat ikon diklik
+- **Bug**: `openReviewCompletedPopover` (inline JS di `editorial.html.heex`) menyetel
+  `popover.style.display = 'none'` secara inline saat mengukur ukuran popover. Inline style
+  `display: none` tetap menempel dan **menimpa** CSS `.rc-popover.rc-open { display: block }`
+  (inline style lebih tinggi prioritasnya dari class), sehingga popover tidak pernah tampil.
+- **Fix**: `popover.style.display = 'none'` diganti `''` (menghapus inline style) sehingga class
+  `.rc-open` yang menampilkan popover berlaku.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_html/editorial.html.heex` — SVG lonceng diganti path
+  ikon email; perbaikan `display` di `openReviewCompletedPopover`.
+
+### Status
+- `mix compile` bersih.
+
+## Editorial Dashboard: ikon notifikasi hijau "Review Completed" + popover di kolom EDITORIAL ACTIVITY
+
+Pada `/dashboard/editorial?currentViewId=assigned-to-me`, submission yang review-nya sudah
+di-submit oleh reviewer (assignment ber-status `:completed`) kini menampilkan **ikon notifikasi
+berbentuk lonceng hijau** (`.btn-review-completed`, bg `#27ae60`) di kolom **EDITORIAL ACTIVITY**.
+Klik ikon membuka **popover** yang di-anchor ke ikon (tutup via X, klik luar, atau Escape):
+
+### Isi popover (`.rc-popover`)
+- **Badge hijau** (teks putih): **"Review Completed on {day Month year}"** (mis. `8 August 2026`).
+- Nama reviewer (dari `reviewer_name`; fallback entri terakhir `review_history`).
+- Pesan: **"The review was completed on {YYYY-MM-DD} with the following recommendation:
+  {rekomendasi}"** — rekomendasi sesuai yang dipilih reviewer.
+- Tombol aksi **"View Unread recommendation"** yang menuju halaman workflow `workflow_3_1`
+  submission yang bersangkutan.
+
+### Data & implementasi
+- `EditorController.to_editorial_row/1` kini menambahkan `completed_reviews` (via
+  `EditorController.completed_reviews/1`): daftar `%{assignment_id, reviewer, completed_on,
+  recommendation}` dari assignment `:completed` yang cocok dengan submission (match by title);
+  tanggal selesai diambil dari `submitted_at` (fallback entri terakhir `review_history.date`),
+  rekomendasi dari `recommendation` (fallback `review_history.decision`).
+- `EditorHTML` — helper `review_completed_header/1`, `review_completed_message/1`, `long_date/1`
+  (format "day Month year"), `month_name/1`.
+- `editorial.html.heex` — tombol ikon lonceng hijau per completed review; markup popover
+  `#review-completed-popover-<submission_id>-<assignment_id>` (badge, reviewer, pesan, tombol);
+  JS inline `openReviewCompletedPopover`/`closeReviewCompletedPopover` (posisi anchored, clamp
+  viewport, tutup X/backdrop/Escape).
+- `assets/css/app.css` — `.btn-review-completed` (lingkaran hijau), `.rc-popover`/
+  `.rc-popover-card`/`.rc-popover-arrow`/`.rc-popover-close`, `.rc-popover-badge` (hijau/teks
+  putih), `.rc-popover-btn`.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/editor_controller.ex`
+- `lib/ojs_landing_web/controllers/editor_html.ex`
+- `lib/ojs_landing_web/controllers/editor_html/editorial.html.heex`
+- `assets/css/app.css`
+- `test/ojs_landing_web/controllers/editor_controller_test.exs` — test baru: ikon muncul + isi
+  popover benar saat submission punya assignment `:completed`.
+
+### Status
+- `mix precommit` lulus: **164 test, 0 failure**; `mix assets.build` sukses (hard-refresh Ctrl+F5).
+
+## Reviewer Review Page Step 3: tombol "Continue to Step 4" diganti "Submit Review" — review langsung dikirim ke editor
+
+Tombol aksi utama di footer Actions panel Step 3 (Download & Review) pada `/review/:id`
+sebelumnya berlabel **"Continue to Step 4"** yang hanya memajukan `wizard_step` ke 4
+(`POST /review/:id/step` → `advance_review_step/2`) tanpa mengirim review ke editor.
+
+### Kondisi sekarang
+- **Step 3 (Download & Review)** kini memuat semua yang dibutuhkan untuk submit: komentar
+  (For Author and Editor + For Editor), dan panel **Recommendation** berupa `<select>` dengan
+  opsi **Accept Submission / Revisions Required / Resubmit for Review / Decline Submission**.
+  Footer Actions berisi **Go back**, **Save For Later** (placeholder), dan tombol
+  **"Submit Review"** (`#rp-btn-submit-review`).
+- Tombol **Submit Review** meng-submit form `#review-form` → **`POST /review/:id`** (`submit_review/2`):
+  - Assignment langsung ber-status **`:completed`**, stage **`:copyediting`** — review masuk ke sisi
+    editor (notification hijau "Review Completed" di dashboard editorial).
+  - Rekomendasi (dari `#rp-recommendation`) + komentar turut tersimpan ke assignment dan
+    `review_history`.
+- Setelah submit, redirect ke `/review/:id` menampilkan **tampilan Step 4 Completion**: panel
+  **"Review Submitted"** (rekomendasi + komentar + tombol Back to My Assignments), dan stepper
+  menandai **Step 4 Completion sebagai step aktif** (`wizard_current_step/1` untuk status
+  `:completed` → 4).
+- Step 4 wizard lama (radio buttons rekomendasi) tetap ada di template namun tidak lagi
+  tercapai dari UI — hanya dapat dimasuki via `POST /review/:id/step`.
+
+### File yang diubah
+- `lib/ojs_landing_web/controllers/reviewer_html/review.html.heex` — form `#review-form` action
+  `/review/:id/step` → `/review/:id`; label tombol → "Submit Review".
+- `lib/ojs_landing_web/controllers/reviewer_html.ex` — `wizard_current_step/1` untuk
+  `%{status: :completed}` → 4.
+- `test/ojs_landing_web/controllers/reviewer_controller_test.exs` — assertion disesuaikan
+  (step 3 mengharapkan "Submit Review" + panel Recommendation).
+
+### Status
+- `mix precommit` lulus: **163 test, 0 failure**.
+
 ## Reviewer (`/review/:id`): "Upload File" di Attached Files membuka Upload Discussion File Modal (drawer kanan→kiri) + label "Attached Files" di luar kotak dihapus
 
 Pada drawer **Add Discussion**, dihapus label **"Attached Files"** yang berada **di luar** kotak

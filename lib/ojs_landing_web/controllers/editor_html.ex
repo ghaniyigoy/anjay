@@ -248,6 +248,35 @@ defmodule OjsLandingWeb.EditorHTML do
   def format_date(%DateTime{} = datetime), do: Calendar.strftime(datetime, "%Y-%m-%d")
   def format_date(_other), do: "—"
 
+  # Popover for reviews submitted by reviewers (EDITORIAL ACTIVITY column).
+  # Header uses a long "day Month year" date while the message reuses the
+  # ISO "%Y-%m-%d" form used by format_date/1.
+  def review_completed_header(review) do
+    "Review Completed on " <> long_date(review.completed_on)
+  end
+
+  def review_completed_message(review) do
+    "The review was completed on " <>
+      format_date(review.completed_on) <>
+      " with the following recommendation: " <>
+      (review.recommendation || "No Recommendation")
+  end
+
+  def long_date(%DateTime{} = datetime), do: long_date(DateTime.to_date(datetime))
+
+  def long_date(%Date{} = date) do
+    "#{date.day} #{month_name(date.month)} #{date.year}"
+  end
+
+  def long_date(_other), do: "—"
+
+  defp month_name(month) when month in 1..12 do
+    Enum.at(
+      ~w(January February March April May June July August September October November December),
+      month - 1
+    )
+  end
+
   # ============================================
   # Editorial activity log (derived from store data)
   # ============================================

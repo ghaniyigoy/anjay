@@ -73,6 +73,34 @@ defmodule OjsLandingWeb.EditorControllerTest do
 
       assert html =~ "Naskah Sudah Diassign Editor"
     end
+
+    test "shows a green Review Completed notification when a reviewer submitted a review", %{
+      conn: conn
+    } do
+      submission = Submission.create("author1", "Naskah Sudah Direview")
+
+      Submission.set_status(submission.id, :active)
+
+      Submission.assign_editor(submission.id, %{"username" => "editor", "role" => "editor"})
+
+      {:ok, assignment} =
+        OjsLanding.ReviewerAssignment.create(%{"title" => "Naskah Sudah Direview"})
+
+      {:ok, _} =
+        OjsLanding.ReviewerAssignment.submit_review(assignment.id, %{
+          "reviewer" => "Dr. Rina Widyastuti",
+          "recommendation" => "Accept"
+        })
+
+      html = get(conn, "/dashboard/editorial?currentViewId=assigned-to-me") |> html_response(200)
+
+      assert html =~ "btn-review-completed"
+      assert html =~ "review-completed-popover-#{submission.id}-#{assignment.id}"
+      assert html =~ "Review Completed on"
+      assert html =~ "Dr. Rina Widyastuti"
+      assert html =~ "with the following recommendation: Accept"
+      assert html =~ "View Unread recommendation"
+    end
   end
 
   describe "send to review email notification wizard" do

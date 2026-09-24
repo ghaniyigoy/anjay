@@ -473,6 +473,30 @@
                 <td class="col-days">{submission.days}</td>
 
                 <td class="col-editorial">
+                  <%= for review <- Map.get(submission, :completed_reviews) || [] do %>
+                    <button
+                      type="button"
+                      class="btn-review-completed"
+                      title="Review Completed"
+                      data-popover={"review-completed-popover-#{submission.id}-#{review.assignment_id}"}
+                      onclick="openReviewCompletedPopover(this)"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                      </svg>
+                    </button>
+                  <% end %>
                   <% action = editorial_actions(submission) %>
                   <%= if action do %>
                     <%= if Map.get(action, :modal) do %>
@@ -534,6 +558,185 @@
     }
   }
 </script>
+
+<%!-- Review Completed notification popovers (EDITORIAL ACTIVITY column) --%>
+<%= for submission <- @submissions do %>
+  <%= for review <- Map.get(submission, :completed_reviews) || [] do %>
+    <div
+      id={"review-completed-popover-#{submission.id}-#{review.assignment_id}"}
+      class="rc-popover"
+      role="dialog"
+      aria-hidden="true"
+    >
+      <div class="rc-popover-card">
+        <div class="rc-popover-arrow"></div>
+
+        <button
+          type="button"
+          class="rc-popover-close"
+          onclick="closeReviewCompletedPopover()"
+          aria-label="Close"
+        >×</button>
+
+        <div class="rc-popover-badge">{review_completed_header(review)}</div>
+
+        <div class="rc-popover-reviewer">{review.reviewer}</div>
+
+        <p class="rc-popover-message">{review_completed_message(review)}</p>
+
+        <div class="rc-popover-actions">
+          <button
+            type="button"
+            class="rc-popover-btn"
+            data-drawer={"review-details-overlay-#{submission.id}-#{review.assignment_id}"}
+            onclick="openReviewDetailsDrawer(this)"
+          >View Unread recommendation</button>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<%!-- Review Details slide-in drawer (right-to-left) for "View Unread recommendation" --%>
+<%= for submission <- @submissions do %>
+  <%= for review <- Map.get(submission, :completed_reviews) || [] do %>
+    <div
+      id={"review-details-overlay-#{submission.id}-#{review.assignment_id}"}
+      class="rvd-overlay"
+      role="dialog"
+      aria-hidden="true"
+    >
+      <div class="rvd-panel">
+        <div class="rvd-header">
+          <button
+            type="button"
+            class="rvd-back"
+            onclick={"closeReviewDetailsDrawer('review-details-overlay-#{submission.id}-#{review.assignment_id}')"}
+            aria-label="Back"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <h2 class="rvd-title">Review Details: {submission.title}</h2>
+          <span class="rvd-title-spacer"></span>
+        </div>
+
+        <div class="rvd-body">
+          <div class="rvd-reviewer">{review.reviewer}</div>
+
+          <p class="rvd-instruction">
+            Once this review has been read, press "Confirm" to record your
+            acknowledgment of this review.
+          </p>
+
+          <div class="rvd-info-box"><strong>Completed:</strong> {review.completed_at}</div>
+
+          <h3 class="rvd-section-title">Reviewer Comments</h3>
+
+          <div class="rvd-comment">
+            <div class="rvd-comment-label">For author and editor</div>
+            <div class="rvd-comment-body">{raw(review.comments_author || "—")}</div>
+          </div>
+
+          <div class="rvd-comment">
+            <div class="rvd-comment-label">For editor</div>
+            <div class="rvd-comment-body">{raw(review.comments_editor || "—")}</div>
+          </div>
+
+          <div class="rvd-files-head">
+            <h3 class="rvd-section-title">Reviewer Files</h3>
+            <div class="rvd-files-actions">
+              <div class="rvd-search-box">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" class="rvd-search-input" placeholder="Search" />
+              </div>
+              <button type="button" class="rvd-btn-upload">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+
+                  <polyline points="17 8 12 3 7 8"></polyline>
+
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Upload File
+              </button>
+            </div>
+          </div>
+
+          <%= if review.reviewer_files == [] do %>
+            <div class="rvd-files-empty">No reviewer files uploaded yet.</div>
+          <% else %>
+            <table class="rvd-files-table">
+              <thead>
+                <tr>
+                  <th>File</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%= for file <- review.reviewer_files do %>
+                  <tr data-name={String.downcase(to_string(file.name || ""))}>
+                    <td>
+                      <a href="#" class="rvd-file-link">{file.name}</a>
+                      <div class="rvd-file-meta">{file.size}</div>
+                    </td>
+                    <td>{file.date}</td>
+                    <td><span class="rvd-file-badge">{file.type}</span></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% end %>
+
+          <h3 class="rvd-section-title">Recommendation</h3>
+
+          <div class="rvd-comment">
+            <div class="rvd-comment-body">{review.recommendation || "—"}</div>
+          </div>
+        </div>
+
+        <div class="rvd-footer">
+          <button
+            type="button"
+            class="rvd-btn-cancel"
+            onclick={"closeReviewDetailsDrawer('review-details-overlay-#{submission.id}-#{review.assignment_id}')"}
+          >Cancel</button>
+          <button
+            type="button"
+            class="rvd-btn-confirm"
+            onclick={"closeReviewDetailsDrawer('review-details-overlay-#{submission.id}-#{review.assignment_id}')"}
+          >Confirm</button>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>
 
 <%!-- Assign Participant Drawer (right slide-in page) --%>
 <div id="assign-editor-overlay" class="apd-overlay">
@@ -1081,4 +1284,53 @@
     document.getElementById('ar-form-reviewer-name').value = name;
     document.getElementById('assign-reviewer-form').submit();
   }
+</script>
+
+<%!-- Review Completed popover scripting --%>
+<script>
+  function openReviewCompletedPopover(btn) {
+    var popover = document.getElementById(btn.getAttribute('data-popover'));
+    if (!popover) return;
+    if (popover.classList.contains('rc-open')) {
+      closeReviewCompletedPopover();
+      return;
+    }
+    closeReviewCompletedPopover();
+
+    popover.style.display = 'block';
+    var popWidth = popover.offsetWidth || 340;
+    var popHeight = popover.offsetHeight;
+    popover.style.display = '';
+
+    var rect = btn.getBoundingClientRect();
+    var left = rect.left + rect.width / 2 - popWidth / 2;
+    var top = rect.bottom + 12;
+    left = Math.max(10, Math.min(left, Math.max(10, window.innerWidth - popWidth - 10)));
+    if (top + popHeight > window.innerHeight - 10) {
+      top = rect.top - popHeight - 12;
+    }
+
+    popover.style.left = left + 'px';
+    popover.style.top = top + 'px';
+    popover.classList.add('rc-open');
+    popover.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeReviewCompletedPopover() {
+    document.querySelectorAll('.rc-popover.rc-open').forEach(function (p) {
+      p.classList.remove('rc-open');
+      p.style.left = '';
+      p.style.top = '';
+      p.setAttribute('aria-hidden', 'true');
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('.rc-popover') || e.target.closest('.btn-review-completed')) return;
+    closeReviewCompletedPopover();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeReviewCompletedPopover();
+  });
 </script>

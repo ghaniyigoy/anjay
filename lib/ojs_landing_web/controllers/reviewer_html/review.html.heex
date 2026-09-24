@@ -395,7 +395,7 @@
                     Enter (or paste) your review of this submission into the form below.
                   </p>
 
-                  <form method="POST" action={"/review/#{@assignment.id}/step"} id="review-form">
+                  <form method="POST" action={"/review/#{@assignment.id}"} id="review-form">
                     <input
                       type="hidden"
                       name="_csrf_token"
@@ -726,6 +726,61 @@
                   </table>
                 </div>
               </div>
+              <%!-- Recommendation Section --%>
+              <div class="rp-panel">
+                <div class="rp-panel-header">
+                  <h2 class="rp-panel-title">Recommendation</h2>
+                </div>
+
+                <div class="rp-panel-body">
+                  <p class="rp-help-text">
+                    Select the overall recommendation for this submission.
+                  </p>
+
+                  <select
+                    id="rp-recommendation"
+                    name="recommendation"
+                    form="review-form"
+                    class="rp-select"
+                  >
+                    <option
+                      value=""
+                      disabled
+                      selected={@assignment.recommendation in [nil, ""]}
+                    >
+                      Select a recommendation…
+                    </option>
+
+                    <option
+                      value="Accept"
+                      selected={@assignment.recommendation == "Accept"}
+                    >
+                      Accept Submission
+                    </option>
+
+                    <option
+                      value="Revisions Required"
+                      selected={@assignment.recommendation == "Revisions Required"}
+                    >
+                      Revisions Required
+                    </option>
+
+                    <option
+                      value="Resubmit for Review"
+                      selected={@assignment.recommendation == "Resubmit for Review"}
+                    >
+                      Resubmit for Review
+                    </option>
+
+                    <option
+                      value="Decline Submission"
+                      selected={@assignment.recommendation == "Decline Submission"}
+                    >
+                      Decline Submission
+                    </option>
+                  </select>
+                </div>
+              </div>
               <%!-- Upload File Slide-in Drawer --%>
               <div id="upload-reviewer-file-overlay" class="urf-overlay">
                 <div class="urf-modal rup-modal">
@@ -921,7 +976,8 @@
                   </form>
                 </div>
               </div>
-              <%!-- Actions for Step 3: Continue to Step 4 (Recommendation moved to Step 4 per OJS 4-step spec) --%>
+              <%!-- Actions for Step 3: Submit Review (sends the review to the editor,
+                     the display then continues to the Step 4 Completion view) --%>
               <div class="rp-panel">
                 <div class="rp-panel-footer">
                   <div class="rp-actions">
@@ -951,7 +1007,7 @@
                         class="rp-btn rp-btn-primary"
                         id="rp-btn-submit-review"
                       >
-                        Continue to Step 4
+                        Submit Review
                       </button>
                     </div>
                   </div>
@@ -1560,7 +1616,7 @@
           <div class="prd-form-error" id="review-discussion-error" style="display:none">
             A message is required to start the discussion.
           </div>
-          
+
           <div class="prd-attach-box">
             <div class="prd-attach-head">
               <h3 class="prd-attach-title">Attached Files</h3>
@@ -1597,16 +1653,16 @@
                     stroke-width="2"
                   >
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    
+
                     <polyline points="17 8 12 3 7 8"></polyline>
-                    
+
                     <line x1="12" y1="3" x2="12" y2="15"></line>
                   </svg>
                   Upload File
                 </button>
               </div>
             </div>
-            
+
             <div
               class="rd-attach-search"
               id="rd-attach-search-bar"
@@ -1646,7 +1702,7 @@
       </form>
     </div>
   </div>
-   <%!-- Upload Discussion File Slide-in Drawer --%>
+  <%!-- Upload Discussion File Slide-in Drawer --%>
   <div id="review-discussion-upload-overlay" class="urf-overlay rdud-overlay">
     <div class="urf-modal rup-modal">
       <div class="urf-header">
@@ -1667,11 +1723,11 @@
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </button>
-        
+
         <h2 class="urf-title">Upload a Discussion File</h2>
-         <span class="urf-title-spacer"></span>
+        <span class="urf-title-spacer"></span>
       </div>
-      
+
       <div class="urf-stepper">
         <div
           class="urf-step urf-step-active urf-step-clickable"
@@ -1680,20 +1736,20 @@
         >
           <span class="urf-step-num">1</span> <span class="urf-step-label">Upload File</span>
         </div>
-        
+
         <div class="urf-step-connector"></div>
-        
+
         <div class="urf-step" id="rdud-step-2-indicator" onclick="rdudGoToStep(2)">
           <span class="urf-step-num">2</span> <span class="urf-step-label">Review Details</span>
         </div>
-        
+
         <div class="urf-step-connector"></div>
-        
+
         <div class="urf-step" id="rdud-step-3-indicator" onclick="rdudGoToStep(3)">
           <span class="urf-step-num">3</span> <span class="urf-step-label">Confirm</span>
         </div>
       </div>
-      
+
       <div class="urf-body">
         <%!-- Step 1: Upload File --%>
         <div class="urf-step-content" id="rdud-step-1">
@@ -1701,34 +1757,34 @@
             <label class="urf-label" for="rdud-component-select">
               <span class="rdud-required">*</span> Article Component
             </label>
-            
+
             <select
               id="rdud-component-select"
               class="urf-select"
               onchange="rdudOnComponentChange(this)"
             >
               <option value="">Select article component</option>
-              
+
               <option>Article Text</option>
-              
+
               <option>Research Instrument</option>
-              
+
               <option>Research Materials</option>
-              
+
               <option>Research Results</option>
-              
+
               <option>Transcript</option>
-              
+
               <option>Data Analysis</option>
-              
+
               <option>Data Set</option>
-              
+
               <option>Source Text</option>
-              
+
               <option>Other</option>
             </select>
           </div>
-          
+
           <div class="rdud-upload-row" id="rdud-upload-row" style="display:none">
             <input
               type="file"
@@ -1748,21 +1804,21 @@
                     stroke-width="2"
                   >
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    
+
                     <polyline points="14 2 14 8 20 8"></polyline>
                   </svg>
                 </div>
-                
+
                 <div class="rup-selected-info">
                   <span class="rup-selected-name" id="rdud-selected-name">
                     No file selected
                   </span>
-                  
+
                   <span class="rup-selected-meta" id="rdud-selected-meta">
                     Drag &amp; drop a file here, or click to browse
                   </span>
                 </div>
-                
+
                 <button
                   type="button"
                   class="rup-selected-remove"
@@ -1779,13 +1835,13 @@
                     stroke-width="2"
                   >
                     <polyline points="3 6 5 6 21 6"></polyline>
-                    
+
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
                     </path>
                   </svg>
                 </button>
               </div>
-              
+
               <div class="rup-upload-side">
                 <button
                   type="button"
@@ -1802,48 +1858,48 @@
                     stroke-width="2"
                   >
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    
+
                     <polyline points="17 8 12 3 7 8"></polyline>
-                    
+
                     <line x1="12" y1="3" x2="12" y2="15"></line>
                   </svg>
-                   <span id="rdud-btn-upload-label">Upload File</span>
+                  <span id="rdud-btn-upload-label">Upload File</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
-         <%!-- Step 2: Review Details --%>
+        <%!-- Step 2: Review Details --%>
         <div class="urf-step-content urf-step-hidden" id="rdud-step-2">
           <p class="urf-hint">Review the file details before confirming.</p>
-          
+
           <div class="urf-detail-row">
             <span class="urf-detail-label">File Name:</span>
             <span class="urf-detail-value" id="rdud-detail-filename">—</span>
           </div>
-          
+
           <div class="urf-detail-row">
             <span class="urf-detail-label">File Size:</span>
             <span class="urf-detail-value" id="rdud-detail-filesize">—</span>
           </div>
-          
+
           <div class="urf-detail-row">
             <span class="urf-detail-label">Article Component:</span>
             <span class="urf-detail-value" id="rdud-detail-component">—</span>
           </div>
         </div>
-         <%!-- Step 3: Confirm --%>
+        <%!-- Step 3: Confirm --%>
         <div class="urf-step-content urf-step-hidden" id="rdud-step-3">
           <div class="urf-confirm-box">
             <p class="urf-confirm-text">File Added</p>
-            
+
             <p class="rup-confirm-sub">
               Ready to add “<span id="rdud-confirm-filename">—</span>” to the discussion.
             </p>
           </div>
         </div>
       </div>
-      
+
       <div class="urf-footer rup-footer">
         <button
           type="button"
@@ -1852,7 +1908,7 @@
         >
           Cancel
         </button>
-        
+
         <button
           type="button"
           class="urf-btn-continue"

@@ -31,6 +31,7 @@ defmodule OjsLandingWeb.ReviewerHTML do
 
   def wizard_current_step(%{status: :action_required}), do: 1
   def wizard_current_step(%{status: :in_progress, wizard_step: s}) when s in [1, 2, 3, 4], do: s
+  def wizard_current_step(%{status: :completed}), do: 4
   def wizard_current_step(_), do: 1
 
   def wizard_step_class(assignment, num) do

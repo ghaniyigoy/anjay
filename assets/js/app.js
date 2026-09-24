@@ -1260,6 +1260,55 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ==========================================
+// Review Details drawer (Review Completed info)
+// ==========================================
+function openReviewDetailsDrawer(btn) {
+  if (typeof closeReviewCompletedPopover === 'function') closeReviewCompletedPopover();
+  var overlay = document.getElementById(btn.getAttribute('data-drawer'));
+  if (!overlay) return;
+  document.body.style.overflow = 'hidden';
+  overlay.classList.add('rvd-open');
+  overlay.setAttribute('aria-hidden', 'false');
+}
+
+function closeReviewDetailsDrawer(overlayId) {
+  var overlay = document.getElementById(overlayId);
+  if (!overlay) return;
+  overlay.classList.remove('rvd-open');
+  overlay.setAttribute('aria-hidden', 'true');
+  if (!document.querySelector('.rvd-overlay.rvd-open')) {
+    document.body.style.overflow = '';
+  }
+}
+
+document.addEventListener('click', function (e) {
+  if (e.target.classList && e.target.classList.contains('rvd-overlay')) {
+    closeReviewDetailsDrawer(e.target.id);
+  }
+});
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.rvd-overlay.rvd-open').forEach(function (o) {
+      closeReviewDetailsDrawer(o.id);
+    });
+  }
+});
+
+document.addEventListener('input', function (e) {
+  if (!e.target.classList || !e.target.classList.contains('rvd-search-input')) return;
+  var panel = e.target.closest('.rvd-panel');
+  var table = panel.querySelector('.rvd-files-table');
+  if (!table) return;
+  var q = e.target.value.toLowerCase();
+  table.querySelectorAll('tbody tr').forEach(function (tr) {
+    var name = (tr.getAttribute('data-name') || '').toLowerCase();
+    var match = !q || name.indexOf(q) !== -1;
+    tr.style.display = match ? '' : 'none';
+  });
+});
+
+// ==========================================
 // Phoenix LiveSocket
 // ==========================================
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");

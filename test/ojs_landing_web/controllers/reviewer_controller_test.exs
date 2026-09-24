@@ -73,8 +73,8 @@ defmodule OjsLandingWeb.ReviewerControllerTest do
       html = html_response(conn, 200)
 
       assert html =~ "Review Files"
-      assert html =~ "Continue to Step 4"
-      refute html =~ "Recommendation"
+      assert html =~ "Submit Review"
+      assert html =~ "Recommendation"
 
       conn =
         post(conn, "/review/1/step", %{
